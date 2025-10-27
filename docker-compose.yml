@@ -11,17 +11,8 @@ services:
     build: ./backend
     ports:
       - "3000:3000"
-    environment:
-      - NODE_ENV=development
-      - DB_HOST_DEV=host.docker.internal # For connecting to XAMPP on the host
-      - DB_USER_DEV=root
-      - DB_PASSWORD_DEV=
-      - DB_NAME_DEV=test
-      - DB_HOST_PROD=mysql
-      - DB_USER_PROD=user
-      - DB_PASSWORD_PROD=password
-      - DB_NAME_PROD=proddb
-      - MONGO_URI=mongodb://mongo:27017/mydatabase
+    env_file:
+      - .env
     depends_on:
       - mongo
       - mysql
