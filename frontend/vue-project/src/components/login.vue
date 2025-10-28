@@ -1,5 +1,5 @@
 <script setup>
-import { ref, defineEmits } from 'vue'
+import { ref } from 'vue'
 
 const nom = ref('')
 const emit = defineEmits(['login'])
@@ -14,11 +14,13 @@ function login() {
 </script>
 
 <template>
-  <div class="login-contenedor">
-    <h2>Inici de sessió</h2>
-    <input v-model="nom" type="text" placeholder="Escriu el teu nom" @keyup.enter="login"/>
-    <button @click="login">Entrar</button>
+  <div class = "centrado">
+    <div class="login-contenedor">
+      <h2>Inici de sessió</h2>
+      <input v-model="nom" type="text" placeholder="Escriu el teu nom" @keyup.enter="login"/>
+      <button @click="login">Entrar</button>
+    </div>
   </div>
 </template>
 
-<style src="../style.css"></style>
+<style src="../styles/style.css"></style>
