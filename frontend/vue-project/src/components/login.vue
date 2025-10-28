@@ -20,3 +20,5 @@ function login() {
     <button @click="login">Entrar</button>
   </div>
 </template>
+
+<style src="../style.css"></style>
