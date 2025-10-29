@@ -26,7 +26,7 @@ let port;
 if (nodeEnv === 'production') {
   console.log('Running in production mode');
   // Configuración para Producción (desde .env)
-  port = process.env.PORT || 8000;
+  port = process.env.PORT || 3000;
 } else {
   console.log('Running in development mode');
   // Configuración para Desarrollo (hardcodeada)
