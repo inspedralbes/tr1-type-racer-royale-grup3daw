@@ -1,5 +1,5 @@
 <script setup>
-import { defineProps } from 'vue'
+import { ref } from 'vue'
 
 const props = defineProps({
   playerName: String
