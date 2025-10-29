@@ -1,20 +1,32 @@
 <script setup>
-import { ref } from 'vue'
+import { ref, watch } from 'vue'  
 
 const props = defineProps({
   playerName: String
 })
 
+const emit = defineEmits(['startGame'])  
+
 const jugadores = ref([])
 
-if (props.playerName && !jugadores.value.includes(props.playerName)) {
-  jugadores.value.push(props.playerName)
-}
+watch(
+  () => props.playerName,
+  (nuevoNombre) => {
+    if (nuevoNombre && !jugadores.value.includes(nuevoNombre)) {
+      jugadores.value.push(nuevoNombre)
+    }
+  },
+  { immediate: true } 
+)
 
 function agregarJugador(nombre) {
   if (nombre && !jugadores.value.includes(nombre)) {
     jugadores.value.push(nombre)
   }
+}
+
+function iniciarJuego() {
+  emit('startGame')
 }
 </script>
 
@@ -25,10 +37,12 @@ function agregarJugador(nombre) {
 
     <ul class="lista-jugadores">
       <li v-for="(jugador, index) in jugadores" :key="index">
-          {{ jugador }}
+        {{ jugador }}
       </li>
     </ul>
-   
+
+    <button @click="iniciarJuego">Començar Joc</button>
   </div>
 </template>
+
 <style src="../styles/style.css"></style>
