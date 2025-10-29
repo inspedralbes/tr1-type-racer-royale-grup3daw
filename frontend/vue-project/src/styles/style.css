@@ -34,3 +34,25 @@ div.login-contenedor {
 div.login-contenedor h2 {
   margin: 0.5em;
 }
+
+
+ul.lista-jugadores {
+  border: 1px solid black;
+  margin: 10px;
+}
+
+div.lobby-contenedor{
+  background-color: rgba(255, 255, 255, 0.7);
+  color: black;
+  border-radius: 10px;
+  width: 50%;
+  height: 10vw;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+div.lobby-contenedor h1, h2 {
+  text-align: center;
+}
