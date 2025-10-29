@@ -22,12 +22,13 @@ function agregarJugador(nombre) {
   <div class="lobby-contenedor">
     <h1>Lobby 1</h1>
     <h2>Benvingut, {{ playerName }}!</h2>
+
     <ul class="lista-jugadores">
       <li v-for="(jugador, index) in jugadores" :key="index">
           {{ jugador }}
       </li>
     </ul>
-    
+   
   </div>
 </template>
 <style src="../styles/style.css"></style>
