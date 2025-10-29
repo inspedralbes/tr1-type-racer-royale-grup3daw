@@ -13,7 +13,7 @@ function onLogin(nombre) {
 </script>
 
 <template>
-  <div>    
+  <div>
     <Login v-if="etapa === 'login'" @login="onLogin" />
 
     <Lobby v-else :playerName="nombreJugador" />

@@ -63,8 +63,29 @@
 
 <template>
 
+                <main class="joc">
+                    <div class="paraules-previstes">
+                        <div class="paraula">Paraula 1</div>
+                        <div class="paraula">Paraula 2</div>
+                        <div class="paraula">Paraula 3</div>
+                        <div class="paraula">Paraula 4</div>
+                    </div>
+                    <div class="paraula-actual">
+                        <h1>Paraula Actual</h1>
+                    </div>
+
+                    <!-- Secció lateral amb puntuacions -->
+                    <div class="puntuacions">
+                        <h2>Classificació</h2>
+                        <ul id="llista-jugadors">
+                            <!-- Exemple de jugadors -->
+                            <li><strong>Anna</strong> - 120 punts</li>
+                            <li><strong>Pol</strong> - 95 punts</li>
+                            <li><strong>Joan</strong> - 80 punts</li>
+                        </ul>
+                    </div>
+                </main>
+
 </template>
 
-<style scoped>
-
-</style>
+<style src="../styles/stylesJoc.css"></style>

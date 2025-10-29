@@ -1,0 +1,53 @@
+html {
+  margin: 0;
+  font-family: sans-serif;
+  background-color: #eeffd4;
+}
+
+.joc {
+  height: 99vh;
+  width: 96vw;
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: #b0d7ff;
+}
+
+.paraules-previstes {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  position: absolute;
+  transform: translate(0%, -100%);
+  background-color: #fff022;
+}
+
+.paraula-actual {
+    position: absolute;
+    background-color: #9dff9d;
+}
+
+.paraula-actual h1 {
+  font-size: 2.5rem;
+  color: #007baf;
+}
+
+.puntuacions {
+  position: absolute;
+  margin-right: 0px;
+  width: 300px;
+  background-color: #ff5c5c;
+  padding: 20px;
+  transform: translate(150%, -100%);
+}
+
+.puntuacions h2 {
+  margin-top: 0;
+}
+
+#llista-jugadors {
+  list-style: none;
+  padding: 0;
+  background-color: #5badff;
+}
