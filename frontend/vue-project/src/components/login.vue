@@ -6,7 +6,7 @@ const emit = defineEmits(['login'])
 
 function login() {
   if (nom.value.trim() !== '') {
-    fetch('https://backend.com/api/login', {
+    /*fetch('https://backend.com/api/login', {
       method: post,
       headers: {
         'Content-Type': 'application/json'
@@ -24,7 +24,7 @@ function login() {
     .catch(error => {
       console.log('Error al enviar nombre: ', error)
       alert('Hi ha hagut un problema al servidor')
-    })
+    }) */
     emit('login', nom.value) 
   } else {
     alert('Nom no seleccionat, escull un nom')
