@@ -1,57 +1,58 @@
 const express = require('express');
-const mongoose = require('mongoose');
-const mysql = require('mysql2');
+const cors = require('cors');
+const http = require('http');
+const { Server } = require('socket.io');
+
+// Importadores de rutas y sockets
+const loginRoutes = require('./routes/loginRoutes');
+const roomsRoutes = require('./routes/roomsRoutes');
+const scoresRoutes = require('./routes/scoresRoutes');
+const wordsRoutes = require('./routes/wordsRoutes');
+const { initializeSockets } = require('./controllers/socketManager');
 
 const app = express();
-const port = 3000;
+const server = http.createServer(app);
+
+// Configuración de CORS para Express y Socket.IO
+app.use(cors());
+
+// Middleware para parsear JSON en las peticiones
+app.use(express.json());
 
 const nodeEnv = process.env.NODE_ENV;
 
-// MongoDB Connection
-const mongoUri = process.env.MONGO_URI;
-mongoose.connect(mongoUri, { useNewUrlParser: true, useUnifiedTopology: true })
-  .then(() => console.log('MongoDB connected'))
-  .catch(err => console.log(err));
+let port;
 
-// MySQL Connection
-let db;
 if (nodeEnv === 'production') {
-  db = mysql.createConnection({
-    host: process.env.DB_HOST_PROD,
-    user: process.env.DB_USER_PROD,
-    password: process.env.DB_PASSWORD_PROD,
-    database: process.env.DB_NAME_PROD
-  });
+  console.log('Running in production mode');
+  // Configuración para Producción (desde .env)
+  port = process.env.PORT || 8000;
 } else {
-  db = mysql.createConnection({
-    host: process.env.DB_HOST_DEV,
-    user: process.env.DB_USER_DEV,
-    password: process.env.DB_PASSWORD_DEV,
-    database: process.env.DB_NAME_DEV
-  });
+  console.log('Running in development mode');
+  // Configuración para Desarrollo (hardcodeada)
+  port = 3000;
 }
 
-db.connect(err => {
-  if (err) {
-    console.error('Error connecting to MySQL:', err);
-    return;
+// Configuración de Socket.IO
+const io = new Server(server, {
+  cors: {
+    origin: "*", // Permitir cualquier origen (ajustar en producción)
+    methods: ["GET", "POST"]
   }
-  console.log('MySQL connected');
 });
 
-app.get('/', (req, res) => {
-  res.send('Hello from the backend!');
-});
+// Hacemos que el objeto 'io' sea accesible desde las rutas/controladores
+app.set('io', io);
 
-app.get('/data', (req, res) => {
-    db.query('SELECT 1', (err, results) => {
-        if (err) {
-            return res.status(500).json({ error: err.message });
-        }
-        res.json({ success: true, results });
-    });
-});
+// Inicializa la lógica de los sockets
+initializeSockets(app);
 
-app.listen(port, () => {
+// Carga de las rutas de la API
+app.use('/api/login', loginRoutes);
+app.use('/api/rooms', roomsRoutes);
+app.use('/api/scores', scoresRoutes);
+app.use('/api/words', wordsRoutes);
+
+server.listen(port, () => {
   console.log(`Backend listening at http://localhost:${port}`);
 });
