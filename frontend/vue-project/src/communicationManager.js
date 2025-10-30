@@ -18,7 +18,7 @@ export const communicationManager = {
   // --- REST ---
   async login(name, socketId) {
     // ahora enviamos ambos datos al servidor
-    return apiClient.post('', { name, socketId });
+    return apiClient.post('/login', { name, socketId });
   },
 
   async getWords() {
