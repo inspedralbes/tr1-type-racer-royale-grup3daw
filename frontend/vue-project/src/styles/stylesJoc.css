@@ -1,12 +1,9 @@
-html {
-  margin: 0;
-  font-family: sans-serif;
-  background-color: #eeffd4;
+main {
+  height: 100vh;
+  width: 100vw;
 }
 
 .joc {
-  height: 99vh;
-  width: 96vw;
   flex: 1;
   display: flex;
   justify-content: center;
@@ -29,17 +26,17 @@ html {
 }
 
 .paraula-actual h1 {
-  font-size: 2.5rem;
+  font-size: 2rem;
   color: #007baf;
 }
 
 .puntuacions {
   position: absolute;
   margin-right: 0px;
-  width: 300px;
+  width: 350px;
   background-color: #ff5c5c;
   padding: 20px;
-  transform: translate(150%, -100%);
+  transform: translate(120%, -100%);
 }
 
 .puntuacions h2 {
