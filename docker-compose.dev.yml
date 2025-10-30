@@ -1,0 +1,67 @@
+version: '3.8'
+
+# Este fichero docker-compose está configurado para el entorno de desarrollo.
+# Permite el hot-reloading del código, expone puertos de bases de datos para fácil acceso
+# y ejecuta los servicios en modo de desarrollo.
+#
+# Para levantar este entorno, usa el comando: docker compose -f docker-compose.dev.yml up --build
+services:
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "5173:5173" # Puerto de Vite para desarrollo
+    volumes:
+      - ./frontend/vue-project:/app # Monta el código fuente para hot-reloading
+      - /app/node_modules # Evita que el node_modules local sobreescriba el del contenedor
+    command: npm run dev
+    networks:
+      - app-network
+
+  backend:
+    build: ./backend
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./backend:/usr/src/app # Monta el código fuente para hot-reloading
+      - /usr/src/app/node_modules
+    command: npm run dev
+    depends_on:
+      - mongo
+      - mysql
+    environment:
+      - NODE_ENV=development
+    networks:
+      - app-network
+
+  mongo:
+    image: mongo:latest
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+    networks:
+      - app-network
+
+  mysql:
+    image: mysql:8.0
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: root_password
+      MYSQL_DATABASE: db_dev
+      MYSQL_USER: user_dev
+      MYSQL_PASSWORD: password_dev
+    volumes:
+      - mysql-data:/var/lib/mysql
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  mongo-data:
+  mysql-data:

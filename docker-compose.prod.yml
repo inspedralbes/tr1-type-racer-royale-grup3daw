@@ -1,0 +1,62 @@
+version: '3.8'
+
+# Este fichero docker-compose está configurado para el entorno de producción.
+# Construye imágenes optimizadas, no expone puertos de bases de datos al exterior
+# y ejecuta los servicios en modo de producción para eficiencia y seguridad.
+#
+# Para levantar este entorno, usa el comando: docker compose -f docker-compose.prod.yml up --build -d
+services:
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile # Asume que este Dockerfile maneja la build de producción
+    ports:
+      - "8080:80" # Nginx sirve en el puerto 80 dentro del contenedor
+    networks:
+      - app-network
+    environment:
+      # El frontend se comunicará con el backend a través del proxy de Nginx
+      - VITE_API_URL=/api
+
+  backend:
+    build: ./backend
+    ports:
+      - "3000:3000"
+    command: npm start # Comando para iniciar en producción
+    environment:
+      - NODE_ENV=production
+      # El backend necesita saber el origen del frontend para CORS
+      - FRONTEND_URL=
+      - PORT=3000
+    depends_on:
+      - mongo
+      - mysql
+    networks:
+      - app-network
+
+  mongo:
+    image: mongo:latest
+    volumes:
+      - mongo-data:/data/db
+    networks:
+      - app-network
+
+  mysql:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: your_production_root_password # Cambiar en producción
+      MYSQL_DATABASE: db_prod
+      MYSQL_USER: user_prod
+      MYSQL_PASSWORD: your_production_password # Cambiar en producción
+    volumes:
+      - mysql-data:/var/lib/mysql
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  mongo-data:
+  mysql-data:
