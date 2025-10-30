@@ -1,4 +1,5 @@
 <script setup>
+import { communicationManager } from '@/communicationManager'
 import { ref } from 'vue'
 
 const nom = ref('')
@@ -6,13 +7,7 @@ const emit = defineEmits(['login'])
 
 function login() {
   if (nom.value.trim() !== '') {
-    /*fetch('https://backend.com/api/login', {
-      method: post,
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({nom: nom.value})
-    })
+    communicationManager.login(nom.value)
     .then(response => {
       if (!response.ok) throw new Error('Error nom')
       return response.json()
@@ -24,7 +19,7 @@ function login() {
     .catch(error => {
       console.log('Error al enviar nombre: ', error)
       alert('Hi ha hagut un problema al servidor')
-    }) */
+    }) 
     emit('login', nom.value) 
   } else {
     alert('Nom no seleccionat, escull un nom')
