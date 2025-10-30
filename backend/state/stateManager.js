@@ -1,28 +1,30 @@
 // Este módulo simula una base de datos en memoria para el estado de la aplicación.
 
-let players = []; // Almacena { name: string, score: number, role: 'player' | 'admin' }
+let players = []; // Almacena { name: string, score: number, role: 'player' | 'admin', socketId: string }
 
 /**
  * Añade un nuevo jugador a la lista.
  * @param {string} name - El nombre del jugador.
+ * @param {string} socketId - El ID del socket del jugador.
  * @returns {object} El objeto del nuevo jugador.
  */
-const addPlayer = (name) => {
+const addPlayer = (name, socketId) => {
   const newPlayer = {
     name,
     score: 0,
     role: players.length === 0 ? 'admin' : 'player', // El primer jugador es admin
+    socketId,
   };
   players.push(newPlayer);
   return newPlayer;
 };
 
 /**
- * Elimina un jugador de la lista por su nombre.
- * @param {string} name - El nombre del jugador a eliminar.
+ * Elimina un jugador de la lista por su ID de socket.
+ * @param {string} socketId - El ID del socket del jugador a eliminar.
  */
-const removePlayer = (name) => {
-  const index = players.findIndex(p => p.name === name);
+const removePlayerBySocketId = (socketId) => {
+  const index = players.findIndex(p => p.socketId === socketId);
   if (index !== -1) {
     const removedPlayer = players.splice(index, 1)[0];
     // Si el admin se va, se asigna el rol al siguiente jugador más antiguo
@@ -64,7 +66,7 @@ const updatePlayerScore = (name, score) => {
 
 module.exports = {
   addPlayer,
-  removePlayer,
+  removePlayerBySocketId, // <--- Nombre de la función actualizado
   getPlayers,
   clearPlayers,
   updatePlayerScore,

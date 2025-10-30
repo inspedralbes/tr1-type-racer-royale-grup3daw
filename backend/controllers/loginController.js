@@ -1,16 +1,15 @@
 const stateManager = require('../state/stateManager');
 
 exports.handleLogin = (req, res) => {
-  const { name } = req.body;
+  const { name, socketId } = req.body;
   const broadcastPlayerList = req.app.get('broadcastPlayerList');
 
-  if (!name) {
-    return res.status(400).json({ error: 'El campo "name" es requerido.' });
+  if (!name || !socketId) {
+    return res.status(400).json({ error: 'Los campos "name" y "socketId" son requeridos.' });
   }
 
-  // 1. Le pedimos al roomsController que cree y añada el jugador a su estado local.
-  // La lógica de crear 'score' y 'role' está dentro de addPlayer.
-  const newPlayer = stateManager.addPlayer(name);
+  // Añadimos el jugador junto con su socketId al estado
+  const newPlayer = stateManager.addPlayer(name, socketId);
 
   // Notificamos a todos los clientes la nueva lista de jugadores
   broadcastPlayerList();

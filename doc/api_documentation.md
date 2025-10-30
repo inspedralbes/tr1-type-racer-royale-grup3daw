@@ -11,11 +11,15 @@ A continuación se detallan las rutas HTTP disponibles.
 ### 1. Autenticación de Jugador
 
 *   **Ruta:** `POST /api/login`
-*   **Descripción:** Registra un nuevo jugador en el servidor. El primer jugador en conectarse será el 'host'.
+*   **Descripción:** Registra un nuevo jugador en el servidor, asociándolo con su conexión de socket activa. El primer jugador en conectarse será el 'host'.
+*   **Flujo de Trabajo:** 
+    1. El cliente se conecta por Socket.IO y obtiene su `socket.id`.
+    2. El cliente envía este `socket.id` junto con su nombre a esta ruta.
 *   **Request Body (JSON):**
     ```json
     {
-      "name": "nombreDelJugador"
+      "name": "nombreDelJugador",
+      "socketId": "id_del_socket_del_cliente"
     }
     ```
 *   **Respuestas:**
@@ -24,13 +28,14 @@ A continuación se detallan las rutas HTTP disponibles.
         {
           "name": "nombreDelJugador",
           "score": 0,
-          "role": "host"
+          "role": "host",
+          "socketId": "id_del_socket_del_cliente"
         }
         ```
-    *   **`400 Bad Request` - Error:** Si no se proporciona el nombre.
+    *   **`400 Bad Request` - Error:** Si no se proporcionan todos los campos.
         ```json
         {
-          "error": "El campo \"name\" es requerido."
+          "error": "Los campos \"name\" y \"socketId\" son requeridos."
         }
         ```
 
@@ -93,13 +98,6 @@ A continuación se detallan las rutas HTTP disponibles.
 ## Eventos de Socket.IO
 
 El cliente debe conectarse al servidor de Sockets para la comunicación en tiempo real.
-
-### Eventos que el Cliente Emite (envía al servidor)
-
-1.  **`register`**
-    *   **Descripción:** Después de hacer login vía HTTP, el cliente debe emitir este evento para asociar su nombre de jugador con su conexión de socket. Esto es crucial para manejar las desconexiones correctamente.
-    *   **Payload:** `(playerName: string)`
-    *   **Ejemplo:** `socket.emit('register', 'nombreDelJugador');`
 
 ### Eventos que el Cliente Escucha (recibe del servidor)
 

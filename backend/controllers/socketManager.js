@@ -2,6 +2,7 @@ const stateManager = require('../state/stateManager');
 
 // Función centralizada para notificar a todos los clientes sobre cambios en la lista de jugadores.
 const broadcastPlayerList = (io) => {
+  // Al transmitir, no incluimos el socketId por seguridad y para no exponer datos internos.
   const playerList = stateManager.getPlayers().map(p => ({ name: p.name, score: p.score, role: p.role }));
   io.to('game-room').emit('updatePlayerList', playerList);
 };
@@ -14,28 +15,22 @@ const initializeSockets = (app) => {
   
   // Hacemos la función de broadcast accesible para otros módulos a través de `app`.
   app.set('broadcastPlayerList', () => broadcastPlayerList(io));
+
   io.on('connection', (socket) => {
     console.log(`Nuevo cliente conectado: ${socket.id}`);
     // Unir al cliente a la sala principal automáticamente
     socket.join(mainRoom);
 
-    // El cliente debe registrarse con su nombre para asociarlo al socket
-    socket.on('register', (playerName) => {
-      socket.playerName = playerName;
-      console.log(`Socket ${socket.id} registrado para el jugador: ${playerName}`);
-    });
+    // Ya no se usa el evento 'register'. La asociación se hace en el login HTTP.
 
     socket.on('disconnect', () => {
-      // Si el socket estaba registrado a un jugador, lo eliminamos de la sala
-      if (socket.playerName) {
-        console.log(`Jugador ${socket.playerName} desconectado.`);
-        stateManager.removePlayer(socket.playerName);
+      console.log(`Cliente desconectado: ${socket.id}`);
+      // Intentamos eliminar al jugador usando su socket.id.
+      // Si un jugador con ese socket.id existía, será eliminado.
+      stateManager.removePlayerBySocketId(socket.id);
 
-        // Usamos la función centralizada para notificar a los clientes restantes.
-        broadcastPlayerList(io);
-      } else {
-        console.log(`Cliente no registrado desconectado: ${socket.id}`);
-      }
+      // Notificamos a los clientes restantes la lista actualizada.
+      broadcastPlayerList(io);
     });
   });
 };

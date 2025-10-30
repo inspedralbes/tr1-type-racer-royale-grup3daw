@@ -13,32 +13,35 @@ const { initializeSockets } = require('./controllers/socketManager');
 const app = express();
 const server = http.createServer(app);
 
-// Configuración de CORS para Express y Socket.IO
-app.use(cors());
+const nodeEnv = process.env.NODE_ENV;
+let port;
+
+// Define la configuración de CORS basada en el entorno
+const corsOptions = {
+  methods: ["GET", "POST"],
+};
+
+if (nodeEnv === 'production') {
+  console.log('Running in production mode');
+  port = process.env.PORT || 8000;
+  // En producción, solo permite peticiones desde la URL del frontend definida en .env
+  corsOptions.origin = process.env.FRONTEND_URL;
+} else {
+  console.log('Running in development mode');
+  port = 3000;
+  // En desarrollo, permite cualquier origen
+  corsOptions.origin = "*";
+}
+
+// Aplica la configuración de CORS a Express
+app.use(cors(corsOptions));
 
 // Middleware para parsear JSON en las peticiones
 app.use(express.json());
 
-const nodeEnv = process.env.NODE_ENV;
-
-let port;
-
-if (nodeEnv === 'production') {
-  console.log('Running in production mode');
-  // Configuración para Producción (desde .env)
-  port = process.env.PORT || 8000;
-} else {
-  console.log('Running in development mode');
-  // Configuración para Desarrollo (hardcodeada)
-  port = 3000;
-}
-
-// Configuración de Socket.IO
+// Configuración de Socket.IO con las mismas opciones de CORS
 const io = new Server(server, {
-  cors: {
-    origin: "*", // Permitir cualquier origen (ajustar en producción)
-    methods: ["GET", "POST"]
-  }
+  cors: corsOptions,
 });
 
 // Hacemos que el objeto 'io' sea accesible desde las rutas/controladores
