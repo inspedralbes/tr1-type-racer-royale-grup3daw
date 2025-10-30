@@ -14,20 +14,16 @@ services:
       - "8080:80" # Nginx sirve en el puerto 80 dentro del contenedor
     networks:
       - app-network
-    environment:
-      # El frontend se comunicará con el backend a través del proxy de Nginx
-      - VITE_API_URL=/api
+    # Carga las variables de entorno desde un fichero .env que se creará en producción
+    env_file: ./frontend/vue-project/.env
 
   backend:
     build: ./backend
     ports:
       - "3000:3000"
     command: npm start # Comando para iniciar en producción
-    environment:
-      - NODE_ENV=production
-      # El backend necesita saber el origen del frontend para CORS
-      - FRONTEND_URL=
-      - PORT=3000
+    # Carga las variables de entorno desde un fichero .env que se creará en producción
+    env_file: ./backend/.env
     depends_on:
       - mongo
       - mysql

@@ -30,8 +30,6 @@ services:
     depends_on:
       - mongo
       - mysql
-    environment:
-      - NODE_ENV=development
     networks:
       - app-network
 

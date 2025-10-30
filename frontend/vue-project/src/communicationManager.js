@@ -2,14 +2,21 @@
 import axios from 'axios';
 import { io } from 'socket.io-client';
 
-// Determinar las URLs base según el entorno (Vite)
-const isProduction = import.meta.env.PROD;
+let API_BASE_URL;
+let SOCKET_URL;
 
-// En producción, la URL de la API es relativa (ej: /api) para que el proxy (Nginx) la gestione.
-// El socket se conecta al mismo host desde el que se sirve el frontend.
-// En desarrollo, apuntamos directamente al backend en localhost:3000.
-const API_BASE_URL = isProduction ? import.meta.env.VITE_API_URL || '/api' : 'http://localhost:3000/api';
-const SOCKET_URL = isProduction ? window.location.origin : 'http://localhost:3000';
+// Vite define import.meta.env.MODE como 'production' o 'development'.
+// Esto es el equivalente en el frontend a process.env.NODE_ENV en el backend.
+if (import.meta.env.MODE === 'production') {
+  // En producción, la URL de la API es relativa para que el proxy (Nginx) la gestione.
+  API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
+  // El socket se conecta a la URL específica definida en las variables de entorno.
+  SOCKET_URL = import.meta.env.VITE_SOCKET_URL;
+} else {
+  // En desarrollo, apuntamos directamente al backend en localhost:3000.
+  API_BASE_URL = 'http://localhost:3000/api';
+  SOCKET_URL = 'http://localhost:3000';
+}
 
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
