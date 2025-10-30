@@ -56,3 +56,28 @@ div.lobby-contenedor{
 div.lobby-contenedor h1, h2 {
   text-align: center;
 }
+
+.lobby-button {
+  font-family: 'PressStart2P', sans-serif;
+  background-color: rgba(255, 255, 255, 0.8);
+  color: black;
+  border: 2px solid black;
+  padding: 8px 15px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 0.8em;
+  margin: 5px;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+.lobby-button:hover {
+  background-color: black;
+  color: white;
+}
+
+.lobby-button:disabled {
+  background-color: rgba(128, 128, 128, 0.5);
+  cursor: not-allowed;
+  border-color: gray;
+  color: #333;
+}

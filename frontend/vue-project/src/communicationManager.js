@@ -25,7 +25,7 @@ const apiClient = axios.create({
   },
 });
 
-const socket = io(SOCKET_URL, {
+export const socket = io(SOCKET_URL, {
   transports: ['websocket'],
   autoConnect: false,
 });
@@ -57,6 +57,14 @@ export const communicationManager = {
     return apiClient.delete('/rooms');
   },
 
+  async removePlayer(playerSocketId, hostSocketId) {
+    return apiClient.delete(`/rooms/player/${playerSocketId}`, { data: { hostSocketId } });
+  },
+
+  async makeHost(currentHostSocketId, targetPlayerSocketId) {
+    return apiClient.post('/rooms/make-host', { currentHostSocketId, targetPlayerSocketId });
+  },
+
   // --- SOCKET ---
   connect() {
     if (!socket.connected) socket.connect();
@@ -85,6 +93,15 @@ export const communicationManager = {
   onUpdateRoomState(callback) {
     socket.off('updateRoomState');
     socket.on('updateRoomState', callback);
+  },
+
+  onPlayerRemoved(callback) {
+    socket.off('player-removed');
+    socket.on('player-removed', callback);
+  },
+
+  sendReadyStatus(isReady) {
+    socket.emit('set-ready', isReady);
   },
 
   disconnect() {

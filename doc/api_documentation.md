@@ -78,6 +78,47 @@ Resetea la sala, eliminando a todos los jugadores y terminando cualquier partida
         ```
 *   **Efecto Secundario:** Emite eventos `updatePlayerList` y `updateRoomState` a todos los clientes.
 
+#### `DELETE /api/rooms/player/:socketId`
+
+Elimina un jugador específico de la sala. Solo el host puede realizar esta acción.
+
+*   **Parámetros de Ruta:**
+    *   `socketId`: El ID de socket del jugador a eliminar.
+*   **Request Body (JSON):**
+    ```json
+    {
+      "hostSocketId": "id_del_socket_del_host_actual"
+    }
+    ```
+*   **Respuestas:**
+    *   **`200 OK` - Éxito:**
+        ```json
+        { "message": "Jugador con socketId [socketId] eliminado." }
+        ```
+    *   **`403 Forbidden` - Error:** Si el solicitante no es el host.
+    *   **`404 Not Found` - Error:** Si el jugador a eliminar no se encuentra.
+*   **Efecto Secundario:** Emite un evento `updatePlayerList` a todos los clientes y `player-removed` al jugador eliminado.
+
+#### `POST /api/rooms/make-host`
+
+Transfiere el rol de host a otro jugador. Solo el host actual puede realizar esta acción.
+
+*   **Request Body (JSON):**
+    ```json
+    {
+      "currentHostSocketId": "id_del_socket_del_host_actual",
+      "targetPlayerSocketId": "id_del_socket_del_jugador_objetivo"
+    }
+    ```
+*   **Respuestas:**
+    *   **`200 OK` - Éxito:**
+        ```json
+        { "message": "Jugador con socketId [socketId] es ahora el host." }
+        ```
+    *   **`403 Forbidden` - Error:** Si el solicitante no es el host actual.
+    *   **`400 Bad Request` - Error:** Si no se pudo transferir el rol de host (ej. jugador no encontrado).
+*   **Efecto Secundario:** Emite un evento `updatePlayerList` a todos los clientes.
+
 ---
 
 ### Juego
@@ -111,7 +152,7 @@ El cliente debe escuchar los siguientes eventos para mantener la UI sincronizada
 ### `updatePlayerList`
 
 *   **Descripción:** Se emite cada vez que un jugador se une, se va o actualiza su puntuación.
-*   **Payload:** `(playerList: Array)` - Un array de objetos, donde cada objeto es un jugador con `name`, `score` y `role`.
+*   **Payload:** `(playerList: Array)` - Un array de objetos, donde cada objeto es un jugador con `name`, `score`, `role`, `socketId` y `isReady`.
 
 ### `updateRoomState`
 
@@ -122,3 +163,14 @@ El cliente debe escuchar los siguientes eventos para mantener la UI sincronizada
       "isPlaying": true
     }
     ```
+
+### `player-removed`
+
+*   **Descripción:** Se emite a un jugador específico cuando ha sido eliminado de la sala por el host.
+*   **Payload:** Ninguno.
+
+### `set-ready`
+
+*   **Descripción:** El cliente emite este evento para cambiar su estado de "listo" en la sala.
+*   **Payload:** `(isReady: boolean)` - El nuevo estado de "listo" del jugador.
+*   **Efecto Secundario (Backend):** Actualiza el estado del jugador y emite un evento `updatePlayerList` a todos los clientes.

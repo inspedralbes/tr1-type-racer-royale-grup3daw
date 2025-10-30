@@ -15,4 +15,12 @@ export default defineConfig({
       '@': fileURLToPath(new URL('./src', import.meta.url))
     },
   },
+  // Añade esta sección para habilitar el hot-reloading en Docker
+  server: {
+    watch: {
+      // Usa polling en lugar de los eventos del sistema de ficheros
+      usePolling: true,
+    },
+    host: true, // Asegura que el servidor sea accesible desde fuera del contenedor
+  },
 })

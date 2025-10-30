@@ -18,7 +18,7 @@ let port;
 
 // Define la configuración de CORS basada en el entorno
 const corsOptions = {
-  methods: ["GET", "POST"],
+  methods: ["GET", "POST","PUT", "DELETE"],
 };
 
 if (nodeEnv === 'production') {

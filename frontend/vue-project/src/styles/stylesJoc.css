@@ -1,6 +1,9 @@
 main {
   height: 100vh;
   width: 100vw;
+  display: flex; /* Make main a flex container */
+  justify-content: center; /* Center horizontally */
+  align-items: center; /* Center vertically */
 }
 
 .joc {
@@ -11,18 +14,28 @@ main {
   background-color: #b0d7ff;
 }
 
+.game-content-wrapper {
+  display: flex;
+  gap: 20px; /* Spacing between elements */
+  align-items: flex-start; /* Align items to the top */
+}
+
 .paraules-previstes {
   display: flex;
   flex-direction: column;
   gap: 20px;
-  position: absolute;
-  transform: translate(0%, -100%);
   background-color: #fff022;
+  padding: 10px;
+}
+
+.paraules-previstes .paraula.active-word {
+  font-weight: bold;
+  color: blue; /* Ejemplo de estilo para la palabra activa */
 }
 
 .paraula-actual {
-    position: absolute;
     background-color: #9dff9d;
+    padding: 20px;
 }
 
 .paraula-actual h1 {
@@ -30,13 +43,15 @@ main {
   color: #007baf;
 }
 
+.paraula-actual input {
+  font-size: 1.5rem;
+  padding: 5px;
+}
+
 .puntuacions {
-  position: absolute;
-  margin-right: 0px;
   width: 350px;
   background-color: #ff5c5c;
   padding: 20px;
-  transform: translate(120%, -100%);
 }
 
 .puntuacions h2 {
