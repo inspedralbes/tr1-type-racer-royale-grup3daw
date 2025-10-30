@@ -110,9 +110,15 @@ watch(
 
 const onGameOver = () => {
   console.log('onGameOver called. Setting etapa to lobby.');
-  nextTick(() => {
+  nextTick(async () => {
     etapa.value = 'lobby';
     wordsLoaded.value = false; // Reset wordsLoaded for next game
+    try {
+      await communicationManager.resetReadyStatus();
+      console.log('Ready status reset successfully.');
+    } catch (error) {
+      console.error('Error resetting ready status:', error);
+    }
   });
 };
 </script>

@@ -193,7 +193,7 @@
                     <strong>{{ jugador.name }}</strong> - {{ jugador.score }} punts
                 </li>
             </ul>
-            <button @click="backToLobby">Volver al Lobby</button>
+            <button class="lobby-button" @click="backToLobby">Volver al Lobby</button>
         </div>
     </div>
 </template>

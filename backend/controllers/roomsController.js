@@ -90,3 +90,16 @@ exports.makeHost = (req, res) => {
     res.status(400).json({ message: 'No se pudo transferir el rol de host.' });
   }
 };
+
+// POST /api/rooms/reset-ready-status - Resetea el estado de listo de los jugadores
+exports.resetReadyStatus = (req, res) => {
+  const broadcastPlayerList = req.app.get('broadcastPlayerList');
+  const broadcastRoomState = req.app.get('broadcastRoomState');
+
+  stateManager.resetGame(); // Esto también resetea el isReady de los jugadores
+
+  broadcastPlayerList();
+  broadcastRoomState();
+
+  res.status(200).json({ message: 'Estado de listo de jugadores reseteado.' });
+};

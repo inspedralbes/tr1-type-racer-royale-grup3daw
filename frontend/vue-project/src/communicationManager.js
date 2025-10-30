@@ -65,6 +65,10 @@ export const communicationManager = {
     return apiClient.post('/rooms/make-host', { currentHostSocketId, targetPlayerSocketId });
   },
 
+  async resetReadyStatus() {
+    return apiClient.post('/rooms/reset-ready-status');
+  },
+
   // --- SOCKET ---
   connect() {
     if (!socket.connected) socket.connect();
