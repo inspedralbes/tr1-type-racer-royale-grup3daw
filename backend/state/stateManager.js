@@ -1,62 +1,37 @@
 // Este módulo simula una base de datos en memoria para el estado de la aplicación.
 
 let players = []; // Almacena { name: string, score: number, role: 'player' | 'admin', socketId: string }
+let roomState = { isPlaying: false };
 
-/**
- * Añade un nuevo jugador a la lista.
- * @param {string} name - El nombre del jugador.
- * @param {string} socketId - El ID del socket del jugador.
- * @returns {object} El objeto del nuevo jugador.
- */
+// --- Gestión de Jugadores ---
+
 const addPlayer = (name, socketId) => {
   const newPlayer = {
     name,
     score: 0,
-    role: players.length === 0 ? 'admin' : 'player', // El primer jugador es admin
+    role: players.length === 0 ? 'admin' : 'player',
     socketId,
   };
   players.push(newPlayer);
   return newPlayer;
 };
 
-/**
- * Elimina un jugador de la lista por su ID de socket.
- * @param {string} socketId - El ID del socket del jugador a eliminar.
- */
 const removePlayerBySocketId = (socketId) => {
   const index = players.findIndex(p => p.socketId === socketId);
   if (index !== -1) {
     const removedPlayer = players.splice(index, 1)[0];
-    // Si el admin se va, se asigna el rol al siguiente jugador más antiguo
     if (removedPlayer.role === 'admin' && players.length > 0) {
       players[0].role = 'admin';
     }
   }
 };
 
-/**
- * Devuelve la lista completa de jugadores.
- * @returns {Array<object>} La lista de jugadores.
- */
-const getPlayers = () => {
-  return players;
-};
+const getPlayers = () => players;
 
-/**
- * Elimina todos los jugadores de la lista.
- */
-const clearPlayers = () => {
-  players = [];
-};
+const findPlayerByName = (name) => players.find(p => p.name.toLowerCase() === name.toLowerCase());
 
-/**
- * Actualiza la puntuación de un jugador.
- * @param {string} name - El nombre del jugador.
- * @param {number} score - La nueva puntuación.
- * @returns {object | null} El jugador actualizado o null si no se encuentra.
- */
 const updatePlayerScore = (name, score) => {
-  const player = players.find(p => p.name === name);
+  const player = findPlayerByName(name);
   if (player) {
     player.score = score;
     return player;
@@ -64,10 +39,35 @@ const updatePlayerScore = (name, score) => {
   return null;
 };
 
+// --- Gestión del Estado de la Sala ---
+
+const getRoomState = () => roomState;
+
+const startGame = () => {
+  roomState.isPlaying = true;
+  return roomState;
+};
+
+const resetGame = () => {
+  roomState.isPlaying = false;
+  return roomState;
+};
+
+const clearPlayers = () => {
+  players = [];
+  resetGame(); // También resetea el estado de la partida
+};
+
 module.exports = {
+  // Jugadores
   addPlayer,
-  removePlayerBySocketId, // <--- Nombre de la función actualizado
+  removePlayerBySocketId,
   getPlayers,
-  clearPlayers,
+  findPlayerByName,
   updatePlayerScore,
+  clearPlayers,
+  // Sala
+  getRoomState,
+  startGame,
+  resetGame,
 };
