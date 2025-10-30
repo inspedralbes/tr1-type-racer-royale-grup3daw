@@ -1,4 +1,4 @@
-// src/managers/CommunicationManager.js
+// src/communicationManager.js
 import axios from 'axios';
 import { io } from 'socket.io-client';
 

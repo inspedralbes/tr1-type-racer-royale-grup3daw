@@ -1,6 +1,6 @@
 <script setup>
 import { ref } from 'vue'
-import { communicationManager } from '@/managers/CommunicationManager'
+import { communicationManager } from '@/communicationManager.js'
 
 const nom = ref('')
 const emit = defineEmits(['login'])
