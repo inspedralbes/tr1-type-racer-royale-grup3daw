@@ -1,5 +1,5 @@
 <script setup>
-import { communicationManager } from '@/communicationmanager'
+import { communicationManager } from '@/communicationManager'
 import { ref } from 'vue'
 
 const nom = ref('')
