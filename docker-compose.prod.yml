@@ -6,21 +6,19 @@ version: '3.8'
 #
 # Para levantar este entorno, usa el comando: docker compose -f docker-compose.prod.yml up --build -d
 services:
-  frontend:
+  nginx:
     build:
-      context: ./frontend
-      dockerfile: Dockerfile # Asume que este Dockerfile maneja la build de producción
+      context: .
+      dockerfile: nginx.Dockerfile
     ports:
-      - "8080:80" # Nginx sirve en el puerto 80 dentro del contenedor
+      - "80:80"
+    depends_on:
+      - backend
     networks:
       - app-network
-    # Carga las variables de entorno desde un fichero .env que se creará en producción
-    env_file: ./frontend/vue-project/.env
 
   backend:
     build: ./backend
-    ports:
-      - "3000:3000"
     command: npm start # Comando para iniciar en producción
     # Carga las variables de entorno desde un fichero .env que se creará en producción
     env_file: ./backend/.env
