@@ -39,6 +39,7 @@ async function login() {
   <div class="login-contenedor">
     <h2>Inici de sessió</h2>
     <input
+      maxlength="12"
       v-model="nom"
       type="text"
       placeholder="Escriu el teu nom"
