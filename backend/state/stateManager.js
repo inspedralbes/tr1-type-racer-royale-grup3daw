@@ -1,20 +1,34 @@
 // Este módulo simula una base de datos en memoria para el estado de la aplicación.
 
 let players = []; // Almacena { name: string, score: number, role: 'player' | 'admin', socketId: string }
-let roomState = { isPlaying: false };
+let roomState = { isPlaying: false, time: 0, gameStartTime: null };
 
 // --- Gestión de Jugadores ---
 
-const addPlayer = (name, socketId) => {
+const addPlayer = (name, socketId, time, token) => {
+  if (players.length === 0) {
+    roomState.time = time;
+  }
   const newPlayer = {
     name,
     score: 0,
     role: players.length === 0 ? 'admin' : 'player',
     socketId,
     isReady: players.length === 0 ? true : false, // Host is always ready
+    token,
+    disconnected: false,
+    currentPage: 'login',
   };
   players.push(newPlayer);
   return newPlayer;
+};
+
+const disconnectPlayerBySocketId = (socketId) => {
+  const player = players.find(p => p.socketId === socketId);
+  if (player) {
+    player.disconnected = true;
+  }
+  return player;
 };
 
 const removePlayerBySocketId = (socketId) => {
@@ -70,11 +84,13 @@ const getRoomState = () => roomState;
 
 const startGame = () => {
   roomState.isPlaying = true;
+  roomState.gameStartTime = Date.now();
   return roomState;
 };
 
 const resetGame = () => {
   roomState.isPlaying = false;
+  roomState.gameStartTime = null;
   // Reset all players' ready status, except for the host
   players.forEach(p => {
     p.score = 0;
@@ -110,12 +126,33 @@ const makeHost = (currentHostSocketId, targetPlayerSocketId) => {
   return false;
 };
 
+const findPlayerByToken = (token) => players.find(p => p.token === token);
+
+const removePlayerByToken = (token) => {
+  const index = players.findIndex(p => p.token === token);
+  if (index !== -1) {
+    const removedPlayer = players.splice(index, 1)[0];
+    if (removedPlayer.role === 'admin' && players.length > 0) {
+      const newAdmin = players.find(p => !p.disconnected);
+      if (newAdmin) {
+        newAdmin.role = 'admin';
+        newAdmin.isReady = true;
+      }
+    }
+    return removedPlayer;
+  }
+  return null;
+};
+
 module.exports = {
   // Jugadores
   addPlayer,
+  disconnectPlayerBySocketId,
   removePlayerBySocketId,
+  removePlayerByToken,
   getPlayers,
   findPlayerByName,
+  findPlayerByToken,
   updatePlayerScore,
   clearPlayers,
   makeHost,

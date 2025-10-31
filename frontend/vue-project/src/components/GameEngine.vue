@@ -15,6 +15,7 @@
         :words="words"
         :playerName="nombreJugador"
         :jugadores="jugadores"
+        :roomState="roomState"
   @done="onGameOver"
       />
       <div v-else>
@@ -30,56 +31,64 @@
 </template>
 
 <script setup>
-import { ref, onMounted, watch, nextTick } from 'vue'
+import { onMounted, watch } from 'vue'
+import { storeToRefs } from 'pinia'
 import Login from './login.vue'
 import Lobby from './lobby.vue'
 import Joc from './joc.vue' 
 import Final from './paginaFinal.vue'
 import { communicationManager } from '../communicationManager'
+import { useSessionStore } from '../stores/session';
+import { useGameStore } from '../stores/game';
+import { useRoomStore } from '../stores/room';
 
-const nombreJugador = ref('') 
-const etapa = ref('login')
-const words = ref(null) // Referencia para guardar las palabras
-const jugadores = ref([]) // Referencia para guardar la lista de jugadores
-const roomState = ref({ isPlaying: false }) // Referencia para el estado de la sala
-const wordsLoaded = ref(false) // Nueva referencia para controlar si las palabras se han cargado
+const gameStore = useGameStore();
+const roomStore = useRoomStore();
+const sessionStore = useSessionStore();
 
-// Nuevo: resultados finales para pasar a paginaFinal
-const finalResults = ref([])
+const { etapa, nombreJugador, words, wordsLoaded, finalResults } = storeToRefs(gameStore);
+const { jugadores, roomState } = storeToRefs(roomStore);
 
 // Setup global listeners for player list and room state
 onMounted(async () => {
   console.log('GameEngine mounted. Initial etapa:', etapa.value);
+
+  const token = sessionStore.token;
+  if (token) {
+    try {
+      const socketId = await communicationManager.connectAndRegister();
+      const response = await communicationManager.login(null, socketId);
+      const player = response.data;
+      gameStore.setNombreJugador(player.name);
+      if (player.remainingTime) {
+        roomStore.setRemainingTime(player.remainingTime);
+        gameStore.setEtapa('game');
+      } else {
+        gameStore.setEtapa('lobby');
+      }
+    } catch (error) {
+      console.error('Error al reconectar:', error);
+      alert('Error al reconectar: ' + error.message);
+      sessionStore.clearToken(); // Invalid token, clear it
+    }
+  }
+
   // Fetch initial players
   try {
     const response = await communicationManager.getRoomPlayers()
-    jugadores.value = response.data
+    roomStore.setJugadores(response.data)
   } catch (error) {
     console.error('Error al obtener jugadores de la sala en GameEngine:', error)
   }
 
-  communicationManager.onUpdatePlayerList((playerList) => {
-    jugadores.value = playerList
-  })
-
-  communicationManager.onUpdateRoomState((state) => {
-    roomState.value = state
-    // GameEngine directamente cambia la etapa si el juego empieza
-    if (state.isPlaying) {
-      etapa.value = 'game'
-    }
-  })
-
-  communicationManager.onPlayerRemoved(() => {
-    console.log('Player removed event received. Redirecting to login.');
-    etapa.value = 'login';
-    // Opcional: limpiar cualquier estado de juego o jugador aquí
-  });
+  communicationManager.onUpdatePlayerList();
+  communicationManager.onUpdateRoomState();
+  communicationManager.onPlayerRemoved();
 })
 
 function onLogin(player) {
-  nombreJugador.value = player.name
-  etapa.value = 'lobby'  
+  gameStore.setNombreJugador(player.name)
+  gameStore.setEtapa('lobby')  
 }
 
 // Esta función ahora solo es responsable de obtener las palabras
@@ -87,35 +96,24 @@ async function fetchWordsForGame() {
   console.log('fetchWordsForGame called.');
   try {
     const response = await communicationManager.getWords()
-    words.value = response.data
-    wordsLoaded.value = true
+    gameStore.setWords(response.data)
+    gameStore.setWordsLoaded(true)
     console.log('Words fetched successfully. wordsLoaded:', wordsLoaded.value, 'words:', words.value);
   } catch (error) {
     console.error('Error al obtener las palabras:', error)
-    wordsLoaded.value = false; // Ensure loading state is false on error
+    gameStore.setWordsLoaded(false); // Ensure loading state is false on error
   }
 }
 
 // Observa cuando roomState.isPlaying cambia a true para cargar las palabras
-watch(etapa, (newEtapa) => {
+watch(etapa, async (newEtapa) => {
   console.log('GameEngine etapa changed to:', newEtapa);
+  await communicationManager.updatePlayerPage(newEtapa);
   if (newEtapa === 'game') {
-    wordsLoaded.value = false; // Reset wordsLoaded
+    gameStore.setWordsLoaded(false); // Reset wordsLoaded
     fetchWordsForGame(); // Always fetch words when entering game stage
   }
 });
-
-// Observa cuando roomState.isPlaying cambia a true para cargar las palabras
-watch(
-  () => roomState.value.isPlaying,
-  (newVal) => {
-    console.log('roomState.isPlaying changed to:', newVal);
-    if (newVal) {
-      // etapa.value = 'game' is already handled by communicationManager.onUpdateRoomState
-      // No need to call fetchWordsForGame() here, as it's handled by the etapa watch
-    }
-  }
-);
 
 // Recibe resultados desde <Joc @done="..."> y cambia a pantalla final
 const onGameOver = async (resultados) => {
@@ -138,16 +136,16 @@ const onGameOver = async (resultados) => {
 
   // Si resultados es ya un array, usarlo directamente
   if (Array.isArray(resultados)) {
-    finalResults.value = resultados
+    gameStore.setFinalResults(resultados)
   } else {
-    finalResults.value = lista
+    gameStore.setFinalResults(lista)
   }
 
   // Cambiar a pantalla final
-  etapa.value = 'done'
+  gameStore.setEtapa('done')
 
   // Reset estado de palabras para la siguiente partida
-  wordsLoaded.value = false
+  gameStore.setWordsLoaded(false)
 
   try {
     await communicationManager.resetReadyStatus()
@@ -158,9 +156,9 @@ const onGameOver = async (resultados) => {
 
 // Manejar reinicio desde la pantalla final
 const onReiniciar = () => {
-  etapa.value = 'lobby'
-  finalResults.value = []
-  words.value = null
-  wordsLoaded.value = false
+  gameStore.setEtapa('lobby')
+  gameStore.setFinalResults([])
+  gameStore.setWords(null)
+  gameStore.setWordsLoaded(false)
 }
 </script>

@@ -22,11 +22,7 @@ async function login() {
 
     console.log('Player rebut del servidor:', player)
 
-    // 3️⃣ Guardar el objeto player y socketId en localStorage
-    localStorage.setItem('player', JSON.stringify(player))
-    localStorage.setItem('socketId', socketId)
-
-    // 4️⃣ Emitir al padre
+    // 3️⃣ Emitir al padre
     emit('login', player)
   } catch (error) {
     console.error('Error al iniciar sessió:', error)

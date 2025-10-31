@@ -1,6 +1,15 @@
 <script setup>
-    import { ref, computed, onMounted, watch, onUnmounted, toRefs } from 'vue';
+    import { ref, computed, onMounted, watch, onUnmounted } from 'vue';
+    import { storeToRefs } from 'pinia';
     import { communicationManager } from '../communicationManager';
+    import { useGameStore } from '../stores/game';
+    import { useRoomStore } from '../stores/room';
+
+    const gameStore = useGameStore();
+    const roomStore = useRoomStore();
+
+    const { nombreJugador, words } = storeToRefs(gameStore);
+    const { jugadores, roomState, remainingTime } = storeToRefs(roomStore);
 
     const POINTS_PER_DIFFICULTY = {
         facil: 5,
@@ -12,14 +21,6 @@
 
     const emits = defineEmits(['done']);
     
-    const props = defineProps({
-        words: Object,
-        playerName: String,
-        jugadores: Array // Added jugadores prop
-    });
-
-    const { words } = toRefs(props); // Desestructurar words de props
-    
     const estatDelJoc = ref({
         paraules: [],
         indexParaulaActiva: 0,
@@ -28,8 +29,11 @@
         errorTotal: 0,
     });
 
-    const timeLeft = ref(30); // 30 segundos para el contador
-    const score = ref(0);
+    const timeLeft = ref(remainingTime.value || roomState.value.time);
+    const score = computed(() => {
+        const player = jugadores.value.find(j => j.name === nombreJugador.value);
+        return player ? player.score : 0;
+    });
     let gameInterval = null;
     const gameEnded = ref(false);
 
@@ -80,9 +84,10 @@
 
     const startGameTimer = () => {
         if (gameInterval) clearInterval(gameInterval);
-        timeLeft.value = 10; // Reset timer
+        if (remainingTime.value === null) {
+            timeLeft.value = roomState.value.time;
+        }
         gameEnded.value = false;
-        score.value = 0; // Reset score
 
         gameInterval = setInterval(() => {
             timeLeft.value--;
@@ -103,7 +108,7 @@
         gameEnded.value = true;
 
         const resultados = {
-            jugador: props.playerName,
+            jugador: nombreJugador.value,
             puntuacion: score.value,
             stats: [...estatDelJoc.value.stats],
             errorTotal: estatDelJoc.value.errorTotal,
@@ -147,8 +152,7 @@
             };
                 };
                 if (entrada === paraula.text){
-                    score.value += POINTS_PER_DIFFICULTY[paraula.difficulty]; // Sumar puntos según la dificultad
-                    communicationManager.updateScore(props.playerName, score.value); // Enviar puntuación al backend
+                    communicationManager.updateScore(nombreJugador.value, score.value + POINTS_PER_DIFFICULTY[paraula.difficulty]); // Enviar puntuación al backend
                     estatDelJoc.value.stats.push({
                         paraula: paraula.text,
                         errors: paraula.errors
@@ -176,7 +180,7 @@
 <template>
     <div class="joc-background">
         <div class="game-container">
-        <h2>Ànims, {{ playerName }}!</h2>
+        <h2>Ànims, {{ nombreJugador }}!</h2>
 
         <div v-if="!gameEnded">
             <p>Tiempo restante: {{ timeLeft }}s</p>
@@ -196,7 +200,7 @@
                     <div class="puntuacions">
                         <h2>Classificació</h2>
                         <ul id="llista-jugadors">
-                            <li v-for="jugador in props.jugadores" :key="jugador.name">
+                            <li v-for="jugador in jugadores" :key="jugador.name">
                                 <strong>{{ jugador.name }}</strong> - {{ jugador.score }} punts
                             </li>
                         </ul>
@@ -210,7 +214,7 @@
             <p>Tu puntuación final: {{ score }}</p>
             <h3>Clasificación Final</h3>
             <ul id="llista-jugadors-final">
-                <li v-for="jugador in props.jugadores" :key="jugador.name">
+                <li v-for="jugador in jugadores" :key="jugador.name">
                     <strong>{{ jugador.name }}</strong> - {{ jugador.score }} punts
                 </li>
             </ul>

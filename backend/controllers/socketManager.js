@@ -36,10 +36,27 @@ const initializeSockets = (app) => {
 
     socket.on('disconnect', () => {
       console.log(`Cliente desconectado: ${socket.id}`);
-      stateManager.removePlayerBySocketId(socket.id);
-      // Notificamos a los clientes restantes la lista y el estado actualizados.
+      const player = stateManager.disconnectPlayerBySocketId(socket.id);
+
+      if (player && player.role === 'admin') {
+        const players = stateManager.getPlayers();
+        const newAdmin = players.find(p => p.token !== player.token && !p.disconnected);
+        if (newAdmin) {
+          stateManager.makeHost(player.socketId, newAdmin.socketId);
+        }
+      }
+
+      if (player) {
+        setTimeout(() => {
+          const stillDisconnected = stateManager.getPlayers().find(p => p.token === player.token && p.disconnected);
+          if (stillDisconnected) {
+            stateManager.removePlayerByToken(player.token);
+            broadcastPlayerList(io);
+          }
+        }, 10000); // 10 seconds to reconnect
+      }
+
       broadcastPlayerList(io);
-      broadcastRoomState(io);
     });
   });
 };

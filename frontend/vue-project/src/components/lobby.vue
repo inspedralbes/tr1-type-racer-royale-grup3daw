@@ -1,34 +1,33 @@
 <script setup>
-import { ref, onMounted, onUnmounted, computed } from 'vue' // Removed 'watch'
+import { computed } from 'vue'
+import { storeToRefs } from 'pinia'
 import { communicationManager, socket } from '../communicationManager'
+import { useGameStore } from '../stores/game';
+import { useRoomStore } from '../stores/room';
 
-const props = defineProps({
-  playerName: String,
-  jugadores: Array, // Ahora recibido como prop de GameEngine
-  roomState: Object // Ahora recibido como prop de GameEngine
-})
+const gameStore = useGameStore();
+const roomStore = useRoomStore();
 
-// Ya no se emite 'startGame' desde Lobby, GameEngine maneja los cambios de roomState
+const { nombreJugador } = storeToRefs(gameStore);
+const { jugadores } = storeToRefs(roomStore);
 
 const isAdmin = computed(() => {
-  const player = props.jugadores.find(j => j.name === props.playerName) // Usa props.jugadores
+  const player = jugadores.value.find(j => j.name === nombreJugador.value)
   return player && player.role === 'admin'
 })
 
 const isPlayerReady = computed(() => {
-  const player = props.jugadores.find(j => j.name === props.playerName);
+  const player = jugadores.value.find(j => j.name === nombreJugador.value);
   return player ? player.isReady : false;
 });
 
 const areAllPlayersReady = computed(() => {
-  // Host is always ready. Check if all non-host players are ready.
-  return props.jugadores.every(p => p.role === 'admin' || p.isReady);
+  return jugadores.value.every(p => p.role === 'admin' || p.isReady);
 });
 
 const removePlayer = async (playerSocketId) => {
   if (isAdmin.value) {
     try {
-      // Asumimos que el socket.id del host es el socket.id del jugador actual
       const hostSocketId = socket.id;
       await communicationManager.removePlayer(playerSocketId, hostSocketId);
       console.log(`Jugador con socketId ${playerSocketId} eliminado.`);
@@ -57,24 +56,11 @@ const makeHost = async (targetPlayerSocketId) => {
 };
 
 const toggleReady = () => {
-  // Only non-host players can toggle their ready status
   if (!isAdmin.value) {
     console.log('Toggling ready status. Current isPlayerReady:', isPlayerReady.value, 'Sending:', !isPlayerReady.value);
     communicationManager.sendReadyStatus(!isPlayerReady.value);
   }
 };
-
-// Fetch initial players and set up socket listener
-onMounted(async () => {
-  // Lobby ya no obtiene jugadores ni escucha el estado de la sala directamente.
-  // Los recibe como props de GameEngine.
-  // El onMounted de GameEngine se encargará de la obtención inicial y los listeners.
-})
-
-// Clean up socket listeners
-onUnmounted(() => {
-  // No hay listeners que limpiar en Lobby, ya que GameEngine los gestiona.
-})
 
 function iniciarJuego() {
   if (isAdmin.value) {
@@ -96,9 +82,9 @@ function iniciarJuego() {
   <div class="lobby-background">
     <div class="lobby-contenedor">
     <h1>Lobby</h1>
-    <h2>Benvingut, {{ playerName }}!</h2>
+    <h2>Benvingut, {{ nombreJugador }}!</h2>
     <ul class="lista-jugadores">
-      <li v-for="(jugador) in props.jugadores" :key="jugador.name">
+      <li v-for="(jugador) in jugadores" :key="jugador.name">
         {{ jugador.name }} <span v-if="jugador.role === 'admin'">⭐</span>
         <span v-if="jugador.role !== 'admin'">
           <span v-if="jugador.isReady"> (Listo)</span><span v-else> (No listo)</span>

@@ -1,6 +1,8 @@
-// src/communicationManager.js
 import axios from 'axios';
 import { io } from 'socket.io-client';
+import { useSessionStore } from './stores/session';
+import { useRoomStore } from './stores/room';
+import { useGameStore } from './stores/game';
 
 let API_BASE_URL;
 let SOCKET_URL;
@@ -32,9 +34,23 @@ export const socket = io(SOCKET_URL, {
 
 export const communicationManager = {
   // --- REST ---
+  getToken() {
+    const sessionStore = useSessionStore();
+    return sessionStore.token;
+  },
+
+  setToken(token) {
+    const sessionStore = useSessionStore();
+    sessionStore.setToken(token);
+  },
+
   async login(name, socketId) {
-    // ahora enviamos ambos datos al servidor
-    return apiClient.post('/login', { name, socketId });
+    const token = this.getToken();
+    const response = await apiClient.post('/login', { name, socketId, time: 15, token });
+    if (response.data.token) {
+      this.setToken(response.data.token);
+    }
+    return response;
   },
 
   async getWords() {
@@ -69,6 +85,14 @@ export const communicationManager = {
     return apiClient.post('/rooms/reset-ready-status');
   },
 
+  async updatePlayerPage(page) {
+    const token = this.getToken();
+    if (token) {
+      return apiClient.post('/player/page', { token, page });
+    }
+    return Promise.resolve();
+  },
+
   // --- SOCKET ---
   connect() {
     if (!socket.connected) socket.connect();
@@ -89,19 +113,32 @@ export const communicationManager = {
     return socket.id;
   },
 
-  onUpdatePlayerList(callback) {
+  onUpdatePlayerList() {
     socket.off('updatePlayerList');
-    socket.on('updatePlayerList', callback);
+    socket.on('updatePlayerList', (playerList) => {
+      const roomStore = useRoomStore();
+      roomStore.setJugadores(playerList);
+    });
   },
 
-  onUpdateRoomState(callback) {
+  onUpdateRoomState() {
     socket.off('updateRoomState');
-    socket.on('updateRoomState', callback);
+    socket.on('updateRoomState', (roomState) => {
+      const roomStore = useRoomStore();
+      roomStore.setRoomState(roomState);
+      if (roomState.isPlaying) {
+        const gameStore = useGameStore();
+        gameStore.setEtapa('game');
+      }
+    });
   },
 
-  onPlayerRemoved(callback) {
+  onPlayerRemoved() {
     socket.off('player-removed');
-    socket.on('player-removed', callback);
+    socket.on('player-removed', () => {
+      const gameStore = useGameStore();
+      gameStore.setEtapa('login');
+    });
   },
 
   sendReadyStatus(isReady) {

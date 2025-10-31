@@ -8,6 +8,7 @@ const loginRoutes = require('./routes/loginRoutes');
 const roomsRoutes = require('./routes/roomsRoutes');
 const scoresRoutes = require('./routes/scoresRoutes');
 const wordsRoutes = require('./routes/wordsRoutes');
+const playerRoutes = require('./routes/playerRoutes');
 const { initializeSockets } = require('./controllers/socketManager');
 
 const app = express();
@@ -55,6 +56,7 @@ app.use('/api/login', loginRoutes);
 app.use('/api/rooms', roomsRoutes);
 app.use('/api/scores', scoresRoutes);
 app.use('/api/words', wordsRoutes);
+app.use('/api/player', playerRoutes);
 
 server.listen(port, () => {
   console.log(`Backend listening at http://localhost:${port}`);
