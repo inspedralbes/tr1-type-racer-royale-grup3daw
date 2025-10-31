@@ -44,8 +44,8 @@ async function login() {
       placeholder="Escriu el teu nom"
       @keyup.enter="login"
     />
-    <button class="lobby-button" @click="login">Entrar</button>
+    <button class="login-button" @click="login">Entrar</button>
   </div>
 </template>
 
-<style src="../styles/style.css"></style>
+<style src="../styles/styleLogin.css"></style>

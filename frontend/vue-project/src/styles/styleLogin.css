@@ -35,29 +35,7 @@ div.login-contenedor h2 {
   margin: 0.5em;
 }
 
-
-ul.lista-jugadores {
-  border: 1px solid black;
-  margin: 10px;
-}
-
-div.lobby-contenedor{
-  background-color: rgba(255, 255, 255, 0.7);
-  color: black;
-  border-radius: 10px;
-  width: 50%;
-  height: 10vw;
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-}
-
-div.lobby-contenedor h1, h2 {
-  text-align: center;
-}
-
-.lobby-button {
+.login-button {
   font-family: 'PressStart2P', sans-serif;
   background-color: rgba(255, 255, 255, 0.8);
   color: black;
@@ -70,14 +48,29 @@ div.lobby-contenedor h1, h2 {
   transition: background-color 0.2s, color 0.2s;
 }
 
-.lobby-button:hover {
+.lobby-login:hover {
   background-color: black;
   color: white;
 }
 
-.lobby-button:disabled {
+.login-button:disabled {
   background-color: rgba(128, 128, 128, 0.5);
   cursor: not-allowed;
   border-color: gray;
   color: #333;
+}
+
+input[type="text"] {
+  border: 2px solid black;
+  font-family: PressStart2P, sans-serif;
+  color: black;
+  font-size: 16px;
+  padding: 12px 12px;
+}
+
+input[type="text"]::placeholder {
+  font-family: PressStart2P, sans-serif;
+  color: black;
+  opacity: 1;
+
 }
