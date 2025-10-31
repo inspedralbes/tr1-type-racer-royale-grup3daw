@@ -6,6 +6,17 @@ main {
   align-items: center; /* Center vertically */
 }
 
+div.joc-background {
+  background-image: url(espacio.png);
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-size: cover;
+  background-position: center;
+}
+
 .joc {
   flex: 1;
   display: flex;

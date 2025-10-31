@@ -21,6 +21,11 @@
         <p>Cargando palabras...</p>
       </div>
     </template>
+    <Final 
+    v-if="etapa === 'done'"
+    :resultados="finalResults"
+    @reiniciar="onReiniciar"
+    />
   </div>
 </template>
 
@@ -29,6 +34,7 @@ import { ref, onMounted, watch, nextTick } from 'vue'
 import Login from './login.vue'
 import Lobby from './lobby.vue'
 import Joc from './joc.vue' 
+import Final from './paginaFinal.vue'
 import { communicationManager } from '../communicationManager'
 
 const nombreJugador = ref('') 

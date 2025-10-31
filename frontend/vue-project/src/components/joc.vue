@@ -94,6 +94,22 @@
         }, 1000);
     };
 
+    function finishGame(){
+        if(gameInterval){
+            clearInterval(gameInterval);
+            gameInterval = null;
+        }
+        gameEnded.value = true;
+
+        const resultados = {
+            jugador: props.playerName,
+            puntuacion: score.value,
+            stats: [...estatDelJoc.value.stats],
+            errorTotal: estatDelJoc.value.errorTotal,
+        }
+        emits('done', resultados);
+    }
+
     const paraulaActiva = computed(() => {
         return estatDelJoc.value.paraules[estatDelJoc.value.indexParaulaActiva];
     });
@@ -141,11 +157,14 @@
 
             // Si no hay más palabras, terminar el juego
             if (estatDelJoc.value.indexParaulaActiva >= estatDelJoc.value.paraules.length) {
-                clearInterval(gameInterval);
-                gameEnded.value = true;
+                finishGame();
             }
         };
     };
+
+    if (startGameTimer.timeLeft <= 0){
+        finishGame();
+    }
 
     const backToLobby = () => {
         console.log('Emitting done event');
@@ -154,7 +173,8 @@
 </script>
 
 <template>
-    <div class="game-container">
+    <div class="joc-background">
+        <div class="game-container">
         <h2>Ànims, {{ playerName }}!</h2>
 
         <div v-if="!gameEnded">
@@ -196,6 +216,8 @@
             <button class="lobby-button" @click="backToLobby">Volver al Lobby</button>
         </div>
     </div>
+    </div>
+    
 </template>
 
 <style src="../styles/stylesJoc.css"></style>

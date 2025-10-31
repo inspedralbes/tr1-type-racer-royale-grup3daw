@@ -36,7 +36,8 @@ async function login() {
 </script>
 
 <template>
-  <div class="login-contenedor">
+  <div class="login-background">
+    <div class="login-contenedor">
     <h2>Inici de sessió</h2>
     <input
       maxlength="12"
@@ -46,6 +47,7 @@ async function login() {
       @keyup.enter="login"
     />
     <button class="login-button" @click="login">Entrar</button>
+  </div>
   </div>
 </template>
 

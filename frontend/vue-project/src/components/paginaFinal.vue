@@ -20,7 +20,8 @@ function volverAJugar() {
 </script>
 
 <template>
-  <div>
+  <div class ="final-background">
+    <div>
     <h1>Ranking Final</h1>
     
     <ol>
@@ -42,8 +43,9 @@ function volverAJugar() {
 
     <button @click="volverAJugar">Tornar a jugar</button>
   </div>
+  </div>
+
 </template>
 
-<style scoped>
-
+<style src="../styles/stylePantallaFinal.css">
 </style>

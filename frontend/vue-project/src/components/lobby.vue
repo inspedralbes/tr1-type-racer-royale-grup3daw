@@ -93,7 +93,8 @@ function iniciarJuego() {
 </script>
 
 <template>
-  <div class="lobby-contenedor">
+  <div class="lobby-background">
+    <div class="lobby-contenedor">
     <h1>Lobby</h1>
     <h2>Benvingut, {{ playerName }}!</h2>
     <ul class="lista-jugadores">
@@ -110,6 +111,7 @@ function iniciarJuego() {
     <button class="lobby-button" v-if="!isAdmin" @click="toggleReady">{{ isPlayerReady ? 'No listo' : 'Listo' }}</button>
 
     <button class="lobby-button" v-if="isAdmin" @click="iniciarJuego" :disabled="!isAdmin || !areAllPlayersReady">Començar Joc</button>
+  </div>
   </div>
 </template>
 
