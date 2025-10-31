@@ -77,6 +77,7 @@ const resetGame = () => {
   roomState.isPlaying = false;
   // Reset all players' ready status, except for the host
   players.forEach(p => {
+    p.score = 0;
     if (p.role !== 'admin') {
       p.isReady = false;
     } else {
