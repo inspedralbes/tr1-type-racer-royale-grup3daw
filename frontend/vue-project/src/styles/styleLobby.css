@@ -95,3 +95,10 @@ div.lobby-contenedor h1, h2 {
   border-color: gray;
   color: #333;
 }
+
+img.naves{
+  position: absolute;
+  top: 70%;
+  left: 83%;
+  height: 35%;
+}
