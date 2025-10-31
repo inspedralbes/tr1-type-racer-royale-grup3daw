@@ -46,7 +46,7 @@ export const communicationManager = {
 
   async login(name, socketId) {
     const token = this.getToken();
-    const response = await apiClient.post('/login', { name, socketId, time: 15, token });
+    const response = await apiClient.post('/login', { name, socketId, token });
     if (response.data.token) {
       this.setToken(response.data.token);
     }
@@ -65,24 +65,46 @@ export const communicationManager = {
     return apiClient.get('/rooms');
   },
 
-  async startGame() {
-    return apiClient.post('/rooms/start');
+  async createRoom(roomSettings) {
+    const sessionStore = useSessionStore();
+    const hostPlayer = { name: sessionStore.playerName, socketId: socket.id, token: sessionStore.token };
+    return apiClient.post('/rooms', { ...roomSettings, hostPlayer });
+  },
+
+  async updateRoom(roomId, roomSettings) {
+    return apiClient.put(`/rooms/${roomId}`, roomSettings);
+  },
+
+  async getPublicRooms() {
+    return apiClient.get('/rooms');
+  },
+
+  async getRoomDetails(roomId) {
+    return apiClient.get(`/rooms/${roomId}`);
+  },
+
+  async joinRoom(roomId, player) {
+    return apiClient.post(`/rooms/${roomId}/join`, { player });
+  },
+
+  async startGame(roomId) {
+    return apiClient.post(`/rooms/${roomId}/start`);
   },
 
   async resetRoom() {
     return apiClient.delete('/rooms');
   },
 
-  async removePlayer(playerSocketId, hostSocketId) {
-    return apiClient.delete(`/rooms/player/${playerSocketId}`, { data: { hostSocketId } });
+  async removePlayer(roomId, playerSocketId, hostSocketId) {
+    return apiClient.delete(`/rooms/${roomId}/player/${playerSocketId}`, { data: { hostSocketId } });
   },
 
-  async makeHost(currentHostSocketId, targetPlayerSocketId) {
-    return apiClient.post('/rooms/make-host', { currentHostSocketId, targetPlayerSocketId });
+  async makeHost(roomId, currentHostSocketId, targetPlayerSocketId) {
+    return apiClient.post(`/rooms/${roomId}/make-host`, { currentHostSocketId, targetPlayerSocketId });
   },
 
-  async resetReadyStatus() {
-    return apiClient.post('/rooms/reset-ready-status');
+  async resetReadyStatus(roomId) {
+    return apiClient.post(`/rooms/${roomId}/reset-ready-status`);
   },
 
   async updatePlayerPage(page) {
@@ -99,7 +121,7 @@ export const communicationManager = {
   },
 
   /** Conecta y registra al jugador, devuelve socket.id */
-  async connectAndRegister(playerName) {
+  async connectAndRegister() {
     this.connect();
 
     await new Promise((resolve) => {
@@ -107,13 +129,11 @@ export const communicationManager = {
       socket.once('connect', resolve);
     });
 
-    socket.emit('register', playerName);
-
-    console.log('Jugador registrado con socket ID:', socket.id);
+    console.log('Jugador conectado con socket ID:', socket.id);
     return socket.id;
   },
 
-  onUpdatePlayerList() {
+  onUpdatePlayerList(roomId) {
     socket.off('updatePlayerList');
     socket.on('updatePlayerList', (playerList) => {
       const roomStore = useRoomStore();
@@ -121,7 +141,7 @@ export const communicationManager = {
     });
   },
 
-  onUpdateRoomState() {
+  onUpdateRoomState(roomId) {
     socket.off('updateRoomState');
     socket.on('updateRoomState', (roomState) => {
       const roomStore = useRoomStore();
@@ -141,8 +161,16 @@ export const communicationManager = {
     });
   },
 
+  onUpdatePublicRoomList(callback) {
+    socket.off('updatePublicRoomList');
+    socket.on('updatePublicRoomList', (publicRooms) => {
+      callback(publicRooms);
+    });
+  },
+
   sendReadyStatus(isReady) {
-    socket.emit('set-ready', isReady);
+    const roomStore = useRoomStore(); // Get roomStore
+    socket.emit('set-ready', { roomId: roomStore.roomId, isReady }); // Send roomId
   },
 
   disconnect() {

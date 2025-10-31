@@ -9,6 +9,12 @@
       :roomState="roomState"
     />
 
+    <RoomSettings v-else-if="etapa === 'room-settings'" />
+
+    <template v-else-if="etapa === 'room-selection'">
+      <RoomSelection />
+    </template>
+
     <template v-if="etapa === 'game'">
       <Joc
         v-if="wordsLoaded"
@@ -37,7 +43,9 @@ import Login from './login.vue'
 import Lobby from './lobby.vue'
 import Joc from './joc.vue' 
 import Final from './paginaFinal.vue'
-import { communicationManager } from '../communicationManager'
+import RoomSettings from './RoomSettings.vue'
+import RoomSelection from './RoomSelection.vue' // New import
+import { communicationManager, socket } from '../communicationManager'
 import { useSessionStore } from '../stores/session';
 import { useGameStore } from '../stores/game';
 import { useRoomStore } from '../stores/room';
@@ -47,7 +55,7 @@ const roomStore = useRoomStore();
 const sessionStore = useSessionStore();
 
 const { etapa, nombreJugador, words, wordsLoaded, finalResults } = storeToRefs(gameStore);
-const { jugadores, roomState } = storeToRefs(roomStore);
+const { jugadores, roomState, roomId } = storeToRefs(roomStore);
 
 // Setup global listeners for player list and room state
 onMounted(async () => {
@@ -57,38 +65,60 @@ onMounted(async () => {
   if (token) {
     try {
       const socketId = await communicationManager.connectAndRegister();
-      const response = await communicationManager.login(null, socketId);
+      const response = await communicationManager.login(sessionStore.playerName, socketId);
       const player = response.data;
       gameStore.setNombreJugador(player.name);
-      if (player.remainingTime) {
-        roomStore.setRemainingTime(player.remainingTime);
-        gameStore.setEtapa('game');
-      } else {
+
+      if (roomStore.roomId) {
+        // Try to rejoin the room
+        await communicationManager.joinRoom(roomStore.roomId, { name: player.name, socketId: socket.id, token: sessionStore.token });
+        const roomDetails = await communicationManager.getRoomDetails(roomStore.roomId);
+        roomStore.setRoom(roomDetails.data);
         gameStore.setEtapa('lobby');
+      } else {
+        gameStore.setEtapa('room-selection'); // New stage for room selection
       }
     } catch (error) {
       console.error('Error al reconectar:', error);
       alert('Error al reconectar: ' + error.message);
       sessionStore.clearToken(); // Invalid token, clear it
+      gameStore.setEtapa('login');
     }
   }
 
-  // Fetch initial players
-  try {
-    const response = await communicationManager.getRoomPlayers()
-    roomStore.setJugadores(response.data)
-  } catch (error) {
-    console.error('Error al obtener jugadores de la sala en GameEngine:', error)
-  }
-
-  communicationManager.onUpdatePlayerList();
-  communicationManager.onUpdateRoomState();
   communicationManager.onPlayerRemoved();
 })
 
+// Watch for roomId changes to set up room-specific socket listeners
+watch(roomId, (newRoomId, oldRoomId) => {
+  if (newRoomId) {
+    communicationManager.onUpdatePlayerList(newRoomId);
+    communicationManager.onUpdateRoomState(newRoomId);
+    socket.emit('join-room', newRoomId); // Make socket join the room
+  } else if (oldRoomId) {
+    // Optionally, handle leaving a room if roomId becomes null
+    socket.emit('leave-room', oldRoomId);
+  }
+});
+
 function onLogin(player) {
-  gameStore.setNombreJugador(player.name)
-  gameStore.setEtapa('lobby')  
+  gameStore.setNombreJugador(player.name);
+  sessionStore.setPlayerName(player.name); // Ensure player name is set in session store
+  if (roomStore.roomId) {
+    // If a room ID is already set (e.g., from a deep link), try to join it
+    communicationManager.joinRoom(roomStore.roomId, { name: player.name, socketId: socket.id, token: sessionStore.token })
+      .then(response => {
+        roomStore.setRoom(response.data);
+        gameStore.setEtapa('lobby');
+      })
+      .catch(error => {
+        console.error('Error al unirse a la sala:', error);
+        alert('Error al unirse a la sala: ' + error.message);
+        gameStore.setEtapa('room-selection'); // Go to room selection if join fails
+      });
+  } else {
+    gameStore.setEtapa('room-selection'); // Go to room selection
+  }
 }
 
 // Esta función ahora solo es responsable de obtener las palabras
@@ -148,7 +178,7 @@ const onGameOver = async (resultados) => {
   gameStore.setWordsLoaded(false)
 
   try {
-    await communicationManager.resetReadyStatus()
+    await communicationManager.resetReadyStatus(roomStore.roomId);
   } catch (error) {
     console.error('Error resetting ready status after game over:', error)
   }

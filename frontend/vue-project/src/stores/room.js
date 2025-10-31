@@ -5,6 +5,8 @@ export const useRoomStore = defineStore('room', {
     jugadores: [],
     roomState: { isPlaying: false },
     remainingTime: null,
+    roomId: null, // New property
+    room: null, // New property to store full room details
   }),
   actions: {
     setJugadores(jugadores) {
@@ -15,6 +17,20 @@ export const useRoomStore = defineStore('room', {
     },
     setRemainingTime(time) {
       this.remainingTime = time
+    },
+    setRoomId(id) { // New action
+      this.roomId = id;
+    },
+    setRoom(roomDetails) { // New action
+      this.room = roomDetails;
+      this.roomId = roomDetails.id;
+      this.roomState = {
+        isPlaying: roomDetails.isPlaying,
+        gameStartTime: roomDetails.gameStartTime,
+        time: roomDetails.time,
+        gameMode: roomDetails.gameMode,
+      };
+      this.jugadores = roomDetails.players;
     },
   },
 })

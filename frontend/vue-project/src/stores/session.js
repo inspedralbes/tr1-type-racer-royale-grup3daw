@@ -3,6 +3,7 @@ import { defineStore } from 'pinia'
 export const useSessionStore = defineStore('session', {
   state: () => ({
     token: sessionStorage.getItem('session_token') || null,
+    playerName: null, // New property
   }),
   actions: {
     setToken(token) {
@@ -12,6 +13,9 @@ export const useSessionStore = defineStore('session', {
     clearToken() {
       this.token = null
       sessionStorage.removeItem('session_token')
+    },
+    setPlayerName(name) { // New action
+      this.playerName = name;
     },
   },
 })

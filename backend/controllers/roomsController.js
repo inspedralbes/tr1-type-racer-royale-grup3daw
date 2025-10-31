@@ -1,105 +1,186 @@
 const stateManager = require('../state/stateManager');
 
-// --- Controladores de Rutas HTTP ---
-
-// GET /api/rooms - Devuelve la lista de jugadores en la sala
-exports.getPlayersInRoom = (req, res) => {
-  // Devolvemos solo los datos públicos de los jugadores
-  const players = stateManager.getPlayers().map(p => ({ name: p.name, score: p.score, role: p.role, socketId: p.socketId }));
-  res.status(200).json(players);
+// GET /api/rooms - Devuelve la lista de salas públicas
+exports.getPublicRooms = (req, res) => {
+  const publicRooms = stateManager.getPublicRooms();
+  res.status(200).json(publicRooms);
 };
 
-// POST /api/rooms/start - Inicia la partida
-exports.startGame = (req, res) => {
+// POST /api/rooms - Crea una nueva sala
+exports.createRoom = (req, res) => {
+  const { hostPlayer, name, isPublic, gameMode, time } = req.body;
+  if (!hostPlayer || !name) {
+    return res.status(400).json({ message: 'Faltan datos para crear la sala.' });
+  }
+  const newRoom = stateManager.createRoom(hostPlayer, name, isPublic, gameMode, time);
+
+  const broadcastPublicRoomList = req.app.get('broadcastPublicRoomList');
+  broadcastPublicRoomList(); // Broadcast public room list after creation
+
+  res.status(201).json(newRoom);
+};
+
+// GET /api/rooms/:roomId - Devuelve los detalles de una sala
+exports.getRoomDetails = (req, res) => {
+  const { roomId } = req.params;
+  const room = stateManager.getRoom(roomId);
+  if (room) {
+    res.status(200).json(room);
+  } else {
+    res.status(404).json({ message: 'Sala no encontrada.' });
+  }
+};
+
+// PUT /api/rooms/:roomId - Actualiza una sala (para el host)
+exports.updateRoom = (req, res) => {
+  const { roomId } = req.params;
+  const settings = req.body;
+
+  // TODO: Verificar que el que hace la petición es el host de la sala
+  const oldRoom = stateManager.getRoom(roomId); // Get old room state to check for changes
+
+  const result = stateManager.updateRoom(roomId, settings);
+
+  if (result.error) {
+    return res.status(404).json({ message: result.error });
+  }
+
   const broadcastRoomState = req.app.get('broadcastRoomState');
-  
-  if (!stateManager.areAllPlayersReady()) {
+  broadcastRoomState(roomId);
+  const broadcastPlayerList = req.app.get('broadcastPlayerList');
+  broadcastPlayerList(roomId);
+
+  // If isPublic status changed, broadcast public room list
+  if (oldRoom && oldRoom.isPublic !== result.room.isPublic) {
+    const broadcastPublicRoomList = req.app.get('broadcastPublicRoomList');
+    broadcastPublicRoomList();
+  }
+
+  res.status(200).json(result.room);
+};
+
+// POST /api/rooms/:roomId/join - Unirse a una sala
+exports.joinRoom = (req, res) => {
+  const { roomId } = req.params;
+  const { player } = req.body;
+
+  if (!player) {
+    return res.status(400).json({ message: 'Falta la información del jugador.' });
+  }
+
+  const result = stateManager.addPlayerToRoom(roomId, player.name, player.socketId, player.token);
+
+  if (result.error) {
+    return res.status(404).json({ message: result.error });
+  }
+
+  const broadcastPlayerList = req.app.get('broadcastPlayerList');
+  broadcastPlayerList(roomId);
+
+  res.status(200).json(result.room);
+};
+
+// POST /api/rooms/:roomId/start - Inicia la partida en una sala
+exports.startGame = (req, res) => {
+  const { roomId } = req.params;
+
+  // TODO: Verificar que el que hace la petición es el host de la sala
+
+  if (!stateManager.areAllPlayersReady(roomId)) {
     return res.status(403).json({ message: 'No todos los jugadores están listos.' });
   }
 
-  stateManager.startGame();
-  
-  // Notificamos a todos los clientes que la partida ha empezado
-  broadcastRoomState();
-  
-  res.status(200).json({ message: 'La partida ha comenzado.' });
-};
+  const result = stateManager.startGame(roomId);
 
-// DELETE /api/rooms - Vacía y resetea la sala
-exports.deleteRoom = (req, res) => {
-  const broadcastPlayerList = req.app.get('broadcastPlayerList');
+  if (result.error) {
+    return res.status(404).json({ message: result.error });
+  }
+
   const broadcastRoomState = req.app.get('broadcastRoomState');
+  broadcastRoomState(roomId);
+  const broadcastPlayerList = req.app.get('broadcastPlayerList');
+  broadcastPlayerList(roomId);
 
-  stateManager.clearPlayers();
-
-  // Notificamos a los clientes que la sala se ha vaciado y reseteado
-  broadcastPlayerList();
-  broadcastRoomState();
-  
-  res.status(200).json({ message: 'La sala ha sido vaciada.' });
+  res.status(200).json(result.room);
 };
 
-// DELETE /api/rooms/player/:socketId - Elimina un jugador de la sala
+// DELETE /api/rooms/:roomId/player/:socketId - Elimina un jugador de la sala
 exports.removePlayer = (req, res) => {
-  const broadcastPlayerList = req.app.get('broadcastPlayerList');
-  const playerToRemoveSocketId = req.params.socketId;
-  const hostSocketId = req.body.hostSocketId; // Asumimos que el hostSocketId viene en el body
+  const { roomId, playerSocketId } = req.params;
+  const { hostSocketId } = req.body; // Asumimos que el hostSocketId viene en el body
 
-  console.log('removePlayer: playerToRemoveSocketId:', playerToRemoveSocketId);
-  console.log('removePlayer: hostSocketId:', hostSocketId);
+  const room = stateManager.getRoom(roomId);
+  if (!room) {
+    return res.status(404).json({ message: 'Sala no encontrada.' });
+  }
 
-  const hostPlayer = stateManager.getPlayers().find(p => p.socketId === hostSocketId);
-
+  const hostPlayer = room.players.find(p => p.socketId === hostSocketId);
   if (!hostPlayer || hostPlayer.role !== 'admin') {
     return res.status(403).json({ message: 'Solo el host puede eliminar jugadores.' });
   }
 
-  const playerRemoved = stateManager.removePlayerBySocketId(playerToRemoveSocketId);
+  const result = stateManager.removePlayerFromRoom(roomId, playerSocketId);
 
-  if (playerRemoved) {
-    broadcastPlayerList();
-    // Notificar al jugador eliminado que ha sido expulsado
-    const io = req.app.get('io');
-    io.to(playerToRemoveSocketId).emit('player-removed');
-    res.status(200).json({ message: `Jugador con socketId ${playerToRemoveSocketId} eliminado.` });
-  } else {
-    res.status(404).json({ message: `Jugador con socketId ${playerToRemoveSocketId} no encontrado.` });
+  if (result.error) {
+    return res.status(404).json({ message: result.error });
   }
+
+  const broadcastPlayerList = req.app.get('broadcastPlayerList');
+  broadcastPlayerList(roomId);
+
+  if (result.roomDeleted) {
+    const broadcastPublicRoomList = req.app.get('broadcastPublicRoomList');
+    broadcastPublicRoomList();
+  }
+
+  // Notificar al jugador eliminado que ha sido expulsado
+  const io = req.app.get('io');
+  io.to(playerSocketId).emit('player-removed');
+
+  res.status(200).json({ message: `Jugador con socketId ${playerSocketId} eliminado.` });
 };
 
-// POST /api/rooms/make-host - Hace a otro jugador el host
+// POST /api/rooms/:roomId/make-host - Hace a otro jugador el host
 exports.makeHost = (req, res) => {
-  const broadcastPlayerList = req.app.get('broadcastPlayerList');
+  const { roomId } = req.params;
   const { currentHostSocketId, targetPlayerSocketId } = req.body;
 
-  console.log('makeHost: currentHostSocketId:', currentHostSocketId);
-  console.log('makeHost: targetPlayerSocketId:', targetPlayerSocketId);
+  const room = stateManager.getRoom(roomId);
+  if (!room) {
+    return res.status(404).json({ message: 'Sala no encontrada.' });
+  }
 
-  const currentHost = stateManager.getPlayers().find(p => p.socketId === currentHostSocketId);
-
+  const currentHost = room.players.find(p => p.socketId === currentHostSocketId);
   if (!currentHost || currentHost.role !== 'admin') {
     return res.status(403).json({ message: 'Solo el host actual puede transferir el rol de host.' });
   }
 
-  const success = stateManager.makeHost(currentHostSocketId, targetPlayerSocketId);
+  const result = stateManager.makeHostInRoom(roomId, currentHostSocketId, targetPlayerSocketId);
 
-  if (success) {
-    broadcastPlayerList();
-    res.status(200).json({ message: `Jugador con socketId ${targetPlayerSocketId} es ahora el host.` });
-  } else {
-    res.status(400).json({ message: 'No se pudo transferir el rol de host.' });
+  if (result.error) {
+    return res.status(400).json({ message: result.error });
   }
+
+  const broadcastPlayerList = req.app.get('broadcastPlayerList');
+  broadcastPlayerList(roomId);
+
+  res.status(200).json({ message: `Jugador con socketId ${targetPlayerSocketId} es ahora el host.` });
 };
 
-// POST /api/rooms/reset-ready-status - Resetea el estado de listo de los jugadores
+// POST /api/rooms/:roomId/reset-ready-status - Resetea el estado de listo de los jugadores
 exports.resetReadyStatus = (req, res) => {
+  const { roomId } = req.params;
+
+  // TODO: Verificar que el que hace la petición es el host de la sala
+
+  const result = stateManager.resetReadyStatusInRoom(roomId);
+
+  if (result.error) {
+    return res.status(404).json({ message: result.error });
+  }
+
   const broadcastPlayerList = req.app.get('broadcastPlayerList');
-  const broadcastRoomState = req.app.get('broadcastRoomState');
-
-  stateManager.resetGame(); // Esto también resetea el isReady de los jugadores
-
-  broadcastPlayerList();
-  broadcastRoomState();
+  broadcastPlayerList(roomId);
 
   res.status(200).json({ message: 'Estado de listo de jugadores reseteado.' });
 };

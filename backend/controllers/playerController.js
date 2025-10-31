@@ -7,7 +7,7 @@ exports.updatePlayerPage = (req, res) => {
     return res.status(400).json({ error: 'Token and page are required.' });
   }
 
-  const player = stateManager.findPlayerByToken(token);
+  const player = stateManager.findRegisteredPlayerByToken(token);
 
   if (player) {
     player.currentPage = page;
