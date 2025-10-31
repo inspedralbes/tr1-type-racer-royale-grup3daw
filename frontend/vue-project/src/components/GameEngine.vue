@@ -15,7 +15,7 @@
         :words="words"
         :playerName="nombreJugador"
         :jugadores="jugadores"
-        @done="onGameOver"
+  @done="onGameOver"
       />
       <div v-else>
         <p>Cargando palabras...</p>
@@ -43,6 +43,9 @@ const words = ref(null) // Referencia para guardar las palabras
 const jugadores = ref([]) // Referencia para guardar la lista de jugadores
 const roomState = ref({ isPlaying: false }) // Referencia para el estado de la sala
 const wordsLoaded = ref(false) // Nueva referencia para controlar si las palabras se han cargado
+
+// Nuevo: resultados finales para pasar a paginaFinal
+const finalResults = ref([])
 
 // Setup global listeners for player list and room state
 onMounted(async () => {
@@ -114,17 +117,50 @@ watch(
   }
 );
 
-const onGameOver = () => {
-  console.log('onGameOver called. Setting etapa to lobby.');
-  nextTick(async () => {
-    etapa.value = 'lobby';
-    wordsLoaded.value = false; // Reset wordsLoaded for next game
-    try {
-      await communicationManager.resetReadyStatus();
-      console.log('Ready status reset successfully.');
-    } catch (error) {
-      console.error('Error resetting ready status:', error);
+// Recibe resultados desde <Joc @done="..."> y cambia a pantalla final
+const onGameOver = async (resultados) => {
+  console.log('onGameOver called. resultados:', resultados);
+
+  // Construir array que paginaFinal espera: [{ nombre, puntuacion }, ...]
+  const lista = jugadores.value.map(p => ({
+    nombre: p.name ?? p.nombre ?? 'Anon',
+    puntuacion: p.score ?? p.puntuacion ?? 0
+  }))
+
+  if (resultados && resultados.jugador) {
+    const idx = lista.findIndex(p => p.nombre === resultados.jugador)
+    if (idx !== -1) {
+      lista[idx].puntuacion = resultados.puntuacion
+    } else {
+      lista.push({ nombre: resultados.jugador, puntuacion: resultados.puntuacion })
     }
-  });
-};
+  }
+
+  // Si resultados es ya un array, usarlo directamente
+  if (Array.isArray(resultados)) {
+    finalResults.value = resultados
+  } else {
+    finalResults.value = lista
+  }
+
+  // Cambiar a pantalla final
+  etapa.value = 'done'
+
+  // Reset estado de palabras para la siguiente partida
+  wordsLoaded.value = false
+
+  try {
+    await communicationManager.resetReadyStatus()
+  } catch (error) {
+    console.error('Error resetting ready status after game over:', error)
+  }
+}
+
+// Manejar reinicio desde la pantalla final
+const onReiniciar = () => {
+  etapa.value = 'lobby'
+  finalResults.value = []
+  words.value = null
+  wordsLoaded.value = false
+}
 </script>

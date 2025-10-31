@@ -87,9 +87,10 @@
         gameInterval = setInterval(() => {
             timeLeft.value--;
             if (timeLeft.value <= 0) {
+                // Al expirar el tiempo, terminar partida y notificar al padre
                 clearInterval(gameInterval);
-                gameEnded.value = true;
-                // Aquí se podría emitir un evento de fin de juego a GameEngine
+                gameInterval = null;
+                finishGame();
             }
         }, 1000);
     };
