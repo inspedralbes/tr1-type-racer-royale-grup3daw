@@ -1,0 +1,88 @@
+@font-face {
+  font-family: 'PressStart2P';
+  src: url('../fonts/PressStart2P-Regular.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+}
+
+body {
+  font-family: 'PressStart2P', sans-serif;
+  background-image: url(estacion.png);
+  background-repeat: no-repeat;
+  background-size: cover;
+  background-position: center;
+  margin: 0;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  position: relative; 
+}
+
+
+ul.lista-jugadores {
+  border: 1px solid black;
+  margin: 10px;
+  text-align: left;
+}
+
+ul.lista-jugadores li {
+  display: flex;
+  align-items: center;
+  margin-bottom: 8px;
+  
+}
+
+ul.lista-jugadores li::before {
+  content: '•';             
+  color: black;
+  margin-right: 10px;   
+  font-size: 1.2em;
+}
+
+ul.lista-jugadores li .lobby-button:first-of-type {
+  margin-left: auto; 
+}
+
+
+div.lobby-contenedor{
+  background-color: rgba(255, 255, 255, 0.7);
+  color: black;
+  border-radius: 10px;
+  width: 50%;
+  height: auto;
+  text-align: center;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  
+}
+
+div.lobby-contenedor h1, h2 {
+  text-align: center;
+}
+
+.lobby-button {
+  font-family: 'PressStart2P', sans-serif;
+  background-color: rgba(255, 255, 255, 0.8);
+  color: black;
+  border: 2px solid black;
+  padding: 8px 15px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 0.8em;
+  margin: 5px;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+.lobby-button:hover {
+  background-color: black;
+  color: white;
+}
+
+.lobby-button:disabled {
+  background-color: rgba(128, 128, 128, 0.5);
+  cursor: not-allowed;
+  border-color: gray;
+  color: #333;
+}

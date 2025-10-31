@@ -113,4 +113,4 @@ function iniciarJuego() {
   </div>
 </template>
 
-<style src="../styles/style.css"></style>
+<style src="../styles/styleLobby.css"></style>
