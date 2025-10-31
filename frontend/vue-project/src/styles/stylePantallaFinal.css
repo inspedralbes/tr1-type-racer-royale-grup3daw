@@ -16,8 +16,9 @@ body {
   overflow: hidden;
   position: relative; 
 }
+
 div.final-background {
-  background-image: url(estacion.png);
+  background-image: url(../img/estacion.png);
   position: absolute;
   top: 0;
   left: 0;
@@ -25,4 +26,40 @@ div.final-background {
   height: 100%;
   background-size: cover;
   background-position: center;
+}
+
+div.pantalla-final{
+background-color: rgba(255, 255, 255, 0.7);
+  color: black;
+  width: 50%;
+  max-width: 600px;
+  padding: 2vw;
+  text-align: center;
+  border-radius: 10px;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+button.final-button{
+  font-family: 'PressStart2P', sans-serif;
+  background-color: rgba(255, 255, 255, 0.8);
+  color: black;
+  border: 2px solid black;
+  padding: 8px 15px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 0.8em;
+  margin: 5px;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+li.ranking{
+  margin: 10px;
+  text-align: left;
+}
+
+li.ranking:first-child::after{
+  content: " 👑 " ;
 }
