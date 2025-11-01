@@ -83,7 +83,7 @@ services:
       retries: 10    # Aumentamos el número de reintentos.
     networks:
       - app-network
-    restart: unless-stopped # CRÍTICO: Reinicia MySQL si falla.
+    restart: unless-stopped # CRÍTICO: Reinicia MySQL si falla
 
 networks:
   app-network:
