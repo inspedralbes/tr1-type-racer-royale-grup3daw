@@ -1,11 +1,17 @@
+# Fichero: docker-compose.dev.yml
+# Descripción: Este fichero de Docker Compose está diseñado para configurar y ejecutar
+# el entorno de desarrollo de la aplicación. Define los servicios necesarios (frontend,
+# backend, bases de datos) y configura volúmenes para el hot-reloading, permitiendo
+# que los cambios en el código se reflejen automáticamente sin necesidad de reconstruir
+# las imágenes. También expone los puertos necesarios para el acceso durante el desarrollo.
+#
+# Para levantar este entorno, se debe usar el comando:
+# docker compose -f docker-compose.dev.yml up --build
+
 version: '3.8'
 
-# Este fichero docker-compose está configurado para el entorno de desarrollo.
-# Permite el hot-reloading del código, expone puertos de bases de datos para fácil acceso
-# y ejecuta los servicios en modo de desarrollo.
-#
-# Para levantar este entorno, usa el comando: docker compose -f docker-compose.dev.yml up --build
 services:
+  # Servicio del frontend (Vue.js con Vite)
   frontend:
     build:
       context: ./frontend
@@ -13,14 +19,15 @@ services:
     environment:
       - VITE_NODE_ENV=development
     ports:
-      - "5173:5173" # Puerto de Vite para desarrollo
+      - "5173:5173" # Expone el puerto de desarrollo de Vite al host.
     volumes:
-      - ./frontend/vue-project:/app # Monta el código fuente para hot-reloading
-      - /app/node_modules # Evita que el node_modules local sobreescriba el del contenedor
-    command: npm run dev
+      - ./frontend/vue-project:/app # Monta el código fuente del proyecto para habilitar el hot-reloading.
+      - /app/node_modules # Usa un volumen anónimo para evitar que la carpeta node_modules local sobreescriba la del contenedor.
+    command: npm run dev # Comando para iniciar el servidor de desarrollo de Vite.
     networks:
       - app-network
 
+  # Servicio del backend (Node.js/Express)
   backend:
     build: ./backend
     environment:
@@ -28,10 +35,11 @@ services:
       DB_HOST: mysql
     ports:
       - "3000:3000"
-    volumes:
-      - ./backend:/usr/src/app # Monta el código fuente para hot-reloading
-      - /usr/src/app/node_modules
-    command: npm run start:dev
+    volumes: # Monta el código fuente para hot-reloading con nodemon.
+      - ./backend:/usr/src/app
+      - /usr/src/app/node_modules # Evita sobreescribir node_modules del contenedor.
+    command: sh -c "npm run start:dev" # Inicia el servidor en modo desarrollo.
+    # El backend esperará a que las bases de datos estén listas antes de iniciar.
     depends_on:
       mongo:
         condition: service_started
@@ -40,15 +48,17 @@ services:
     networks:
       - app-network
 
+  # Servicio de la base de datos MongoDB
   mongo:
     image: mongo:latest
     ports:
-      - "27017:27017"
+      - "27017:27017" # Expone el puerto de MongoDB para conexión externa (ej. Mongo Compass).
     volumes:
-      - mongo-data:/data/db
+      - mongo-data:/data/db # Persiste los datos de MongoDB en un volumen.
     networks:
       - app-network
 
+  # Servicio de la base de datos MySQL
   mysql:
     image: mysql:8.0
     ports:
@@ -59,7 +69,7 @@ services:
       MYSQL_USER: user_dev
       MYSQL_PASSWORD: password_dev
     volumes:
-      - mysql-data:/var/lib/mysql
+      - mysql-data:/var/lib/mysql # Persiste los datos de MySQL en un volumen.
     healthcheck:
       test: [ "CMD", "mysqladmin", "ping", "-h", "localhost" ]
       interval: 10s
@@ -68,10 +78,12 @@ services:
     networks:
       - app-network
 
+# Definición de la red que usarán los servicios para comunicarse entre sí.
 networks:
   app-network:
     driver: bridge
 
+# Definición de los volúmenes para la persistencia de datos.
 volumes:
   mongo-data:
   mysql-data:

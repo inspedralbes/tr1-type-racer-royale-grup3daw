@@ -1,9 +1,23 @@
+/**
+ * Fichero: socketManager.js
+ * Descripción: Gestiona toda la lógica de comunicación en tiempo real a través de Socket.IO.
+ * Se encarga de:
+ * - Inicializar los listeners para eventos de conexión de nuevos clientes.
+ * - Definir funciones de "broadcast" que emiten eventos a todos los clientes en una sala
+ *   o a todos los clientes en general (ej. `updatePlayerList`, `updateRoomState`).
+ * - Registrar estas funciones de broadcast en la aplicación Express para que puedan ser
+ *   utilizadas desde los controladores de las rutas REST.
+ * - Manejar los eventos emitidos por los clientes, como unirse/salir de una sala,
+ *   cambiar el estado de "listo", y la desconexión.
+ * - Implementar la lógica de reconexión, marcando a los jugadores como desconectados
+ *   y dándoles un tiempo de gracia para volver a conectarse antes de eliminarlos.
+ */
 const stateManager = require('../state/stateManager');
 
 const initializeSockets = (app) => {
   const io = app.get('io');
 
-  // Las funciones de broadcast ahora son específicas de la sala y se llaman desde los controladores
+  // Función para emitir la lista de jugadores actualizada a todos los clientes de una sala.
   const broadcastPlayerList = (roomId) => {
     const room = stateManager.getRoom(roomId);
     if (room) {
@@ -12,6 +26,7 @@ const initializeSockets = (app) => {
     }
   };
 
+  // Función para emitir el estado actualizado de la sala a todos sus miembros.
   const broadcastRoomState = (roomId) => {
     const room = stateManager.getRoom(roomId);
     if (room) {
@@ -24,16 +39,20 @@ const initializeSockets = (app) => {
     }
   };
 
+  // Función para emitir la lista de salas públicas a todos los clientes conectados.
   const broadcastPublicRoomList = () => {
     const publicRooms = stateManager.getPublicRooms();
     io.emit('updatePublicRoomList', publicRooms);
   };
 
+  // Registra las funciones de broadcast en la app de Express para que sean accesibles
+  // desde los controladores de las rutas.
   app.set('broadcastPlayerList', broadcastPlayerList);
   app.set('broadcastRoomState', broadcastRoomState);
   app.set('broadcastPublicRoomList', broadcastPublicRoomList);
 
   io.on('connection', (socket) => {
+    // Listener para cuando un nuevo cliente se conecta.
     console.log(`Nuevo player conectado: ${socket.id}`);
 
     socket.on('join-room', (data) => {
@@ -43,7 +62,7 @@ const initializeSockets = (app) => {
         return;
       }
       socket.join(roomId);
-      socket.data.roomId = roomId; // Almacenamos el roomId en el objeto socket
+      socket.data.roomId = roomId; // Almacenamos el roomId en el objeto socket para fácil acceso.
       console.log(`Socket ${socket.id} se unió a la sala ${roomId}`);
 
       // Añadir jugador a la sala y notificar
@@ -53,6 +72,7 @@ const initializeSockets = (app) => {
       }
     });
 
+    // Listener para cuando un cliente abandona una sala.
     socket.on('leave-room', (roomId) => {
       socket.leave(roomId);
       console.log(`Socket ${socket.id} abandonó la sala ${roomId}`);
@@ -67,6 +87,7 @@ const initializeSockets = (app) => {
       }
     });
 
+    // Listener para cuando un jugador cambia su estado de "listo".
     socket.on('set-ready', (data) => {
       const { roomId, isReady } = data;
       stateManager.setPlayerReadyStatusInRoom(roomId, socket.id, isReady);
@@ -74,8 +95,10 @@ const initializeSockets = (app) => {
       broadcastRoomState(roomId); // Notificar también el cambio de estado de la sala
     });
 
+    // Listener para cuando un cliente se desconecta.
     socket.on('disconnect', () => {
       console.log(`Cliente desconectado: ${socket.id}`);
+      // Busca al jugador registrado asociado a este socket.id.
       const token = Object.keys(stateManager.registeredPlayers).find(
         key => stateManager.registeredPlayers[key].socketId === socket.id
       );
@@ -83,11 +106,12 @@ const initializeSockets = (app) => {
       if (token) {
         const player = stateManager.findRegisteredPlayerByToken(token);
         if (player && player.roomId) {
-          // Marcar como desconectado en lugar de eliminarlo inmediatamente
+          // En lugar de eliminarlo inmediatamente, lo marca como desconectado.
           const { room } = stateManager.setPlayerDisconnected(player.roomId, token, true);
           broadcastPlayerList(player.roomId);
 
-          // Iniciar un temporizador para eliminar al jugador si no se reconecta
+          // Inicia un temporizador. Si el jugador no se ha reconectado cuando el temporizador
+          // termine, será eliminado permanentemente de la sala y del registro.
           setTimeout(() => {
             const roomAfterTimeout = stateManager.getRoom(player.roomId);
             if (roomAfterTimeout) {
@@ -109,11 +133,11 @@ const initializeSockets = (app) => {
           }, 30000); // 30 segundos de tiempo de gracia
         }
       }
-      // Ya no eliminamos al jugador inmediatamente. La lógica de reconexión o un temporizador de limpieza se encargará de ello.
-      // stateManager.removeRegisteredPlayerBySocketId(socket.id);
     });
 
+    // Listener para un logout explícito (ej. el usuario cierra sesión).
     socket.on('explicit-logout', (token) => {
+      // Elimina al jugador del registro global inmediatamente.
       console.log(`Jugador con token ${token} ha solicitado logout explícito.`);
       stateManager.removeRegisteredPlayer(token);
     });

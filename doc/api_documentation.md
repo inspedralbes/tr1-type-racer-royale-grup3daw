@@ -1,10 +1,17 @@
+<!--
+Fichero: api_documentation.md
+Descripción: Este documento Markdown sirve como referencia central para los desarrolladores del frontend.
+Detalla todos los endpoints de la API REST y los eventos de Socket.IO que el backend expone.
+Para cada endpoint y evento, se especifica su propósito, el formato de los datos esperados (payload),
+las posibles respuestas y los efectos secundarios (como la emisión de otros eventos).
+-->
 # Documentación de la API y Sockets del Backend
 
 Este documento describe los endpoints de la API REST y los eventos de Socket.IO para la comunicación con el servidor.
 
 ## API REST Endpoints
 
----
+<!-- ====================================================================== -->
 
 ### Autenticación
 
@@ -28,7 +35,7 @@ Registra un nuevo jugador en el servidor.
     *   **`409 Conflict` - Error:** Si el nombre de usuario ya está en uso.
     *   **`423 Locked` - Error:** Si la partida ya ha comenzado.
 
----
+<!-- ====================================================================== -->
 
 ### Sala (Room)
 

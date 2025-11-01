@@ -1,5 +1,14 @@
 <template>
   <div>
+    <!--
+      Este componente actúa como un "motor" o "director de orquesta" para la interfaz de usuario.
+      Utiliza la variable de estado `etapa` (del store de Pinia) para renderizar condicionalmente
+      el componente adecuado para cada fase del juego:
+      - 'login': Pantalla de inicio de sesión.
+      - 'lobby': Sala de espera antes de la partida.
+      - 'game': La partida en sí.
+      - 'done': Pantalla de resultados finales.
+    -->
     <Login v-if="etapa === 'login'" @login="onLogin" />
 
     <Lobby
@@ -37,6 +46,19 @@
 </template>
 
 <script setup>
+/**
+ * Fichero: GameEngine.vue
+ * Descripción: Este es el componente principal que gestiona el flujo y el estado del juego.
+ * Actúa como un enrutador de vistas, mostrando diferentes componentes (`Login`, `Lobby`, `Joc`, etc.)
+ * basándose en el estado actual del juego (`etapa`), que se gestiona a través de Pinia.
+ *
+ * Funcionalidades clave:
+ * - Orquesta la transición entre las diferentes fases del juego (login, lobby, partida, final).
+ * - Maneja la lógica de reconexión de sesión al cargar la página, restaurando el estado del jugador
+ *   y de la sala si existe una sesión válida.
+ * - Escucha cambios en el estado del juego (como el inicio de una partida) para realizar acciones,
+ *   como cargar las palabras necesarias para el juego.
+ */
 import { onMounted, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import Login from './login.vue'
@@ -51,6 +73,7 @@ import { useGameStore } from '../stores/game';
 import { useRoomStore } from '../stores/room';
 import { usePublicRoomsStore } from '../stores/publicRooms';
 
+// Inicialización de los stores de Pinia para gestionar el estado global.
 const gameStore = useGameStore();
 const roomStore = useRoomStore();
 const sessionStore = useSessionStore();
@@ -59,7 +82,11 @@ const publicRoomsStore = usePublicRoomsStore();
 const { etapa, nombreJugador, words, wordsLoaded, finalResults } = storeToRefs(gameStore);
 const { jugadores, roomState, roomId } = storeToRefs(roomStore);
 
-// Setup global listeners for player list and room state
+    /**
+     * Hook `onMounted`: Se ejecuta cuando el componente se monta en el DOM.
+     * Su principal responsabilidad es gestionar la persistencia de la sesión.
+     * Intenta reconectar al jugador si encuentra un token y un nombre de jugador en el `sessionStorage`.
+     */
     onMounted(async () => {
       console.log('GameEngine mounted. Initial etapa:', etapa.value);
   
@@ -72,10 +99,12 @@ const { jugadores, roomState, roomId } = storeToRefs(roomStore);
       console.log('  PlayerName from sessionStore:', playerNameFromSession);
       console.log('  RoomId from sessionStore:', roomIdFromSession);
   
+      // Si hay un token y nombre, intenta reconectar la sesión.
       if (token && playerNameFromSession) { // Only attempt reconnection if both token and playerName exist
         console.log('onMounted - Existing token and playerName found. Attempting to reconnect...');
         try {
-          // Conecta el socket y deja que el backend valide el token.
+          // Conecta el socket y se registra en el backend. El backend validará el token
+          // y devolverá el estado actualizado del jugador.
           const player = await communicationManager.connectAndRegister(playerNameFromSession);
           console.log('onMounted - Reconnected player:', player);
           gameStore.setNombreJugador(player.name); // Set gameStore's playerName from session
@@ -86,11 +115,11 @@ const { jugadores, roomState, roomId } = storeToRefs(roomStore);
             sessionStore.setRoomId(player.roomId);
             communicationManager.joinRoom(player.roomId);
 
-            // Obtenemos los detalles completos de la sala para restaurar el estado
+            // Obtiene los detalles completos de la sala para restaurar el estado.
             const roomDetails = await communicationManager.getRoomDetails(player.roomId);
             roomStore.setRoom(roomDetails.data); // Actualiza el store con todos los datos de la sala
 
-            // Ahora decidimos la etapa basándonos en el estado de la sala recuperado
+            // Decide la etapa basándose en el estado de la sala recuperado.
             if (roomDetails.data.isPlaying) {
               gameStore.setEtapa('game');
             } else {
@@ -103,7 +132,8 @@ const { jugadores, roomState, roomId } = storeToRefs(roomStore);
         } catch (error) {
           console.error('Error al reconectar la sesión:', error);
           alert('Error al reconectar la sesión: ' + error.message);
-          // If reconnection fails, clear all persisted session data and go to login
+          // Si la reconexión falla, limpia todos los datos de sesión y estado,
+          // y redirige al usuario a la pantalla de login.
           sessionStore.resetState();
           gameStore.resetState(); // Also reset gameStore to clear playerName
           roomStore.resetState();
@@ -111,7 +141,7 @@ const { jugadores, roomState, roomId } = storeToRefs(roomStore);
           gameStore.setEtapa('login');
         }
       } else {
-        // If no token or playerName, ensure we are on the login screen and clear any stale data
+        // Si no hay sesión, se asegura de que el estado esté limpio y muestra la pantalla de login.
         console.log('onMounted - No valid token or playerName found. Going to login screen.');
         sessionStore.resetState(); // Ensure all session data is cleared
         gameStore.resetState();
@@ -121,9 +151,11 @@ const { jugadores, roomState, roomId } = storeToRefs(roomStore);
       }
     })
 
-// Watch for roomId changes to set up room-specific socket listeners
-
-
+/**
+ * Se ejecuta después de que el usuario se loguea con éxito.
+ * Guarda el nombre del jugador y lo lleva a la selección de sala,
+ * o directamente a una sala si el ID ya estaba presente (ej. por un enlace de invitación).
+ */
 function onLogin(player) {
   gameStore.setNombreJugador(player.name);
   sessionStore.setPlayerName(player.name); // Ensure player name is set in session store
@@ -136,7 +168,10 @@ function onLogin(player) {
   }
 }
 
-// Esta función ahora solo es responsable de obtener las palabras
+/**
+ * Obtiene la lista de palabras del backend a través del `communicationManager`.
+ * Actualiza el estado en el `gameStore` para indicar que las palabras están cargadas.
+ */
 async function fetchWordsForGame() {
   console.log('fetchWordsForGame called.');
   try {
@@ -150,7 +185,11 @@ async function fetchWordsForGame() {
   }
 }
 
-// Observa cuando roomState.isPlaying cambia a true para cargar las palabras
+/**
+ * Observador (`watch`) que reacciona a los cambios en la `etapa` del juego.
+ * Cuando la etapa cambia a 'game', resetea el estado de carga de palabras y
+ * llama a `fetchWordsForGame` para obtener las palabras para la nueva partida.
+ */
 watch(etapa, async (newEtapa) => {
   console.log('GameEngine etapa changed to:', newEtapa);
   await communicationManager.updatePlayerPage(newEtapa);
@@ -160,12 +199,16 @@ watch(etapa, async (newEtapa) => {
   }
 });
 
-// Recibe resultados desde <Joc @done="..."> y cambia a pantalla final
+/**
+ * Se ejecuta cuando el componente `Joc` emite el evento `done`, indicando que la partida ha terminado.
+ * Recibe los resultados, los procesa para la pantalla final y cambia la etapa a 'done'.
+ * También resetea el estado de las palabras y el estado de "listo" de los jugadores en el backend.
+ */
 const onGameOver = async (resultados) => {
   console.log('onGameOver called. resultados:', resultados);
 
-  // La lista de jugadores de la sala ya debería tener las puntuaciones finales actualizadas
-  // a través de los eventos de socket. Simplemente la usamos.
+  // La lista de jugadores en `roomStore` ya tiene las puntuaciones finales actualizadas
+  // por los eventos de socket. Se mapea a un formato simple para la pantalla final.
   const finalScores = jugadores.value.map(p => ({
     nombre: p.name,
     puntuacion: p.score
@@ -173,13 +216,14 @@ const onGameOver = async (resultados) => {
   
   gameStore.setFinalResults(finalScores);
 
-  // Cambiar a pantalla final
+  // Cambia a la pantalla final.
   gameStore.setEtapa('done')
   
-  // Reset estado de palabras para la siguiente partida
+  // Resetea el estado de las palabras para la siguiente partida.
   gameStore.setWordsLoaded(false)
 
   try {
+    // Pide al backend que resetee el estado de "listo" de todos los jugadores en la sala.
     await communicationManager.resetReadyStatus(roomStore.roomId);
   } catch (error) {
     console.error('Error resetting ready status after game over:', error)
@@ -187,6 +231,10 @@ const onGameOver = async (resultados) => {
 }
 
 // Manejar reinicio desde la pantalla final
+/**
+ * Se ejecuta cuando el usuario hace clic en "Reiniciar" en la pantalla final.
+ * Resetea el estado del juego y devuelve al usuario al lobby para jugar de nuevo.
+ */
 const onReiniciar = () => {
   gameStore.setEtapa('lobby')
   gameStore.setFinalResults([])

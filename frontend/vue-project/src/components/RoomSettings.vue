@@ -1,5 +1,10 @@
 <template>
   <div class="room-settings-container">
+    <!--
+      Este componente presenta un formulario para que el usuario configure los parámetros de una sala de juego.
+      Permite tanto la creación de una nueva sala como la edición de una existente si el usuario es el host.
+      Los campos del formulario están vinculados a la variable reactiva `room`.
+    -->
     <button class="back-button" @click="goBack">←</button>
     <h2>Configuración de la Sala</h2>
     <form @submit.prevent="saveSettings">
@@ -36,30 +41,54 @@
 </template>
 
 <script setup>
+/**
+ * Fichero: RoomSettings.vue
+ * Descripción: Este componente gestiona la interfaz y la lógica para crear o modificar
+ * la configuración de una sala de juego.
+ *
+ * Funcionalidades:
+ * - Presenta un formulario con opciones como nombre de la sala, visibilidad (pública/privada),
+ *   modo de juego y tiempo de la partida.
+ * - Si se accede para editar una sala existente (el `roomStore` tiene datos), precarga el
+ *   formulario con la configuración actual de esa sala.
+ * - Si se accede para crear una sala nueva, inicializa el formulario con valores por defecto.
+ * - Al guardar, llama al método correspondiente del `communicationManager` (`createRoom` o `updateRoom`)
+ *   y redirige al usuario al lobby de la sala.
+ */
 import { ref, onMounted } from 'vue';
 import { useRoomStore } from '../stores/room';
 import { useGameStore } from '../stores/game';
-import { useSessionStore } from '../stores/session'; // Import session store
+import { useSessionStore } from '../stores/session';
 import { communicationManager } from '../communicationManager';
 
+// Inicialización de los stores de Pinia.
 const roomStore = useRoomStore();
 const gameStore = useGameStore();
-const sessionStore = useSessionStore(); // Use session store
+const sessionStore = useSessionStore();
 
+// `room` es una referencia reactiva que contiene los datos del formulario.
+// Se inicializa con valores por defecto, usando el nombre del jugador para el nombre de la sala.
 const room = ref({
-  name: sessionStore.playerName ? `${sessionStore.playerName}'s Room` : 'Mi Sala', // Set default name
+  name: sessionStore.playerName ? `${sessionStore.playerName}'s Room` : 'Mi Sala',
   isPublic: true,
   gameMode: 'normal',
   time: 60,
 });
 
-// Si estamos editando una sala existente, cargamos sus datos
+/**
+ * Hook `onMounted`: Se ejecuta cuando el componente se monta.
+ * Comprueba si ya existe una sala en el `roomStore`. Si es así, significa que estamos
+ * editando una sala existente, por lo que copia sus datos al `ref` local `room`.
+ */
 onMounted(() => {
   if (roomStore.room) {
     room.value = { ...roomStore.room };
   }
 });
 
+/**
+ * Navega de vuelta a la pantalla de selección de sala y limpia los datos de la sala actual.
+ */
 const goBack = () => {
   roomStore.setRoom(null); // Limpiar el estado de la sala
   gameStore.setEtapa('room-selection');
@@ -68,14 +97,17 @@ const goBack = () => {
 const saveSettings = async () => {
   try {
     if (roomStore.room && roomStore.room.id) {
-      // Actualizar sala existente
+      // Si la sala ya tiene un ID, significa que estamos actualizando una sala existente.
       const response = await communicationManager.updateRoom(roomStore.room.id, room.value);
-      roomStore.setRoom(response.data); // Update roomStore.room with the latest data
+      roomStore.setRoom(response.data); // Actualiza el store con los nuevos datos.
     } else {
-      // Crear nueva sala
+      // Si no hay ID, estamos creando una nueva sala.
       const newRoom = await communicationManager.createRoom(room.value);
+      // Guarda la nueva sala en el store.
       roomStore.setRoom(newRoom.data);
+      // Guarda el ID de la sala en la sesión para persistencia.
       sessionStore.setRoomId(newRoom.data.id);
+      // Se une a la sala recién creada a través del socket.
       communicationManager.joinRoom(newRoom.data.id);
     }
     gameStore.setEtapa('lobby');

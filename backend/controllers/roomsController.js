@@ -1,26 +1,37 @@
+/**
+ * Fichero: roomsController.js
+ * Descripción: Este fichero contiene los controladores para las rutas relacionadas con la
+ * gestión de salas (`/api/rooms`). Cada función exportada maneja una solicitud HTTP específica
+ * (GET, POST, PUT, DELETE) para realizar operaciones como crear, obtener, actualizar,
+ * e iniciar partidas en las salas, así como gestionar a los jugadores dentro de ellas.
+ * Utiliza `stateManager` para modificar el estado del servidor y las funciones de broadcast
+ * (configuradas en `socketManager`) para notificar a los clientes de los cambios.
+ */
 const stateManager = require('../state/stateManager');
 
-// GET /api/rooms - Devuelve la lista de salas públicas
+// GET /api/rooms - Devuelve la lista de todas las salas marcadas como públicas.
 exports.getPublicRooms = (req, res) => {
   const publicRooms = stateManager.getPublicRooms();
   res.status(200).json(publicRooms);
 };
 
-// POST /api/rooms - Crea una nueva sala
+// POST /api/rooms - Crea una nueva sala con la configuración proporcionada.
 exports.createRoom = (req, res) => {
   const { hostPlayer, name, isPublic, gameMode, time } = req.body;
   if (!hostPlayer || !name) {
     return res.status(400).json({ message: 'Faltan datos para crear la sala.' });
   }
+  // Llama al stateManager para crear la sala en el estado del servidor.
   const newRoom = stateManager.createRoom(hostPlayer, name, isPublic, gameMode, time);
 
+  // Notifica a todos los clientes que la lista de salas públicas ha cambiado.
   const broadcastPublicRoomList = req.app.get('broadcastPublicRoomList');
   broadcastPublicRoomList(); // Broadcast public room list after creation
 
   res.status(201).json(newRoom);
 };
 
-// GET /api/rooms/:roomId - Devuelve los detalles de una sala
+// GET /api/rooms/:roomId - Devuelve los detalles completos de una sala específica.
 exports.getRoomDetails = (req, res) => {
   const { roomId } = req.params;
   const room = stateManager.getRoom(roomId);
@@ -31,26 +42,29 @@ exports.getRoomDetails = (req, res) => {
   }
 };
 
-// PUT /api/rooms/:roomId - Actualiza una sala (para el host)
+// PUT /api/rooms/:roomId - Actualiza la configuración de una sala (acción solo para el host).
 exports.updateRoom = (req, res) => {
   const { roomId } = req.params;
   const settings = req.body;
 
-  const oldRoom = { ...stateManager.getRoom(roomId) }; // Get a copy of old room state
+  // Guarda una copia del estado anterior para detectar cambios (ej. visibilidad).
+  const oldRoom = { ...stateManager.getRoom(roomId) };
 
+  // Actualiza la sala en el stateManager.
   const result = stateManager.updateRoom(roomId, settings);
 
   if (result.error) {
     return res.status(404).json({ message: result.error });
   }
 
+  // Si la actualización fue exitosa, notifica a los clientes de la sala.
   if (result.room) {
     const broadcastRoomState = req.app.get('broadcastRoomState');
     broadcastRoomState(roomId);
     const broadcastPlayerList = req.app.get('broadcastPlayerList');
     broadcastPlayerList(roomId);
   
-    // If isPublic status changed, broadcast public room list
+    // Si la visibilidad de la sala cambió, notifica a todos los clientes.
     if (oldRoom && oldRoom.isPublic !== result.room.isPublic) {
       const broadcastPublicRoomList = req.app.get('broadcastPublicRoomList');
       broadcastPublicRoomList();
@@ -61,10 +75,11 @@ exports.updateRoom = (req, res) => {
 };
 
 
-// POST /api/rooms/:roomId/start - Inicia la partida en una sala
+// POST /api/rooms/:roomId/start - Inicia la partida en una sala (acción solo para el host).
 exports.startGame = (req, res) => {
   const { roomId } = req.params;
 
+  // Verifica si todos los jugadores en la sala están listos.
   if (!stateManager.areAllPlayersReady(roomId)) {
     return res.status(403).json({ message: 'No todos los jugadores están listos.' });
   }
@@ -75,6 +90,7 @@ exports.startGame = (req, res) => {
     return res.status(404).json({ message: result.error });
   }
 
+  // Notifica a los clientes de la sala que el juego ha comenzado.
   const broadcastRoomState = req.app.get('broadcastRoomState');
   broadcastRoomState(roomId);
   const broadcastPlayerList = req.app.get('broadcastPlayerList');
@@ -83,7 +99,7 @@ exports.startGame = (req, res) => {
   res.status(200).json(result.room);
 };
 
-// DELETE /api/rooms/:roomId/player/:socketId - Elimina un jugador de la sala
+// DELETE /api/rooms/:roomId/player/:socketId - Elimina a un jugador de la sala (acción solo para el host).
 exports.removePlayer = (req, res) => {
   const { roomId, socketId } = req.params;
 
@@ -93,6 +109,7 @@ exports.removePlayer = (req, res) => {
     return res.status(404).json({ message: result.error });
   }
 
+  // Si la sala quedó vacía y fue eliminada, actualiza la lista de salas públicas.
   if (result.roomDeleted) {
     const broadcastPublicRoomList = req.app.get('broadcastPublicRoomList');
     broadcastPublicRoomList();
@@ -101,17 +118,17 @@ exports.removePlayer = (req, res) => {
     broadcastPlayerList(roomId);
   }
 
-  // Notificar al jugador eliminado que ha sido expulsado
+  // Notifica al jugador específico que ha sido expulsado.
   const io = req.app.get('io');
   io.to(socketId).emit('player-removed');
 
-  // Eliminar al jugador de la lista de jugadores registrados
+  // Elimina al jugador del registro global de jugadores.
   stateManager.removeRegisteredPlayerBySocketId(socketId);
 
   res.status(200).json({ message: `Jugador con socketId ${socketId} eliminado.` });
 };
 
-// POST /api/rooms/:roomId/make-host - Hace a otro jugador el host
+// POST /api/rooms/:roomId/make-host - Transfiere el rol de host a otro jugador (acción solo para el host actual).
 exports.makeHost = (req, res) => {
   const { roomId } = req.params;
   const { targetPlayerSocketId } = req.body;
@@ -121,6 +138,7 @@ exports.makeHost = (req, res) => {
     return res.status(404).json({ message: 'Sala no encontrada.' });
   }
 
+  // Identifica al host actual a través de su token de autorización.
   const token = req.headers.authorization;
   const currentHost = room.players.find(p => p.token === token);
 
@@ -130,13 +148,14 @@ exports.makeHost = (req, res) => {
     return res.status(400).json({ message: result.error });
   }
 
+  // Notifica a los clientes de la sala sobre el cambio de host.
   const broadcastPlayerList = req.app.get('broadcastPlayerList');
   broadcastPlayerList(roomId);
 
   res.status(200).json({ message: `Jugador con socketId ${targetPlayerSocketId} es ahora el host.` });
 };
 
-// POST /api/rooms/:roomId/reset-ready-status - Resetea el estado de listo de los jugadores
+// POST /api/rooms/:roomId/reset-ready-status - Resetea el estado "listo" de todos los jugadores (ej. después de una partida).
 exports.resetReadyStatus = (req, res) => {
   const { roomId } = req.params;
 
@@ -146,6 +165,7 @@ exports.resetReadyStatus = (req, res) => {
     return res.status(404).json({ message: result.error });
   }
 
+  // Notifica a los clientes de la sala que el estado de "listo" ha sido reseteado.
   const broadcastPlayerList = req.app.get('broadcastPlayerList');
   broadcastPlayerList(roomId);
 
