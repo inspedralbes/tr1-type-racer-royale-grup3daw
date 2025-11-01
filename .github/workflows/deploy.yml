@@ -20,7 +20,7 @@ jobs:
             # Define project path and repo URL
             PROJECT_PATH="/var/www/html/tr1-type-racer-royale-grup3daw"
             REPO_URL="https://github.com/${{ github.repository }}.git"
-            BRANCH="github-actions"
+            BRANCH="main"
 
             # Clone repo if it doesn't exist
             if [ ! -d "$PROJECT_PATH" ]; then
