@@ -62,8 +62,8 @@ jobs:
             echo "Starting docker-compose..."
             # Detiene y elimina contenedores, redes y TAMBIÉN las imágenes construidas previamente.
             # Esto fuerza una reconstrucción completa y evita problemas de caché.
-            docker compose -f docker-compose.prod.yml down --rmi all --remove-orphans
+            docker compose -f docker-compose.prod.yml down 
             docker compose -f docker-compose.prod.yml up --build -d
 
-            # Prune old images
+            # Prune old imagesall --remove-orphans
             docker image prune -f
