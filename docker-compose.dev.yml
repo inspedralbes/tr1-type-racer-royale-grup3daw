@@ -24,16 +24,19 @@ services:
   backend:
     build: ./backend
     environment:
-      - NODE_ENV=development
+      NODE_ENV: development
+      DB_HOST: mysql
     ports:
       - "3000:3000"
     volumes:
       - ./backend:/usr/src/app # Monta el código fuente para hot-reloading
       - /usr/src/app/node_modules
-    command: npm run dev
+    command: npm run start:dev
     depends_on:
-      - mongo
-      - mysql
+      mongo:
+        condition: service_started
+      mysql:
+        condition: service_healthy
     networks:
       - app-network
 
@@ -57,6 +60,11 @@ services:
       MYSQL_PASSWORD: password_dev
     volumes:
       - mysql-data:/var/lib/mysql
+    healthcheck:
+      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     networks:
       - app-network
 
