@@ -19,12 +19,16 @@ services:
 
   backend:
     build: ./backend
-    command: npm start # Comando para iniciar en producción
+    command: npm run start:prod # Comando para iniciar en producción
     # Carga las variables de entorno desde un fichero .env que se creará en producción
     env_file: ./backend/.env
+    environment:
+      - DB_HOST=mysql
     depends_on:
-      - mongo
-      - mysql
+      mongo:
+        condition: service_started
+      mysql:
+        condition: service_healthy
     networks:
       - app-network
 
@@ -44,6 +48,11 @@ services:
       MYSQL_PASSWORD_FILE: /run/secrets/mysql_password
     volumes:
       - mysql-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin" ,"ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     networks:
       - app-network
 
