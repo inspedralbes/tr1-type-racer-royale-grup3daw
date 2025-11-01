@@ -1,4 +1,4 @@
-version: '3.8'
+
 
 # Este fichero docker-compose está configurado para el entorno de producción.
 services:
