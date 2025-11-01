@@ -24,6 +24,7 @@ services:
       - MYSQL_DATABASE=${MYSQL_DATABASE}
       - MYSQL_USER=${MYSQL_USER}
       - MONGO_URI=${MONGO_URI}
+      - DB_HOST: mysql
     depends_on:
       - mongo
       - mysql
