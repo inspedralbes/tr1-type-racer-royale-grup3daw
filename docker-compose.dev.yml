@@ -10,6 +10,8 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+    environment:
+      - VITE_NODE_ENV=development
     ports:
       - "5173:5173" # Puerto de Vite para desarrollo
     volumes:
@@ -21,6 +23,8 @@ services:
 
   backend:
     build: ./backend
+    environment:
+      - NODE_ENV=development
     ports:
       - "3000:3000"
     volumes:

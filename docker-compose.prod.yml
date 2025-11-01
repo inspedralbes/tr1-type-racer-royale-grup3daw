@@ -1,10 +1,6 @@
 version: '3.8'
 
 # Este fichero docker-compose está configurado para el entorno de producción.
-# Construye imágenes optimizadas, no expone puertos de bases de datos al exterior
-# y ejecuta los servicios en modo de producción para eficiencia y seguridad.
-#
-# Para levantar este entorno, usa el comando: docker compose -f docker-compose.prod.yml up --build -d
 services:
   nginx:
     build:
@@ -14,17 +10,36 @@ services:
       - "80:80"
     depends_on:
       - backend
+      - frontend
     networks:
       - app-network
 
   backend:
     build: ./backend
-    command: npm start # Comando para iniciar en producción
-    # Carga las variables de entorno desde un fichero .env que se creará en producción
-    env_file: ./backend/.env
+    command: npm start
+    environment:
+      - NODE_ENV=${NODE_ENV}
+      - PORT=${PORT}
+      - FRONTEND_URL=${FRONTEND_URL}
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD}
+      - MYSQL_DATABASE=${MYSQL_DATABASE}
+      - MYSQL_USER=${MYSQL_USER}
+      - MONGO_URI=${MONGO_URI}
     depends_on:
       - mongo
       - mysql
+    networks:
+      - app-network
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    environment:
+      - VITE_NODE_ENV=${VITE_NODE_ENV}
+      - VITE_API_URL=${VITE_API_URL}
+      - VITE_SOCKET_URL=${VITE_SOCKET_URL}
     networks:
       - app-network
 
@@ -38,10 +53,10 @@ services:
   mysql:
     image: mysql:8.0
     environment:
-      MYSQL_ROOT_PASSWORD_FILE: /run/secrets/mysql_root_password
-      MYSQL_DATABASE: db_prod
-      MYSQL_USER: user_prod # Considera también usar secrets para el usuario
-      MYSQL_PASSWORD_FILE: /run/secrets/mysql_password
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
     volumes:
       - mysql-data:/var/lib/mysql
     networks:
@@ -54,9 +69,3 @@ networks:
 volumes:
   mongo-data:
   mysql-data:
-
-secrets:
-  mysql_root_password:
-    file: ./mysql_root_password.txt
-  mysql_password:
-    file: ./mysql_password.txt

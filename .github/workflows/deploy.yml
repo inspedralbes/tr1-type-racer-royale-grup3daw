@@ -1,0 +1,58 @@
+name: Deploy to Production
+
+on:
+  push:
+    branches:
+      - github-actions # Cambiado de 'main' para las pruebas
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Deploy to server
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            # Define project path and repo URL
+            PROJECT_PATH="/var/www/html/tr1-type-racer-royale-grup3daw"
+            REPO_URL="https://github.com/${{ github.repository }}.git"
+            BRANCH="github-actions"
+
+            # Clone repo if it doesn't exist
+            if [ ! -d "$PROJECT_PATH" ]; then
+              echo "Cloning repository..."
+              cd /var/www/html/
+              git clone $REPO_URL
+            fi
+
+            # Navigate to project directory
+            cd $PROJECT_PATH
+
+            # Pull latest changes
+            git checkout $BRANCH
+            git pull origin $BRANCH
+
+            # Export all environment variables from GitHub Secrets
+            echo "Exporting environment variables..."
+            export NODE_ENV=${{ secrets.NODE_ENV }}
+            export PORT=${{ secrets.PORT }}
+            export FRONTEND_URL=${{ secrets.FRONTEND_URL }}
+            export MYSQL_ROOT_PASSWORD=${{ secrets.MYSQL_ROOT_PASSWORD }}
+            export MYSQL_PASSWORD=${{ secrets.MYSQL_PASSWORD }}
+            export MYSQL_DATABASE=${{ secrets.MYSQL_DATABASE }}
+            export MYSQL_USER=${{ secrets.MYSQL_USER }}
+            export MONGO_URI=${{ secrets.MONGO_URI }}
+            export VITE_NODE_ENV=${{ secrets.NODE_ENV }}
+            export VITE_API_URL=${{ secrets.VITE_API_URL }}
+            export VITE_SOCKET_URL=${{ secrets.VITE_SOCKET_URL }}
+
+            # Run docker-compose
+            echo "Starting docker-compose..."
+            docker-compose -f docker-compose.prod.yml up --build -d
+
+            # Prune old images
+            docker image prune -f
