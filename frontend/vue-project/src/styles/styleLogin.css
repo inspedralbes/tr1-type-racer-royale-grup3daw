@@ -12,7 +12,7 @@ body {
   position: relative; 
 }
 div.login-background {
-  background-image: url(estacion.png);
+  background-image: url(../img/estacion.png);
   position: absolute;
   top: 0;
   left: 0;

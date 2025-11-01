@@ -21,18 +21,19 @@ function volverAJugar() {
 
 <template>
   <div class ="final-background">
-    <div>
+    <div class ="pantalla-final">
     <h1>Ranking Final</h1>
     
     <ol>
-      <li 
+      <li
+        class ="ranking" 
         v-for="(jugador, index) in ranking" 
         :key="jugador.nombre"
       >
         <span>
-          <span v-if="index === 0">1 -</span>
-          <span v-else-if="index === 1">2 -</span>
-          <span v-else-if="index === 2">3 -</span>
+          <span v-if="index === 0"></span>
+          <span v-else-if="index === 1"></span>
+          <span v-else-if="index === 2"></span>
           <span v-else>#{{ index + 1 }}</span>
         </span>
         
@@ -41,7 +42,7 @@ function volverAJugar() {
       </li>
     </ol>
 
-    <button @click="volverAJugar">Tornar a jugar</button>
+    <button class="final-button" @click="volverAJugar">Tornar a jugar</button>
   </div>
   </div>
 
