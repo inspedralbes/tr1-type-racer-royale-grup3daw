@@ -32,13 +32,13 @@ jobs:
             # Navigate to project directory
             cd $PROJECT_PATH
 
+            # Ensure clean working directory before checkout
+            git reset --hard
+            git clean -fd
+
             # Pull latest changes
             git checkout $BRANCH
-            git status # Para depuración
-            git reset --hard # Descartar cambios locales
-            git clean -fd # Eliminar archivos no rastreados
             git pull origin $BRANCH
-            git status # Para depuración
 
             # Export all environment variables from GitHub Secrets
             echo "Exporting environment variables..."
