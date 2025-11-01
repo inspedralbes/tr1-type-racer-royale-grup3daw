@@ -1,16 +1,20 @@
 # Este fichero docker-compose está configurado para el entorno de producción.
 services:
+  # Nginx actúa como reverse proxy y sirve el contenido estático del frontend.
   nginx:
     build:
       context: .
       dockerfile: nginx.Dockerfile
     ports:
       - "80:80"
+    # Nginx solo necesita que el backend esté iniciado para hacer proxy.
+    # Ya no depende del servicio 'frontend' porque los ficheros se copian durante el build.
     depends_on:
-      - backend
-      - frontend
+      backend:
+        condition: service_started
     networks:
       - app-network
+    restart: unless-stopped # CRÍTICO: Reinicia Nginx si falla.
 
   backend:
     build: ./backend
@@ -25,29 +29,42 @@ services:
       - MYSQL_USER=${MYSQL_USER}
       - MONGO_URI=${MONGO_URI}
       - DB_HOST: mysql
+    # MEJORA: El backend esperará a que las bases de datos estén listas.
     depends_on:
-      - mongo
-      - mysql
+      mongo:
+        condition: service_started # MongoDB no tiene un healthcheck fácil, 'service_started' es una buena aproximación.
+      mysql:
+        condition: service_healthy # Espera a que el healthcheck de MySQL pase.
     networks:
       - app-network
+    restart: unless-stopped # CRÍTICO: Reinicia el backend si falla.
 
+  # OPTIMIZACIÓN: Este servicio solo existe para construir la imagen del frontend.
+  # Nginx la usará en su Dockerfile (con 'COPY --from=...').
+  # No se ejecutará como un contenedor persistente en producción.
   frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile
-    environment:
-      - VITE_NODE_ENV=${VITE_NODE_ENV}
-      - VITE_API_URL=${VITE_API_URL}
-      - VITE_SOCKET_URL=${VITE_SOCKET_URL}
-    networks:
-      - app-network
+      # Las variables de entorno se pasan como argumentos de construcción (build args)
+      # para que estén disponibles durante 'npm run build' dentro del Dockerfile.
+      args:
+        VITE_NODE_ENV: ${VITE_NODE_ENV}
+        VITE_API_URL: ${VITE_API_URL}
+        VITE_SOCKET_URL: ${VITE_SOCKET_URL}
+    # Ya no necesita 'environment', 'networks' ni ejecutarse como un servicio.
 
   mongo:
-    image: mongo:latest
+    image: mongo:6.0 # BUENA PRÁCTICA: Fija la versión de la imagen.
+    # SEGURIDAD: Añade autenticación a MongoDB.
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USER}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD}
     volumes:
       - mongo-data:/data/db
     networks:
       - app-network
+    restart: unless-stopped # CRÍTICO: Reinicia MongoDB si falla.
 
   mysql:
     image: mysql:8.0
@@ -65,6 +82,7 @@ services:
       retries: 5
     networks:
       - app-network
+    restart: unless-stopped # CRÍTICO: Reinicia MySQL si falla.
 
 networks:
   app-network:

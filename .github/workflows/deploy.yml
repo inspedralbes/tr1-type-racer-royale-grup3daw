@@ -3,7 +3,7 @@ name: Deploy to Production
 on:
   push:
     branches:
-      - github-actions # Cambiado de 'main' para las pruebas
+      - mian # Cambiado de 'main' para las pruebas
 
 jobs:
   deploy:
@@ -50,8 +50,6 @@ jobs:
             echo "MYSQL_DATABASE=${{ secrets.MYSQL_DATABASE }}" >> .env
             echo "MYSQL_USER=${{ secrets.MYSQL_USER }}" >> .env
             echo "MONGO_URI=${{ secrets.MONGO_URI }}" >> .env
-            # Las variables VITE_* no son necesarias en el backend, se usan en el build del frontend
-            # pero el Dockerfile.prod se encarga de eso.
 
             # Run docker-compose
             echo "Starting docker-compose..."

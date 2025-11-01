@@ -17,10 +17,10 @@ module.exports = {
     dialect: "mysql"
   },
   production: {
-    username: "user_dev",
-    password: "password_dev",
-    database: "db_dev",
-    host: process.env.DB_HOST || 'localhost',
-    dialect: "mysql"
+    username: process.env.MYSQL_USER,
+    password: process.env.MYSQL_PASSWORD,
+    database: process.env.MYSQL_DATABASE,
+    host: process.env.DB_HOST,
+    dialect: "mysql" // Sequelize usará el driver de mysql
   }
 };
