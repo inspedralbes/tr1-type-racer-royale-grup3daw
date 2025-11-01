@@ -1,54 +1,69 @@
 <script setup>
+    // Importaciones de Vue para la reactividad y gestión del ciclo de vida del componente.
     import { ref, computed, onMounted, watch, onUnmounted } from 'vue';
+    // Importación de Pinia para desestructurar propiedades reactivas de los stores.
     import { storeToRefs } from 'pinia';
+    // Importación del gestor de comunicación para interactuar con el backend.
     import { communicationManager } from '../communicationManager';
+    // Importación de los stores de Pinia para la gestión del estado global de la aplicación.
     import { useGameStore } from '../stores/game';
     import { useRoomStore } from '../stores/room';
 
+    // Inicialización de los stores.
     const gameStore = useGameStore();
     const roomStore = useRoomStore();
 
+    // Desestructuración de propiedades reactivas de los stores.
     const { nombreJugador, words } = storeToRefs(gameStore);
     const { jugadores, roomState, remainingTime } = storeToRefs(roomStore);
 
+    // Definición de puntos por dificultad de palabra.
     const POINTS_PER_DIFFICULTY = {
         facil: 5,
         normal: 10,
         dificil: 15,
     };
 
-    const GAME_WORD_COUNT = 10; // Número fijo de palabras por juego
+    const GAME_WORD_COUNT = 10; // Número fijo de palabras por juego.
 
+    // Declaración de eventos que este componente puede emitir.
     const emits = defineEmits(['done']);
     
+    // Estado reactivo local para la gestión del juego.
     const estatDelJoc = ref({
-        paraules: [],
-        indexParaulaActiva: 0,
-        textEntrat: '',
-        stats: [],
-        errorTotal: 0,
+        paraules: [], // Array de palabras para el juego.
+        indexParaulaActiva: 0, // Índice de la palabra actual.
+        textEntrat: '', // Texto introducido por el usuario.
+        stats: [], // Estadísticas de palabras completadas.
+        errorTotal: 0, // Contador total de errores.
     });
 
+    // Tiempo restante para el juego, inicializado con el tiempo de la sala.
     const timeLeft = ref(roomState.value.time || 0);
+    // Puntuación del jugador actual, computada a partir del store de la sala.
     const score = computed(() => {
         const player = jugadores.value.find(j => j.name === nombreJugador.value);
         return player ? player.score : 0;
     });
-    let gameInterval = null;
-    const gameEnded = ref(false);
+    let gameInterval = null; // Variable para almacenar el ID del intervalo del juego.
+    const gameEnded = ref(false); // Estado para controlar si el juego ha terminado.
 
+    // Hook `onMounted` que se ejecuta cuando el componente ha sido montado.
     onMounted(() => {
         console.log('joc.vue mounted. roomState:', roomState.value);
+        // Si el juego ya está en curso y tiene un tiempo de inicio, inicializa el juego.
         if (roomState.value.isPlaying && roomState.value.gameStartTime) {
             initializeGame();
         }
     });
 
+    // Hook `onUnmounted` que se ejecuta cuando el componente va a ser desmontado.
     onUnmounted(() => {
+        // Limpia el intervalo del juego para evitar fugas de memoria.
         clearInterval(gameInterval);
     });
 
-    // Observa si el juego comienza (cuando isPlaying pasa a true)
+    // Observa si el juego comienza (cuando `isPlaying` pasa a `true`).
     watch(() => roomState.value.isPlaying, (newIsPlaying, oldIsPlaying) => {
         if (newIsPlaying && !oldIsPlaying) {
             console.log('El juego ha comenzado. Inicializando...');
@@ -56,11 +71,17 @@
         }
     });
 
+    /**
+     * @description Inicializa el juego, cargando las palabras y comenzando el temporizador.
+     */
     function initializeGame() {
         initializeWords(words.value);
         startGameTimer();
     }
 
+    /**
+     * @description Sincroniza el temporizador del juego con el tiempo restante real.
+     */
     const initializeTimer = () => {
         const now = Date.now();
         const startTime = roomState.value.gameStartTime;
@@ -74,14 +95,18 @@
         timeLeft.value = Math.max(0, Math.floor(remainingMs / 1000));
     };
 
+    /**
+     * @description Inicia el temporizador del juego, actualizando `timeLeft` cada segundo.
+     * Cuando el tiempo llega a cero, finaliza el juego.
+     */
     const startGameTimer = () => {
-        if (gameInterval) clearInterval(gameInterval); // Limpiar cualquier intervalo anterior
-        initializeTimer(); // Sincronizar tiempo al iniciar
+        if (gameInterval) clearInterval(gameInterval); // Limpiar cualquier intervalo anterior.
+        initializeTimer(); // Sincronizar tiempo al iniciar.
 
         gameInterval = setInterval(() => {
             timeLeft.value--;
             if (timeLeft.value <= 0) {
-                // Al expirar el tiempo, terminar partida y notificar al padre
+                // Al expirar el tiempo, terminar partida y notificar al padre.
                 clearInterval(gameInterval);
                 gameInterval = null;
                 finishGame();
@@ -89,6 +114,10 @@
         }, 1000);
     };
 
+    /**
+     * @description Inicializa las palabras para el juego, mezclándolas y seleccionando un número fijo.
+     * @param {Object} wordsData - Objeto que contiene arrays de palabras por dificultad (facil, normal, dificil).
+     */
     const initializeWords = (wordsData) => {
         if (!wordsData) {
             console.error("initializeWords: wordsData es nulo o indefinido.");
@@ -97,6 +126,7 @@
         }
 
         let allWords = [];
+        // Concatena las palabras de cada dificultad con su etiqueta.
         if (wordsData.facil) {
             allWords = allWords.concat(wordsData.facil.map(word => ({ text: word, difficulty: 'facil' })));
         }
@@ -107,18 +137,21 @@
             allWords = allWords.concat(wordsData.dificil.map(word => ({ text: word, difficulty: 'dificil' })));
         }
 
-        // Mezclar las palabras
+        // Mezcla las palabras aleatoriamente.
         for (let i = allWords.length - 1; i > 0; i--) {
             const j = Math.floor(Math.random() * (i + 1));
             [allWords[i], allWords[j]] = [allWords[j], allWords[i]];
         }
 
-        // Asignar al estado del juego
+        // Asigna un subconjunto de palabras al estado del juego y las inicializa.
         estatDelJoc.value.paraules = allWords.slice(0, GAME_WORD_COUNT).map(p => ({ ...p, errors: 0, estat: 'pendent' }));
         estatDelJoc.value.indexParaulaActiva = 0;
-        estatDelJoc.value.textEntrat = ''; // Limpiar input
+        estatDelJoc.value.textEntrat = ''; // Limpia el campo de entrada.
     };
 
+    /**
+     * @description Finaliza el juego, detiene el temporizador y emite los resultados.
+     */
     function finishGame(){
         if(gameInterval){
             clearInterval(gameInterval);
@@ -135,32 +168,50 @@
         emits('done', resultados);
     }
 
+    /**
+     * @description Propiedad computada que devuelve la palabra activa actual.
+     * @returns {Object} - La palabra actual con su texto, dificultad, errores y estado.
+     */
     const paraulaActiva = computed(() => {
         return estatDelJoc.value.paraules[estatDelJoc.value.indexParaulaActiva];
     });
 
     let temps = 0;
+    /**
+     * @description Inicia el cronómetro para medir el tiempo de escritura de una palabra.
+     */
     function cronometro() {
-        // Corregido: se llama a Date.now() para obtener el valor
         temps = Date.now();
     }
 
+    /**
+     * @description Obtiene la clase CSS para una letra individual, indicando si es correcta o incorrecta.
+     * @param {string} lletra - La letra a evaluar.
+     * @param {number} index - El índice de la letra dentro de la palabra.
+     * @returns {string} - Clase CSS ('lletra-correcta', 'lletra-incorrecta') o cadena vacía.
+     */
     function obtenirClasseLletra(lletra, index) {
         const entrada = estatDelJoc.value.textEntrat[index];
         if (!entrada) return '';
         return lletra === entrada ? 'lletra-correcta' : 'lletra-incorrecta';
         };
 
+    /**
+     * @description Valida el progreso de escritura del usuario, actualiza errores y puntuación.
+     * Avanza a la siguiente palabra si la actual se completa correctamente.
+     */
     function validarProgres() {
         const entrada = estatDelJoc.value.textEntrat.toLowerCase();
         estatDelJoc.value.textEntrat = entrada;
 
+        // Inicia el cronómetro cuando el usuario empieza a escribir la primera letra.
         if (entrada.length === 1 && temps === 0){
-            cronometro(); // Corregido: se llama a la función cronometro()
+            cronometro();
         };
 
         const paraula = paraulaActiva.value;
 
+        // Compara cada letra introducida con la palabra activa para detectar errores.
         for (let i = 0; i < entrada.length; i++){
             paraula._errors = paraula._errors || [];
 
@@ -170,8 +221,11 @@
                 paraula._errors[i] = true;
             };
                 };
+                // Si la palabra introducida coincide exactamente con la palabra activa.
                 if (entrada === paraula.text){
-                    communicationManager.updateScore(nombreJugador.value, score.value + POINTS_PER_DIFFICULTY[paraula.difficulty], roomStore.roomId); // Enviar puntuación al backend
+                    // Actualiza la puntuación del jugador en el backend.
+                    communicationManager.updateScore(nombreJugador.value, score.value + POINTS_PER_DIFFICULTY[paraula.difficulty], roomStore.roomId);
+                    // Registra las estadísticas de la palabra completada.
                     estatDelJoc.value.stats.push({
                         paraula: paraula.text,
                         errors: paraula.errors
@@ -179,17 +233,21 @@
             estatDelJoc.value.indexParaulaActiva++;
             estatDelJoc.value.textEntrat = '';
 
-            // Si no hay más palabras, terminar el juego
+            // Si no hay más palabras, termina el juego.
             if (estatDelJoc.value.indexParaulaActiva >= estatDelJoc.value.paraules.length) {
                 finishGame();
             }
         };
     };
 
+    // Si el tiempo restante es cero, finaliza el juego (redundante con el setInterval, pero como fallback).
     if (startGameTimer.timeLeft <= 0){
         finishGame();
     }
 
+    /**
+     * @description Navega de vuelta al lobby. Emite un evento 'done' al componente padre.
+     */
     const backToLobby = () => {
         console.log('Emitting done event');
         emits('done');
@@ -197,26 +255,32 @@
 </script>
 
 <template>
+    <!-- Contenedor principal del juego con un fondo específico. -->
     <div class="joc-background">
         <div class="game-container">
+        <!-- Botón para regresar al lobby. -->
         <button class="back-button" @click="backToLobby">←</button>
+        <!-- Saludo al jugador. -->
         <h2>Ànims, {{ nombreJugador }}!</h2>
 
+        <!-- Contenido del juego mientras no ha terminado. -->
         <div v-if="!gameEnded">
             <p>Tiempo restante: {{ timeLeft }}s</p>
             <p>Puntuación: {{ score }}</p>
             <main class="joc" v-if="estatDelJoc.paraules.length > 0">
                 <div class="game-content-wrapper">
                     <div class="paraula-actual">
+                        <!-- Muestra la palabra actual letra por letra, aplicando estilos según si son correctas o incorrectas. -->
                         <h1>
                             <span v-for="(lletra, index) in paraulaActiva.text" :key="index" :class="obtenirClasseLletra(lletra, index)">
                                 {{ lletra }}
                             </span>
                         </h1>
+                        <!-- Campo de entrada para que el usuario escriba la palabra. -->
                         <input type="text" v-model="estatDelJoc.textEntrat" @input="validarProgres" autofocus />
                     </div>
 
-                    <!-- Secció lateral amb puntuacions -->
+                    <!-- Sección lateral con la clasificación de jugadores. -->
                     <div class="puntuacions">
                         <h2>Classificació</h2>
                         <ul id="llista-jugadors">
@@ -229,6 +293,7 @@
             </main>
         </div>
 
+        <!-- Pantalla de fin de juego, visible cuando `gameEnded` es true. -->
         <div v-else class="game-end-screen">
             <h2>¡Juego Terminado!</h2>
             <p>Tu puntuación final: {{ score }}</p>
@@ -238,6 +303,7 @@
                     <strong>{{ jugador.name }}</strong> - {{ jugador.score }} punts
                 </li>
             </ul>
+            <!-- Botón para volver al lobby después de que el juego ha terminado. -->
             <button class="lobby-button" @click="backToLobby">Volver al Lobby</button>
         </div>
     </div>
@@ -245,4 +311,5 @@
     
 </template>
 
+<!-- Importa los estilos específicos para el componente de juego. -->
 <style src="../styles/stylesJoc.css"></style>

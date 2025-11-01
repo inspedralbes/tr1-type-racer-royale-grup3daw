@@ -40,19 +40,18 @@ jobs:
             git checkout $BRANCH
             git pull origin $BRANCH
 
-            # Export all environment variables from GitHub Secrets
-            echo "Exporting environment variables..."
-            export NODE_ENV=${{ secrets.NODE_ENV }}
-            export PORT=${{ secrets.PORT }}
-            export FRONTEND_URL=${{ secrets.FRONTEND_URL }}
-            export MYSQL_ROOT_PASSWORD=${{ secrets.MYSQL_ROOT_PASSWORD }}
-            export MYSQL_PASSWORD=${{ secrets.MYSQL_PASSWORD }}
-            export MYSQL_DATABASE=${{ secrets.MYSQL_DATABASE }}
-            export MYSQL_USER=${{ secrets.MYSQL_USER }}
-            export MONGO_URI=${{ secrets.MONGO_URI }}
-            export VITE_NODE_ENV=${{ secrets.NODE_ENV }}
-            export VITE_API_URL=${{ secrets.VITE_API_URL }}
-            export VITE_SOCKET_URL=${{ secrets.VITE_SOCKET_URL }}
+            # Create .env file from GitHub Secrets
+            echo "Creating .env file..."
+            echo "NODE_ENV=${{ secrets.NODE_ENV }}" > .env
+            echo "PORT=${{ secrets.PORT }}" >> .env
+            echo "FRONTEND_URL=${{ secrets.FRONTEND_URL }}" >> .env
+            echo "MYSQL_ROOT_PASSWORD=${{ secrets.MYSQL_ROOT_PASSWORD }}" >> .env
+            echo "MYSQL_PASSWORD=${{ secrets.MYSQL_PASSWORD }}" >> .env
+            echo "MYSQL_DATABASE=${{ secrets.MYSQL_DATABASE }}" >> .env
+            echo "MYSQL_USER=${{ secrets.MYSQL_USER }}" >> .env
+            echo "MONGO_URI=${{ secrets.MONGO_URI }}" >> .env
+            # Las variables VITE_* no son necesarias en el backend, se usan en el build del frontend
+            # pero el Dockerfile.prod se encarga de eso.
 
             # Run docker-compose
             echo "Starting docker-compose..."
