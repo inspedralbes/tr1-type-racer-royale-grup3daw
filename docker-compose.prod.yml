@@ -28,7 +28,7 @@ services:
       - MYSQL_DATABASE=${MYSQL_DATABASE}
       - MYSQL_USER=${MYSQL_USER}
       - MONGO_URI=${MONGO_URI}
-      - DB_HOST: mysql
+      - DB_HOST=mysql
     # MEJORA: El backend esperará a que las bases de datos estén listas.
     depends_on:
       mongo:
