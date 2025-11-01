@@ -49,7 +49,14 @@ jobs:
             echo "MYSQL_PASSWORD=${{ secrets.MYSQL_PASSWORD }}" >> .env
             echo "MYSQL_DATABASE=${{ secrets.MYSQL_DATABASE }}" >> .env
             echo "MYSQL_USER=${{ secrets.MYSQL_USER }}" >> .env
+            # Las variables MONGO_ROOT_* son necesarias para la autenticación de MongoDB
+            echo "MONGO_ROOT_USER=${{ secrets.MONGO_ROOT_USER }}" >> .env
+            echo "MONGO_ROOT_PASSWORD=${{ secrets.MONGO_ROOT_PASSWORD }}" >> .env
             echo "MONGO_URI=${{ secrets.MONGO_URI }}" >> .env
+            # Las variables VITE_* son cruciales para el build del frontend
+            echo "VITE_NODE_ENV=${{ secrets.NODE_ENV }}" >> .env
+            echo "VITE_API_URL=${{ secrets.FRONTEND_URL }}" >> .env
+            echo "VITE_SOCKET_URL=${{ secrets.FRONTEND_URL }}" >> .env
 
             # Run docker-compose
             echo "Starting docker-compose..."
