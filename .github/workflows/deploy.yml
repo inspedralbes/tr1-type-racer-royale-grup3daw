@@ -34,7 +34,11 @@ jobs:
 
             # Pull latest changes
             git checkout $BRANCH
+            git status # Para depuración
+            git reset --hard # Descartar cambios locales
+            git clean -fd # Eliminar archivos no rastreados
             git pull origin $BRANCH
+            git status # Para depuración
 
             # Export all environment variables from GitHub Secrets
             echo "Exporting environment variables..."
