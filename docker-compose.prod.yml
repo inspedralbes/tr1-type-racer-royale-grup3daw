@@ -78,9 +78,9 @@ services:
     healthcheck:
       # Se usa CMD-SHELL para poder pasar la variable de entorno con la contraseña de root.
       test: ["CMD-SHELL", "mysqladmin ping -h localhost -u root -p$${MYSQL_ROOT_PASSWORD}"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+      interval: 20s  # Aumentamos el intervalo entre verificaciones a 20 segundos.
+      timeout: 10s   # Aumentamos el tiempo de espera de cada verificación.
+      retries: 10    # Aumentamos el número de reintentos.
     networks:
       - app-network
     restart: unless-stopped # CRÍTICO: Reinicia MySQL si falla.
