@@ -8,5 +8,8 @@ export const usePublicRoomsStore = defineStore('publicRooms', {
     setRooms(rooms) {
       this.rooms = rooms;
     },
+    resetState() {
+      this.rooms = [];
+    },
   },
 });

@@ -1,6 +1,6 @@
 <template>
   <div class="room-selection-container">
-    <button class="back-button" @click="goBackToLogin">←</button>
+    <button class="lobby-button logout-button" @click="logoutAndReset">Logout</button>
     <h2>Seleccionar Sala</h2>
 
     <div class="section">
@@ -51,7 +51,7 @@ onMounted(() => {
 
 const fetchPublicRooms = async () => {
   try {
-    const response = await communicationManager.getPublicRooms();
+    const response = await communicationManager.getPublicRoomsList();
     publicRooms.value = response.data;
   } catch (error) {
     console.error('Error al obtener salas públicas:', error);
@@ -83,6 +83,22 @@ const createRoom = () => {
 const goBackToLogin = () => {
   sessionStore.clearToken();
   sessionStore.clearRoomId();
+  gameStore.setEtapa('login');
+};
+
+const logoutAndReset = () => {
+  // Emit explicit-logout with the player's token to ensure backend cleanup
+  if (sessionStore.token) {
+    socket.emit('explicit-logout', sessionStore.token);
+  }
+  // Disconnect the socket after emitting the logout event
+  socket.disconnect();
+  
+  sessionStore.resetState();
+  gameStore.resetState();
+  roomStore.resetState();
+  publicRoomsStore.resetState();
+
   gameStore.setEtapa('login');
 };
 </script>

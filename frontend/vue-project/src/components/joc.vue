@@ -29,7 +29,7 @@
         errorTotal: 0,
     });
 
-    const timeLeft = ref(remainingTime.value || roomState.value.time);
+    const timeLeft = ref(roomState.value.time || 0);
     const score = computed(() => {
         const player = jugadores.value.find(j => j.name === nombreJugador.value);
         return player ? player.score : 0;
@@ -38,11 +38,9 @@
     const gameEnded = ref(false);
 
     onMounted(() => {
-        console.log('joc.vue mounted. words:', words.value);
-        if (words.value) {
-            initializeWords(words.value);
-            initializeTimer();
-            startGameTimer();
+        console.log('joc.vue mounted. roomState:', roomState.value);
+        if (roomState.value.isPlaying && roomState.value.gameStartTime) {
+            initializeGame();
         }
     });
 
@@ -50,15 +48,54 @@
         clearInterval(gameInterval);
     });
 
-    watch(words, (newWords) => {
-        console.log('joc.vue - words changed:', newWords);
-        if (newWords) {
-            initializeWords(newWords);
-            startGameTimer();
+    // Observa si el juego comienza (cuando isPlaying pasa a true)
+    watch(() => roomState.value.isPlaying, (newIsPlaying, oldIsPlaying) => {
+        if (newIsPlaying && !oldIsPlaying) {
+            console.log('El juego ha comenzado. Inicializando...');
+            initializeGame();
         }
     });
 
+    function initializeGame() {
+        initializeWords(words.value);
+        startGameTimer();
+    }
+
+    const initializeTimer = () => {
+        const now = Date.now();
+        const startTime = roomState.value.gameStartTime;
+        if (!startTime) {
+            timeLeft.value = roomState.value.time;
+            return;
+        }
+        const totalDurationMs = roomState.value.time * 1000;
+        const elapsedMs = now - startTime;
+        const remainingMs = totalDurationMs - elapsedMs;
+        timeLeft.value = Math.max(0, Math.floor(remainingMs / 1000));
+    };
+
+    const startGameTimer = () => {
+        if (gameInterval) clearInterval(gameInterval); // Limpiar cualquier intervalo anterior
+        initializeTimer(); // Sincronizar tiempo al iniciar
+
+        gameInterval = setInterval(() => {
+            timeLeft.value--;
+            if (timeLeft.value <= 0) {
+                // Al expirar el tiempo, terminar partida y notificar al padre
+                clearInterval(gameInterval);
+                gameInterval = null;
+                finishGame();
+            }
+        }, 1000);
+    };
+
     const initializeWords = (wordsData) => {
+        if (!wordsData) {
+            console.error("initializeWords: wordsData es nulo o indefinido.");
+            estatDelJoc.value.paraules = [];
+            return;
+        }
+
         let allWords = [];
         if (wordsData.facil) {
             allWords = allWords.concat(wordsData.facil.map(word => ({ text: word, difficulty: 'facil' })));
@@ -70,41 +107,16 @@
             allWords = allWords.concat(wordsData.dificil.map(word => ({ text: word, difficulty: 'dificil' })));
         }
 
-        // Shuffle and select GAME_WORD_COUNT words
-        const shuffledWords = allWords.sort(() => 0.5 - Math.random());
-        estatDelJoc.value.paraules = shuffledWords.slice(0, GAME_WORD_COUNT).map((word, index) => ({
-            id: index,
-            text: word.text,
-            estat: 'pendent',
-            errors: 0,
-            difficulty: word.difficulty,
-        }));
+        // Mezclar las palabras
+        for (let i = allWords.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [allWords[i], allWords[j]] = [allWords[j], allWords[i]];
+        }
+
+        // Asignar al estado del juego
+        estatDelJoc.value.paraules = allWords.slice(0, GAME_WORD_COUNT).map(p => ({ ...p, errors: 0, estat: 'pendent' }));
         estatDelJoc.value.indexParaulaActiva = 0;
-        estatDelJoc.value.textEntrat = '';
-    };
-
-    const initializeTimer = () => {
-      const now = Date.now();
-      const startTime = roomState.value.gameStartTime;
-      const totalTime = roomState.value.time * 1000; // convert to ms
-      const elapsedTime = now - startTime;
-      const remaining = totalTime - elapsedTime;
-      timeLeft.value = Math.max(0, Math.floor(remaining / 1000));
-    };
-
-    const startGameTimer = () => {
-        if (gameInterval) clearInterval(gameInterval);
-        gameEnded.value = false;
-
-        gameInterval = setInterval(() => {
-            timeLeft.value--;
-            if (timeLeft.value <= 0) {
-                // Al expirar el tiempo, terminar partida y notificar al padre
-                clearInterval(gameInterval);
-                gameInterval = null;
-                finishGame();
-            }
-        }, 1000);
+        estatDelJoc.value.textEntrat = ''; // Limpiar input
     };
 
     function finishGame(){

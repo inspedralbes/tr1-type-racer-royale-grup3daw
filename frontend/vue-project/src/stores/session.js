@@ -1,39 +1,46 @@
-import { defineStore } from 'pinia'
+import { defineStore } from 'pinia';
 
 export const useSessionStore = defineStore('session', {
   state: () => ({
-    token: sessionStorage.getItem('session_token') || null,
-    playerName: sessionStorage.getItem('player_name') || null,
-    roomId: sessionStorage.getItem('room_id') || null,
+    token: sessionStorage.getItem('playerToken') || null,
+    roomId: sessionStorage.getItem('roomId') || null, // Persist roomId
+    playerName: sessionStorage.getItem('playerName') || null,
   }),
   actions: {
     setToken(token) {
-      this.token = token
-      sessionStorage.setItem('session_token', token)
+      this.token = token;
+      if (token) {
+        sessionStorage.setItem('playerToken', token);
+      } else {
+        sessionStorage.removeItem('playerToken');
+      }
     },
     clearToken() {
-      this.token = null
-      sessionStorage.removeItem('session_token')
-    },
-    setPlayerName(name) {
-      this.playerName = name;
-      if (name) {
-        sessionStorage.setItem('player_name', name);
-      } else {
-        sessionStorage.removeItem('player_name');
-      }
+      this.setToken(null); // Use setToken to also clear sessionStorage
     },
     setRoomId(roomId) {
       this.roomId = roomId;
       if (roomId) {
-        sessionStorage.setItem('room_id', roomId);
+        sessionStorage.setItem('roomId', roomId);
       } else {
-        sessionStorage.removeItem('room_id');
+        sessionStorage.removeItem('roomId');
       }
     },
     clearRoomId() {
-      this.roomId = null;
-      sessionStorage.removeItem('room_id');
+      this.setRoomId(null); // Use setRoomId to also clear sessionStorage
+    },
+    setPlayerName(name) {
+      this.playerName = name;
+      if (name) {
+        sessionStorage.setItem('playerName', name);
+      } else {
+        sessionStorage.removeItem('playerName');
+      }
+    },
+    resetState() {
+      this.setToken(null); // Use setToken to also clear sessionStorage
+      this.setPlayerName(null); // Use setPlayerName to also clear sessionStorage
+      this.setRoomId(null); // Use setRoomId to also clear sessionStorage
     },
   },
-})
+});

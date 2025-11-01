@@ -61,6 +61,7 @@ onMounted(() => {
 });
 
 const goBack = () => {
+  roomStore.setRoom(null); // Limpiar el estado de la sala
   gameStore.setEtapa('room-selection');
 };
 

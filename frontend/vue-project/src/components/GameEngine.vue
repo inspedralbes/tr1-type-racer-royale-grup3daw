@@ -49,62 +49,77 @@ import { communicationManager, socket } from '../communicationManager'
 import { useSessionStore } from '../stores/session';
 import { useGameStore } from '../stores/game';
 import { useRoomStore } from '../stores/room';
+import { usePublicRoomsStore } from '../stores/publicRooms';
 
 const gameStore = useGameStore();
 const roomStore = useRoomStore();
 const sessionStore = useSessionStore();
+const publicRoomsStore = usePublicRoomsStore();
 
 const { etapa, nombreJugador, words, wordsLoaded, finalResults } = storeToRefs(gameStore);
 const { jugadores, roomState, roomId } = storeToRefs(roomStore);
 
 // Setup global listeners for player list and room state
-onMounted(async () => {
-  console.log('GameEngine mounted. Initial etapa:', etapa.value);
-
-  const token = sessionStore.token;
-  const roomIdFromSession = sessionStore.roomId;
-  const playerNameFromSession = sessionStore.playerName;
-
-  if (token) {
-    try {
-      const socketId = await communicationManager.connectAndRegister();
-      const response = await communicationManager.login(playerNameFromSession, socketId);
-      const player = response.data;
-      gameStore.setNombreJugador(player.name);
-
-      if (roomIdFromSession) {
-        roomStore.setRoomId(roomIdFromSession);
-        communicationManager.joinRoom(roomIdFromSession);
+    onMounted(async () => {
+      console.log('GameEngine mounted. Initial etapa:', etapa.value);
+  
+      const token = sessionStore.token;
+      const roomIdFromSession = sessionStore.roomId;
+      const playerNameFromSession = sessionStore.playerName;
+  
+      console.log('onMounted - Checking for existing session:');
+      console.log('  Token from sessionStore:', token);
+      console.log('  PlayerName from sessionStore:', playerNameFromSession);
+      console.log('  RoomId from sessionStore:', roomIdFromSession);
+  
+      if (token && playerNameFromSession) { // Only attempt reconnection if both token and playerName exist
+        console.log('onMounted - Existing token and playerName found. Attempting to reconnect...');
         try {
-          const roomDetails = await communicationManager.getRoomDetails(roomIdFromSession);
-          roomStore.setRoom(roomDetails.data);
-          if (roomDetails.data.isPlaying) {
-            gameStore.setEtapa('game');
+          // Conecta el socket y deja que el backend valide el token.
+          const player = await communicationManager.connectAndRegister(playerNameFromSession);
+          console.log('onMounted - Reconnected player:', player);
+          gameStore.setNombreJugador(player.name); // Set gameStore's playerName from session
+
+          // Si el jugador estaba en una sala, recuperamos su estado.
+          if (player.roomId) {
+            roomStore.setRoomId(player.roomId);
+            sessionStore.setRoomId(player.roomId);
+            communicationManager.joinRoom(player.roomId);
+
+            // Obtenemos los detalles completos de la sala para restaurar el estado
+            const roomDetails = await communicationManager.getRoomDetails(player.roomId);
+            roomStore.setRoom(roomDetails.data); // Actualiza el store con todos los datos de la sala
+
+            // Ahora decidimos la etapa basándonos en el estado de la sala recuperado
+            if (roomDetails.data.isPlaying) {
+              gameStore.setEtapa('game');
+            } else {
+              gameStore.setEtapa('lobby');
+            }
           } else {
-            gameStore.setEtapa('lobby');
+            // Si no estaba en ninguna sala, vamos a la página que indique el backend (ej. 'room-selection')
+            gameStore.setEtapa(player.currentPage || 'room-selection');
           }
         } catch (error) {
-          if (error.response && error.response.status === 404) {
-            sessionStore.clearRoomId();
-            gameStore.setEtapa('room-selection');
-          } else {
-            throw error;
-          }
+          console.error('Error al reconectar la sesión:', error);
+          alert('Error al reconectar la sesión: ' + error.message);
+          // If reconnection fails, clear all persisted session data and go to login
+          sessionStore.resetState();
+          gameStore.resetState(); // Also reset gameStore to clear playerName
+          roomStore.resetState();
+          publicRoomsStore.resetState();
+          gameStore.setEtapa('login');
         }
       } else {
-        gameStore.setEtapa('room-selection');
+        // If no token or playerName, ensure we are on the login screen and clear any stale data
+        console.log('onMounted - No valid token or playerName found. Going to login screen.');
+        sessionStore.resetState(); // Ensure all session data is cleared
+        gameStore.resetState();
+        roomStore.resetState();
+        publicRoomsStore.resetState();
+        gameStore.setEtapa('login');
       }
-    } catch (error) {
-      console.error('Error al reconectar:', error);
-      alert('Error al reconectar: ' + error.message);
-      sessionStore.clearToken();
-      sessionStore.clearRoomId();
-      gameStore.setEtapa('login');
-    }
-  }
-
-  
-})
+    })
 
 // Watch for roomId changes to set up room-specific socket listeners
 

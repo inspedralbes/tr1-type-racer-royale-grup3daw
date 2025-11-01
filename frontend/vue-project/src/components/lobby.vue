@@ -19,7 +19,6 @@
 
       <button class="lobby-button" v-if="isAdmin" @click="goToRoomSettings">Editar Sala</button>
       <button class="lobby-button" v-if="isAdmin" @click="iniciarJuego" :disabled="!isAdmin || !areAllPlayersReady">Començar Joc</button>
-      <button class="lobby-button" @click="logout">Logout</button>
     </div>
   </div>
 </template>
@@ -27,16 +26,23 @@
 <style src="../styles/styleLobby.css"></style>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, onMounted } from 'vue' // Import onMounted
 import { storeToRefs } from 'pinia'
 import { communicationManager, socket } from '../communicationManager'
 import { useGameStore } from '../stores/game';
 import { useRoomStore } from '../stores/room';
 import { useSessionStore } from '../stores/session';
+import { usePublicRoomsStore } from '../stores/publicRooms'; // Import publicRoomsStore
 
 const gameStore = useGameStore();
 const roomStore = useRoomStore();
 const sessionStore = useSessionStore();
+const publicRoomsStore = usePublicRoomsStore();
+
+onMounted(async () => {
+  // Update player's current page to 'lobby'
+  await communicationManager.updatePlayerPage('lobby');
+});
 
 const { nombreJugador } = storeToRefs(gameStore);
 const { jugadores } = storeToRefs(roomStore);
@@ -56,16 +62,12 @@ const areAllPlayersReady = computed(() => {
 });
 
 const goBack = () => {
-  socket.emit('leave-room', roomStore.roomId);
-  sessionStore.clearRoomId();
-  gameStore.setEtapa('room-selection');
-};
+  socket.emit('leave-room', roomStore.roomId); // Solo salir de la sala
 
-const logout = () => {
-  socket.emit('leave-room', roomStore.roomId);
-  sessionStore.clearToken();
-  sessionStore.clearRoomId();
-  gameStore.setEtapa('login');
+  roomStore.resetState(); // Limpiar solo el estado de la sala
+  // No resetear otros stores ni desconectar el socket para mantener la sesión activa
+
+  gameStore.setEtapa('room-selection');
 };
 
 const removePlayer = async (playerSocketId) => {

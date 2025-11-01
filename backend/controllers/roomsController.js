@@ -105,6 +105,9 @@ exports.removePlayer = (req, res) => {
   const io = req.app.get('io');
   io.to(socketId).emit('player-removed');
 
+  // Eliminar al jugador de la lista de jugadores registrados
+  stateManager.removeRegisteredPlayerBySocketId(socketId);
+
   res.status(200).json({ message: `Jugador con socketId ${socketId} eliminado.` });
 };
 

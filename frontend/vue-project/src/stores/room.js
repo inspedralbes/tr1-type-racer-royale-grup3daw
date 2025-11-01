@@ -23,15 +23,30 @@ export const useRoomStore = defineStore('room', {
       this.roomId = id;
     },
     setRoom(roomDetails) { // New action
-      this.room = roomDetails;
-      this.roomId = roomDetails.id;
-      this.roomState = {
-        isPlaying: roomDetails.isPlaying,
-        gameStartTime: roomDetails.gameStartTime,
-        time: roomDetails.time,
-        gameMode: roomDetails.gameMode,
-      };
-      this.jugadores = roomDetails.players;
+      if (roomDetails) {
+        this.room = roomDetails;
+        this.roomId = roomDetails.id;
+        this.roomState = {
+          isPlaying: roomDetails.isPlaying,
+          gameStartTime: roomDetails.gameStartTime,
+          time: roomDetails.time,
+          gameMode: roomDetails.gameMode,
+        };
+        this.jugadores = roomDetails.players;
+      } else {
+        // Reset room state if roomDetails is null
+        this.room = null;
+        this.roomId = null;
+        this.roomState = { isPlaying: false };
+        this.jugadores = [];
+      }
+    },
+    resetState() {
+      this.jugadores = [];
+      this.roomState = { isPlaying: false };
+      this.remainingTime = null;
+      this.roomId = null;
+      this.room = null;
     },
   },
 })

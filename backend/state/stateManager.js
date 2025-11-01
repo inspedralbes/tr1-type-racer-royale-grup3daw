@@ -43,6 +43,10 @@ const getPublicRooms = () => {
   return Object.values(rooms).filter(room => room.isPublic);
 };
 
+const getRooms = () => {
+  return rooms;
+};
+
 const updateRoom = (roomId, settings) => {
   const room = getRoom(roomId);
   if (!room) {
@@ -67,12 +71,12 @@ const updateRoom = (roomId, settings) => {
 
 // --- Gestión de Jugadores Registrados ---
 
-const addRegisteredPlayer = (name, socketId, token) => {
+const addRegisteredPlayer = (name, socketId, token, currentPage = 'room-selection') => {
   const newPlayer = {
     name,
     socketId,
     token,
-    currentPage: 'room-selection', // Default page after login
+    currentPage, // Use provided currentPage or default
   };
   registeredPlayers[token] = newPlayer;
   return newPlayer;
@@ -131,7 +135,7 @@ const addPlayerToRoom = (roomId, player, isHost = false) => {
   const newPlayer = {
     name,
     score: 0,
-    role: isHost ? 'admin' : 'player',
+    role: isHost ? 'admin' : 'player', // El rol se asigna aquí
     socketId,
     isReady: isHost, // El host siempre está listo
     token,
@@ -139,6 +143,7 @@ const addPlayerToRoom = (roomId, player, isHost = false) => {
   };
 
   room.players.push(newPlayer);
+  newPlayer.roomId = roomId; // Guardar roomId en el objeto del jugador
   return { room };
 };
 
@@ -186,6 +191,33 @@ const removePlayerFromRoom = (roomId, playerSocketId) => {
   // If the removed player was the admin, assign a new admin
   if (removedPlayer.role === 'admin') {
     // The room is not empty, so there's at least one player to be the new admin
+    room.players[0].role = 'admin';
+    room.players[0].isReady = true;
+  }
+
+  return { room };
+};
+
+const removePlayerFromRoomByToken = (roomId, token) => {
+  const room = getRoom(roomId);
+  if (!room) {
+    return { error: 'La sala no existe.' };
+  }
+
+  const index = room.players.findIndex(p => p.token === token);
+  if (index === -1) {
+    return { error: 'Jugador no encontrado en la sala.' };
+  }
+
+  const removedPlayer = room.players.splice(index, 1)[0];
+
+  if (room.players.length === 0) {
+    delete rooms[roomId];
+    return { roomDeleted: true };
+  }
+
+  // If the removed player was the admin, assign a new admin
+  if (removedPlayer.role === 'admin' && room.players.length > 0) {
     room.players[0].role = 'admin';
     room.players[0].isReady = true;
   }
@@ -243,11 +275,30 @@ const setPlayerReadyStatusInRoom = (roomId, playerSocketId, isReady) => {
   return { room };
 };
 
+const setPlayerDisconnected = (roomId, token, isDisconnected) => {
+  const room = getRoom(roomId);
+  if (!room) {
+    return { error: 'La sala no existe.' };
+  }
+
+  const player = room.players.find(p => p.token === token);
+  if (!player) {
+    return { error: 'Jugador no encontrado en la sala.' };
+  }
+
+  player.disconnected = isDisconnected;
+
+  return { player, room };
+};
+
 const resetReadyStatusInRoom = (roomId) => {
   const room = getRoom(roomId);
   if (!room) {
     return { error: 'La sala no existe.' };
   }
+
+  room.isPlaying = false;
+  room.gameStartTime = null;
 
   room.players.forEach(p => {
     if (p.role !== 'admin') {
@@ -280,15 +331,18 @@ module.exports = {
   createRoom,
   getRoom,
   getPublicRooms,
+  getRooms, // Exportar la nueva función
   updateRoom,
   addPlayerToRoom,
   areAllPlayersReady,
   startGame,
   removePlayerFromRoom,
+  removePlayerFromRoomByToken,
   makeHostInRoom,
   deleteRoom,
   setPlayerReadyStatusInRoom,
   resetReadyStatusInRoom,
+  setPlayerDisconnected,
   updatePlayerScore, // Exportar la nueva función
   // Exportar funciones de jugadores registrados
   addRegisteredPlayer,

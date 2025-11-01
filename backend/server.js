@@ -56,8 +56,12 @@ app.use('/api/login', loginRoutes);
 app.use('/api/rooms', roomsRoutes);
 app.use('/api/scores', scoresRoutes);
 app.use('/api/words', wordsRoutes);
-app.use('/api/player', playerRoutes);
 
+// Temporary debug middleware for player routes
+app.use('/api/player', (req, res, next) => {
+  console.log(`[DEBUG] Player Route Hit: ${req.method} ${req.originalUrl}`);
+  next();
+}, playerRoutes);
 server.listen(port, () => {
   console.log(`Backend listening at http://localhost:${port}`);
 });

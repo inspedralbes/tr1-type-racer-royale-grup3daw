@@ -59,13 +59,29 @@ export function setupSocketListeners() {
   });
 
   socket.on('player-removed', () => {
+    const sessionStore = useSessionStore();
     const gameStore = useGameStore();
-    gameStore.setEtapa('login');
+    const roomStore = useRoomStore();
+    const publicRoomsStore = usePublicRoomsStore();
+
+    sessionStore.resetState();
+    gameStore.resetState();
+    roomStore.resetState();
+    publicRoomsStore.resetState();
+
+    gameStore.setEtapa('room-selection');
   });
 
   socket.on('updatePublicRoomList', (publicRooms) => {
     const publicRoomsStore = usePublicRoomsStore();
     publicRoomsStore.setRooms(publicRooms);
+  });
+
+  socket.on('join-room-error', (error) => {
+    console.error('Error al unirse a la sala:', error.message);
+    // Aquí podrías añadir lógica para mostrar el error al usuario,
+    // por ejemplo, usando un store de notificaciones o un alert.
+    alert(error.message);
   });
 }
 
@@ -98,7 +114,7 @@ export const communicationManager = {
     return apiClient.post('/scores', { name, score, roomId });
   },
 
-  async getRoomPlayers() {
+  async getPublicRoomsList() {
     return apiClient.get('/rooms');
   },
 
@@ -112,12 +128,13 @@ export const communicationManager = {
     return apiClient.put(`/rooms/${roomId}`, roomSettings);
   },
 
-  async getPublicRooms() {
-    return apiClient.get('/rooms');
-  },
-
   async getRoomDetails(roomId) {
     return apiClient.get(`/rooms/${roomId}`);
+  },
+
+  async getPlayersInRoom(roomId) {
+    const response = await apiClient.get(`/rooms/${roomId}`);
+    return response.data.players;
   },
 
   async startGame(roomId) {
@@ -159,17 +176,29 @@ export const communicationManager = {
     socket.emit('join-room', { roomId, player });
   },
 
-  /** Conecta y registra al jugador, devuelve socket.id */
-  async connectAndRegister() {
-    this.connect();
+  /**
+   * Conecta el socket. Si hay un token, intenta reconectar la sesión.
+   * Si no, simplemente conecta. Devuelve el socket.id.
+   */
+  async connectAndRegister(name) {
+    const sessionStore = useSessionStore();
+    const existingToken = sessionStore.token;
 
+    this.connect();
     await new Promise((resolve) => {
       if (socket.connected) return resolve();
       socket.once('connect', resolve);
     });
 
-    console.log('Jugador conectado con socket ID:', socket.id);
-    return socket.id;
+    console.log('Socket conectado con ID:', socket.id);
+
+    // Si hay token, es una reconexión o recarga de página.
+    // Si no, es un login nuevo.
+    const response = await this.login(name, socket.id, existingToken);
+
+    sessionStore.setPlayerName(response.data.name);
+
+    return response.data;
   },
 
   sendReadyStatus(isReady) {
