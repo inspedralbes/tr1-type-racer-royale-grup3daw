@@ -24,6 +24,7 @@ services:
     ports:
       - "3000:3000"
     environment:
+      - NODE_ENV=development
       - DB_HOST=mysql
     volumes:
       - ./backend:/usr/src/app # Monta el código fuente para hot-reloading
