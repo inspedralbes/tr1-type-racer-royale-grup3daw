@@ -60,10 +60,11 @@ jobs:
 
             # Run docker-compose
             echo "Starting docker-compose..."
-            # Detiene y elimina contenedores, redes y TAMBIÉN las imágenes construidas previamente.
-            # Esto fuerza una reconstrucción completa y evita problemas de caché.
-            docker compose -f docker-compose.prod.yml down 
+            # LIMPIEZA TOTAL: Detiene contenedores, elimina redes, borra las imágenes
+            # antiguas (--rmi all) y los volúmenes de datos de las bases de datos (-v).
+            # Esto fuerza a que todo se cree desde cero en cada despliegue.
+            docker compose -f docker-compose.prod.yml down --rmi all -v --remove-orphans
             docker compose -f docker-compose.prod.yml up --build -d
 
-            # Prune old imagesall --remove-orphans
+            # Limpia cualquier otra imagen de Docker que no se esté utilizando.
             docker image prune -f
