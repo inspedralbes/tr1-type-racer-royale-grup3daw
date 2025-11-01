@@ -1,5 +1,6 @@
 <template>
   <div class="room-settings-container">
+    <button class="back-button" @click="goBack">←</button>
     <h2>Configuración de la Sala</h2>
     <form @submit.prevent="saveSettings">
       <div class="form-group" v-if="room.id">
@@ -59,6 +60,10 @@ onMounted(() => {
   }
 });
 
+const goBack = () => {
+  gameStore.setEtapa('room-selection');
+};
+
 const saveSettings = async () => {
   try {
     if (roomStore.room && roomStore.room.id) {
@@ -69,6 +74,8 @@ const saveSettings = async () => {
       // Crear nueva sala
       const newRoom = await communicationManager.createRoom(room.value);
       roomStore.setRoom(newRoom.data);
+      sessionStore.setRoomId(newRoom.data.id);
+      communicationManager.joinRoom(newRoom.data.id);
     }
     gameStore.setEtapa('lobby');
   } catch (error) {

@@ -10,7 +10,8 @@ export const useRoomStore = defineStore('room', {
   }),
   actions: {
     setJugadores(jugadores) {
-      this.jugadores = jugadores
+      console.log('Updating jugadores:', jugadores);
+      this.jugadores.splice(0, this.jugadores.length, ...jugadores);
     },
     setRoomState(roomState) {
       this.roomState = roomState

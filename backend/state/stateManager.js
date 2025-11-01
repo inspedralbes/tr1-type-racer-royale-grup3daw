@@ -32,7 +32,8 @@ const createRoom = (hostPlayer, name, isPublic, gameMode, time) => {
   };
 
   rooms[roomId] = newRoom;
-  addPlayerToRoom(roomId, hostPlayer.name, hostPlayer.socketId, hostPlayer.token, true);
+  // Construimos el objeto hostPlayer para pasarlo a addPlayerToRoom
+  addPlayerToRoom(roomId, hostPlayer, true);
   return newRoom;
 };
 
@@ -97,13 +98,27 @@ const removeRegisteredPlayer = (token) => {
   return player;
 };
 
+const removeRegisteredPlayerBySocketId = (socketId) => {
+  if (!socketId) return null;
+
+  // Find the token of the player with the given socketId
+  const token = Object.keys(registeredPlayers).find(
+    (key) => registeredPlayers[key].socketId === socketId
+  );
+
+  if (token) {
+    return removeRegisteredPlayer(token);
+  }
+  return null;
+};
 // --- Gestión de Jugadores (adaptada a salas) ---
 
-const addPlayerToRoom = (roomId, name, socketId, token, isHost = false) => {
+const addPlayerToRoom = (roomId, player, isHost = false) => {
   const room = getRoom(roomId);
   if (!room) {
     return { error: 'La sala no existe.' };
   }
+  const { name, socketId, token } = player;
 
   // Check if player with this token already exists in the room
   const existingPlayer = room.players.find(p => p.token === token);
@@ -124,19 +139,15 @@ const addPlayerToRoom = (roomId, name, socketId, token, isHost = false) => {
   };
 
   room.players.push(newPlayer);
-  return { player: newPlayer, room };
+  return { room };
 };
 
 const areAllPlayersReady = (roomId) => {
   const room = getRoom(roomId);
   if (!room) {
-    console.log(`areAllPlayersReady: Room ${roomId} not found.`);
     return false;
   }
-  console.log(`areAllPlayersReady: Room ${roomId}, players:`, room.players.map(p => ({ name: p.name, isReady: p.isReady, role: p.role })));
-  const allReady = room.players.every(p => p.isReady);
-  console.log(`areAllPlayersReady: All players ready: ${allReady}`);
-  return allReady;
+  return room.players.every(p => p.isReady);
 };
 
 const startGame = (roomId) => {
@@ -167,18 +178,18 @@ const removePlayerFromRoom = (roomId, playerSocketId) => {
 
   const removedPlayer = room.players.splice(index, 1)[0];
 
+  if (room.players.length === 0) {
+    delete rooms[roomId];
+    return { roomDeleted: true };
+  }
+
   // If the removed player was the admin, assign a new admin
   if (removedPlayer.role === 'admin') {
-    if (room.players.length > 0) {
-      // Assign the next player as admin
-      room.players[0].role = 'admin';
-      room.players[0].isReady = true;
-    } else {
-      // No players left, delete the room
-      delete rooms[roomId];
-      return { roomDeleted: true };
-    }
+    // The room is not empty, so there's at least one player to be the new admin
+    room.players[0].role = 'admin';
+    room.players[0].isReady = true;
   }
+
   return { room };
 };
 
@@ -250,6 +261,21 @@ const resetReadyStatusInRoom = (roomId) => {
 };
 
 
+const updatePlayerScore = (roomId, playerName, newScore) => {
+  const room = getRoom(roomId);
+  if (!room) {
+    return null;
+  }
+
+  const player = room.players.find(p => p.name === playerName);
+  if (!player) {
+    return null;
+  }
+
+  player.score = newScore;
+  return player;
+};
+
 module.exports = {
   createRoom,
   getRoom,
@@ -263,10 +289,12 @@ module.exports = {
   deleteRoom,
   setPlayerReadyStatusInRoom,
   resetReadyStatusInRoom,
+  updatePlayerScore, // Exportar la nueva función
   // Exportar funciones de jugadores registrados
   addRegisteredPlayer,
   findRegisteredPlayerByToken,
   updateRegisteredPlayerSocketId,
   removeRegisteredPlayer,
+  removeRegisteredPlayerBySocketId, // Exportar la nueva función
   registeredPlayers, // Export registeredPlayers
 };

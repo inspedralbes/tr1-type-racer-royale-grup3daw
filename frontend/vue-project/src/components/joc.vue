@@ -41,6 +41,7 @@
         console.log('joc.vue mounted. words:', words.value);
         if (words.value) {
             initializeWords(words.value);
+            initializeTimer();
             startGameTimer();
         }
     });
@@ -82,11 +83,17 @@
         estatDelJoc.value.textEntrat = '';
     };
 
+    const initializeTimer = () => {
+      const now = Date.now();
+      const startTime = roomState.value.gameStartTime;
+      const totalTime = roomState.value.time * 1000; // convert to ms
+      const elapsedTime = now - startTime;
+      const remaining = totalTime - elapsedTime;
+      timeLeft.value = Math.max(0, Math.floor(remaining / 1000));
+    };
+
     const startGameTimer = () => {
         if (gameInterval) clearInterval(gameInterval);
-        if (remainingTime.value === null) {
-            timeLeft.value = roomState.value.time;
-        }
         gameEnded.value = false;
 
         gameInterval = setInterval(() => {
@@ -152,7 +159,7 @@
             };
                 };
                 if (entrada === paraula.text){
-                    communicationManager.updateScore(nombreJugador.value, score.value + POINTS_PER_DIFFICULTY[paraula.difficulty]); // Enviar puntuación al backend
+                    communicationManager.updateScore(nombreJugador.value, score.value + POINTS_PER_DIFFICULTY[paraula.difficulty], roomStore.roomId); // Enviar puntuación al backend
                     estatDelJoc.value.stats.push({
                         paraula: paraula.text,
                         errors: paraula.errors
@@ -180,6 +187,7 @@
 <template>
     <div class="joc-background">
         <div class="game-container">
+        <button class="back-button" @click="backToLobby">←</button>
         <h2>Ànims, {{ nombreJugador }}!</h2>
 
         <div v-if="!gameEnded">

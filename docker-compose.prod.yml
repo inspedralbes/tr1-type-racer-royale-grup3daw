@@ -38,10 +38,10 @@ services:
   mysql:
     image: mysql:8.0
     environment:
-      MYSQL_ROOT_PASSWORD: your_production_root_password # Cambiar en producción
+      MYSQL_ROOT_PASSWORD_FILE: /run/secrets/mysql_root_password
       MYSQL_DATABASE: db_prod
-      MYSQL_USER: user_prod
-      MYSQL_PASSWORD: your_production_password # Cambiar en producción
+      MYSQL_USER: user_prod # Considera también usar secrets para el usuario
+      MYSQL_PASSWORD_FILE: /run/secrets/mysql_password
     volumes:
       - mysql-data:/var/lib/mysql
     networks:
@@ -54,3 +54,9 @@ networks:
 volumes:
   mongo-data:
   mysql-data:
+
+secrets:
+  mysql_root_password:
+    file: ./mysql_root_password.txt
+  mysql_password:
+    file: ./mysql_password.txt

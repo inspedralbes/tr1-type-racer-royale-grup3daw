@@ -29,24 +29,24 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, computed } from 'vue';
+import { storeToRefs } from 'pinia';
 import { useGameStore } from '../stores/game';
 import { useRoomStore } from '../stores/room';
 import { useSessionStore } from '../stores/session';
+import { usePublicRoomsStore } from '../stores/publicRooms';
 import { communicationManager, socket } from '../communicationManager';
 
 const gameStore = useGameStore();
 const roomStore = useRoomStore();
 const sessionStore = useSessionStore();
+const publicRoomsStore = usePublicRoomsStore();
 
 const joinRoomId = ref('');
-const publicRooms = ref([]);
+const { rooms: publicRooms } = storeToRefs(publicRoomsStore);
 
 onMounted(() => {
   fetchPublicRooms();
-  communicationManager.onUpdatePublicRoomList((updatedList) => {
-    publicRooms.value = updatedList;
-  });
 });
 
 const fetchPublicRooms = async () => {
@@ -64,11 +64,11 @@ const joinRoom = async () => {
   await joinRoomById(joinRoomId.value);
 };
 
-const joinRoomById = async (roomId) => {
+const joinRoomById = (roomId) => {
   try {
-    const player = { name: sessionStore.playerName, socketId: socket.id, token: sessionStore.token };
-    const response = await communicationManager.joinRoom(roomId, player);
-    roomStore.setRoom(response.data);
+    communicationManager.joinRoom(roomId);
+    roomStore.setRoomId(roomId);
+    sessionStore.setRoomId(roomId);
     gameStore.setEtapa('lobby');
   } catch (error) {
     console.error('Error al unirse a la sala:', error);
@@ -81,6 +81,8 @@ const createRoom = () => {
 };
 
 const goBackToLogin = () => {
+  sessionStore.clearToken();
+  sessionStore.clearRoomId();
   gameStore.setEtapa('login');
 };
 </script>

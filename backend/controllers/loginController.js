@@ -10,6 +10,10 @@ exports.handleLogin = (req, res) => {
     if (player) {
       stateManager.updateRegisteredPlayerSocketId(token, socketId);
       return res.status(200).json({ ...player, currentPage: player.currentPage });
+    } else {
+      // Token exists but is invalid (e.g., server restarted).
+      // Fall through to create a new player, but don't allow using an old token with a new name.
+      // The client should ideally clear the invalid token, but we proceed as a new login.
     }
   }
 

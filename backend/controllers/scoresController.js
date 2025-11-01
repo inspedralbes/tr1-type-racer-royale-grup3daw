@@ -2,22 +2,22 @@ const stateManager = require('../state/stateManager');
 
 // POST /api/scores - Actualiza la puntuación de un jugador
 exports.updateScore = (req, res) => {
-  const { name, score } = req.body;
+  const { name, score, roomId } = req.body; // Se necesita el roomId
   const broadcastPlayerList = req.app.get('broadcastPlayerList');
 
-  if (!name || score === undefined) {
-    return res.status(400).json({ error: 'Se requieren los campos "name" y "score".' });
+  if (!name || score === undefined || !roomId) {
+    return res.status(400).json({ error: 'Se requieren los campos "name", "score" y "roomId".' });
   }
 
   // Usamos la función importada para actualizar el estado en roomsController
-  const updatedPlayer = stateManager.updatePlayerScore(name, score);
+  const updatedPlayer = stateManager.updatePlayerScore(roomId, name, score);
 
   if (!updatedPlayer) {
     return res.status(404).json({ error: 'Jugador no encontrado.' });
   }
 
   // Notificamos a todos los clientes la nueva lista de jugadores
-  broadcastPlayerList();
+  broadcastPlayerList(roomId);
 
   res.status(200).json({ message: 'Puntuación actualizada correctamente.' });
 };

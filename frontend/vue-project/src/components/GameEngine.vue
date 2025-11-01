@@ -62,60 +62,60 @@ onMounted(async () => {
   console.log('GameEngine mounted. Initial etapa:', etapa.value);
 
   const token = sessionStore.token;
+  const roomIdFromSession = sessionStore.roomId;
+  const playerNameFromSession = sessionStore.playerName;
+
   if (token) {
     try {
       const socketId = await communicationManager.connectAndRegister();
-      const response = await communicationManager.login(sessionStore.playerName, socketId);
+      const response = await communicationManager.login(playerNameFromSession, socketId);
       const player = response.data;
       gameStore.setNombreJugador(player.name);
 
-      if (roomStore.roomId) {
-        // Try to rejoin the room
-        await communicationManager.joinRoom(roomStore.roomId, { name: player.name, socketId: socket.id, token: sessionStore.token });
-        const roomDetails = await communicationManager.getRoomDetails(roomStore.roomId);
-        roomStore.setRoom(roomDetails.data);
-        gameStore.setEtapa('lobby');
+      if (roomIdFromSession) {
+        roomStore.setRoomId(roomIdFromSession);
+        communicationManager.joinRoom(roomIdFromSession);
+        try {
+          const roomDetails = await communicationManager.getRoomDetails(roomIdFromSession);
+          roomStore.setRoom(roomDetails.data);
+          if (roomDetails.data.isPlaying) {
+            gameStore.setEtapa('game');
+          } else {
+            gameStore.setEtapa('lobby');
+          }
+        } catch (error) {
+          if (error.response && error.response.status === 404) {
+            sessionStore.clearRoomId();
+            gameStore.setEtapa('room-selection');
+          } else {
+            throw error;
+          }
+        }
       } else {
-        gameStore.setEtapa('room-selection'); // New stage for room selection
+        gameStore.setEtapa('room-selection');
       }
     } catch (error) {
       console.error('Error al reconectar:', error);
       alert('Error al reconectar: ' + error.message);
-      sessionStore.clearToken(); // Invalid token, clear it
+      sessionStore.clearToken();
+      sessionStore.clearRoomId();
       gameStore.setEtapa('login');
     }
   }
 
-  communicationManager.onPlayerRemoved();
+  
 })
 
 // Watch for roomId changes to set up room-specific socket listeners
-watch(roomId, (newRoomId, oldRoomId) => {
-  if (newRoomId) {
-    communicationManager.onUpdatePlayerList(newRoomId);
-    communicationManager.onUpdateRoomState(newRoomId);
-    socket.emit('join-room', newRoomId); // Make socket join the room
-  } else if (oldRoomId) {
-    // Optionally, handle leaving a room if roomId becomes null
-    socket.emit('leave-room', oldRoomId);
-  }
-});
+
 
 function onLogin(player) {
   gameStore.setNombreJugador(player.name);
   sessionStore.setPlayerName(player.name); // Ensure player name is set in session store
   if (roomStore.roomId) {
     // If a room ID is already set (e.g., from a deep link), try to join it
-    communicationManager.joinRoom(roomStore.roomId, { name: player.name, socketId: socket.id, token: sessionStore.token })
-      .then(response => {
-        roomStore.setRoom(response.data);
-        gameStore.setEtapa('lobby');
-      })
-      .catch(error => {
-        console.error('Error al unirse a la sala:', error);
-        alert('Error al unirse a la sala: ' + error.message);
-        gameStore.setEtapa('room-selection'); // Go to room selection if join fails
-      });
+    communicationManager.joinRoom(roomStore.roomId);
+    gameStore.setEtapa('lobby');
   } else {
     gameStore.setEtapa('room-selection'); // Go to room selection
   }
@@ -149,31 +149,18 @@ watch(etapa, async (newEtapa) => {
 const onGameOver = async (resultados) => {
   console.log('onGameOver called. resultados:', resultados);
 
-  // Construir array que paginaFinal espera: [{ nombre, puntuacion }, ...]
-  const lista = jugadores.value.map(p => ({
-    nombre: p.name ?? p.nombre ?? 'Anon',
-    puntuacion: p.score ?? p.puntuacion ?? 0
-  }))
-
-  if (resultados && resultados.jugador) {
-    const idx = lista.findIndex(p => p.nombre === resultados.jugador)
-    if (idx !== -1) {
-      lista[idx].puntuacion = resultados.puntuacion
-    } else {
-      lista.push({ nombre: resultados.jugador, puntuacion: resultados.puntuacion })
-    }
-  }
-
-  // Si resultados es ya un array, usarlo directamente
-  if (Array.isArray(resultados)) {
-    gameStore.setFinalResults(resultados)
-  } else {
-    gameStore.setFinalResults(lista)
-  }
+  // La lista de jugadores de la sala ya debería tener las puntuaciones finales actualizadas
+  // a través de los eventos de socket. Simplemente la usamos.
+  const finalScores = jugadores.value.map(p => ({
+    nombre: p.name,
+    puntuacion: p.score
+  }));
+  
+  gameStore.setFinalResults(finalScores);
 
   // Cambiar a pantalla final
   gameStore.setEtapa('done')
-
+  
   // Reset estado de palabras para la siguiente partida
   gameStore.setWordsLoaded(false)
 

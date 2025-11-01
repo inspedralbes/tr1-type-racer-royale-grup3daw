@@ -5,7 +5,7 @@ import { communicationManager } from '@/communicationManager'
 const nom = ref('')
 const emit = defineEmits(['login'])
 
-async function login() {
+const login = async () => {
   if (nom.value.trim() === '') {
     alert('Nom no seleccionat, escull un nom')
     return
@@ -42,7 +42,7 @@ async function login() {
       placeholder="Escriu el teu nom"
       @keyup.enter="login"
     />
-    <button class="login-button" @click="login">Entrar</button>
+    <button class="login-button" @click="login()">Entrar</button>
   </div>
   </div>
 </template>

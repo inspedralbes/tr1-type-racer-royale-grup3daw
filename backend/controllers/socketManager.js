@@ -7,6 +7,7 @@ const initializeSockets = (app) => {
   const broadcastPlayerList = (roomId) => {
     const room = stateManager.getRoom(roomId);
     if (room) {
+      console.log('Broadcasting player list:', room.players);
       io.to(roomId).emit('updatePlayerList', room.players);
     }
   };
@@ -35,15 +36,34 @@ const initializeSockets = (app) => {
   io.on('connection', (socket) => {
     console.log(`Nuevo player conectado: ${socket.id}`);
 
-    socket.on('join-room', (roomId) => {
+    socket.on('join-room', (data) => {
+      const { roomId, player } = data;
+      if (!roomId || !player) {
+        return;
+      }
       socket.join(roomId);
+      socket.data.roomId = roomId; // Almacenamos el roomId en el objeto socket
       console.log(`Socket ${socket.id} se unió a la sala ${roomId}`);
-      // Opcional: notificar a otros en la sala que un nuevo jugador se ha unido
+
+      // Añadir jugador a la sala y notificar
+      const result = stateManager.addPlayerToRoom(roomId, player);
+      if (!result.error) {
+        broadcastPlayerList(roomId);
+      }
     });
 
     socket.on('leave-room', (roomId) => {
       socket.leave(roomId);
       console.log(`Socket ${socket.id} abandonó la sala ${roomId}`);
+      delete socket.data.roomId;
+
+      const result = stateManager.removePlayerFromRoom(roomId, socket.id);
+
+      if (result.roomDeleted) {
+        broadcastPublicRoomList();
+      } else if (result.room) {
+        broadcastPlayerList(roomId);
+      }
     });
 
     socket.on('set-ready', (data) => {
@@ -54,40 +74,20 @@ const initializeSockets = (app) => {
 
     socket.on('disconnect', () => {
       console.log(`Cliente desconectado: ${socket.id}`);
+      const playerRoomId = socket.data.roomId;
 
-      // Find the player in registeredPlayers
-      let disconnectedPlayerToken = null;
-      for (const token in stateManager.registeredPlayers) {
-        if (stateManager.registeredPlayers[token].socketId === socket.id) {
-          disconnectedPlayerToken = token;
-          break;
+      // Si el jugador estaba en una sala, lo eliminamos de ella.
+      if (playerRoomId) {
+        const result = stateManager.removePlayerFromRoom(playerRoomId, socket.id);
+
+        if (result.roomDeleted) {
+          broadcastPublicRoomList();
+        } else if (result.room) {
+          broadcastPlayerList(playerRoomId);
         }
       }
-
-      if (disconnectedPlayerToken) {
-        const disconnectedPlayer = stateManager.removeRegisteredPlayer(disconnectedPlayerToken);
-
-        // Find the room the player was in
-        let playerRoomId = null;
-        for (const roomId in stateManager.rooms) {
-          const room = stateManager.rooms[roomId];
-          if (room.players.some(p => p.socketId === socket.id)) {
-            playerRoomId = roomId;
-            break;
-          }
-        }
-
-        if (playerRoomId) {
-          const result = stateManager.removePlayerFromRoom(playerRoomId, socket.id);
-
-          if (result.roomDeleted) {
-            broadcastPublicRoomList();
-          } else {
-            broadcastPlayerList(playerRoomId);
-          }
-          socket.leave(playerRoomId);
-        }
-      }
+      // También eliminamos al jugador del registro global si es necesario.
+      stateManager.removeRegisteredPlayerBySocketId(socket.id);
     });
   });
 };

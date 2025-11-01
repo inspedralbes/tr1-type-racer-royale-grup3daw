@@ -4,6 +4,8 @@ import { useSessionStore } from './stores/session';
 import { useRoomStore } from './stores/room';
 import { useGameStore } from './stores/game';
 
+import { usePublicRoomsStore } from './stores/publicRooms';
+
 let API_BASE_URL;
 let SOCKET_URL;
 
@@ -27,10 +29,45 @@ const apiClient = axios.create({
   },
 });
 
+apiClient.interceptors.request.use((config) => {
+  const sessionStore = useSessionStore();
+  const token = sessionStore.token;
+  if (token) {
+    config.headers.Authorization = token;
+  }
+  return config;
+});
+
 export const socket = io(SOCKET_URL, {
   transports: ['websocket'],
   autoConnect: false,
 });
+
+export function setupSocketListeners() {
+  socket.on('updatePlayerList', (playerList) => {
+    const roomStore = useRoomStore();
+    roomStore.setJugadores(playerList);
+  });
+
+  socket.on('updateRoomState', (roomState) => {
+    const roomStore = useRoomStore();
+    roomStore.setRoomState(roomState);
+    if (roomState.isPlaying) {
+      const gameStore = useGameStore();
+      gameStore.setEtapa('game');
+    }
+  });
+
+  socket.on('player-removed', () => {
+    const gameStore = useGameStore();
+    gameStore.setEtapa('login');
+  });
+
+  socket.on('updatePublicRoomList', (publicRooms) => {
+    const publicRoomsStore = usePublicRoomsStore();
+    publicRoomsStore.setRooms(publicRooms);
+  });
+}
 
 export const communicationManager = {
   // --- REST ---
@@ -57,8 +94,8 @@ export const communicationManager = {
     return apiClient.get('/words');
   },
 
-  async updateScore(name, score) {
-    return apiClient.post('/scores', { name, score });
+  async updateScore(name, score, roomId) {
+    return apiClient.post('/scores', { name, score, roomId });
   },
 
   async getRoomPlayers() {
@@ -83,10 +120,6 @@ export const communicationManager = {
     return apiClient.get(`/rooms/${roomId}`);
   },
 
-  async joinRoom(roomId, player) {
-    return apiClient.post(`/rooms/${roomId}/join`, { player });
-  },
-
   async startGame(roomId) {
     return apiClient.post(`/rooms/${roomId}/start`);
   },
@@ -95,12 +128,12 @@ export const communicationManager = {
     return apiClient.delete('/rooms');
   },
 
-  async removePlayer(roomId, playerSocketId, hostSocketId) {
-    return apiClient.delete(`/rooms/${roomId}/player/${playerSocketId}`, { data: { hostSocketId } });
+  async removePlayer(roomId, playerSocketId) {
+    return apiClient.delete(`/rooms/${roomId}/player/${playerSocketId}`);
   },
 
-  async makeHost(roomId, currentHostSocketId, targetPlayerSocketId) {
-    return apiClient.post(`/rooms/${roomId}/make-host`, { currentHostSocketId, targetPlayerSocketId });
+  async makeHost(roomId, targetPlayerSocketId) {
+    return apiClient.post(`/rooms/${roomId}/make-host`, { targetPlayerSocketId });
   },
 
   async resetReadyStatus(roomId) {
@@ -120,6 +153,12 @@ export const communicationManager = {
     if (!socket.connected) socket.connect();
   },
 
+  joinRoom(roomId) {
+    const sessionStore = useSessionStore();
+    const player = { name: sessionStore.playerName, socketId: socket.id, token: sessionStore.token };
+    socket.emit('join-room', { roomId, player });
+  },
+
   /** Conecta y registra al jugador, devuelve socket.id */
   async connectAndRegister() {
     this.connect();
@@ -131,41 +170,6 @@ export const communicationManager = {
 
     console.log('Jugador conectado con socket ID:', socket.id);
     return socket.id;
-  },
-
-  onUpdatePlayerList(roomId) {
-    socket.off('updatePlayerList');
-    socket.on('updatePlayerList', (playerList) => {
-      const roomStore = useRoomStore();
-      roomStore.setJugadores(playerList);
-    });
-  },
-
-  onUpdateRoomState(roomId) {
-    socket.off('updateRoomState');
-    socket.on('updateRoomState', (roomState) => {
-      const roomStore = useRoomStore();
-      roomStore.setRoomState(roomState);
-      if (roomState.isPlaying) {
-        const gameStore = useGameStore();
-        gameStore.setEtapa('game');
-      }
-    });
-  },
-
-  onPlayerRemoved() {
-    socket.off('player-removed');
-    socket.on('player-removed', () => {
-      const gameStore = useGameStore();
-      gameStore.setEtapa('login');
-    });
-  },
-
-  onUpdatePublicRoomList(callback) {
-    socket.off('updatePublicRoomList');
-    socket.on('updatePublicRoomList', (publicRooms) => {
-      callback(publicRooms);
-    });
   },
 
   sendReadyStatus(isReady) {

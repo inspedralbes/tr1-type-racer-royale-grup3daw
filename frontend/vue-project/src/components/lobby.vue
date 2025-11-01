@@ -1,6 +1,7 @@
 <template>
   <div class="lobby-background">
     <div class="lobby-contenedor">
+      <button class="back-button" @click="goBack">←</button>
       <h1>Lobby</h1>
       <h2>Benvingut, {{ nombreJugador }}!</h2>
       <ul class="lista-jugadores">
@@ -18,6 +19,7 @@
 
       <button class="lobby-button" v-if="isAdmin" @click="goToRoomSettings">Editar Sala</button>
       <button class="lobby-button" v-if="isAdmin" @click="iniciarJuego" :disabled="!isAdmin || !areAllPlayersReady">Començar Joc</button>
+      <button class="lobby-button" @click="logout">Logout</button>
     </div>
   </div>
 </template>
@@ -30,9 +32,11 @@ import { storeToRefs } from 'pinia'
 import { communicationManager, socket } from '../communicationManager'
 import { useGameStore } from '../stores/game';
 import { useRoomStore } from '../stores/room';
+import { useSessionStore } from '../stores/session';
 
 const gameStore = useGameStore();
 const roomStore = useRoomStore();
+const sessionStore = useSessionStore();
 
 const { nombreJugador } = storeToRefs(gameStore);
 const { jugadores } = storeToRefs(roomStore);
@@ -51,11 +55,23 @@ const areAllPlayersReady = computed(() => {
   return jugadores.value.every(p => p.role === 'admin' || p.isReady);
 });
 
+const goBack = () => {
+  socket.emit('leave-room', roomStore.roomId);
+  sessionStore.clearRoomId();
+  gameStore.setEtapa('room-selection');
+};
+
+const logout = () => {
+  socket.emit('leave-room', roomStore.roomId);
+  sessionStore.clearToken();
+  sessionStore.clearRoomId();
+  gameStore.setEtapa('login');
+};
+
 const removePlayer = async (playerSocketId) => {
   if (isAdmin.value) {
     try {
-      const hostSocketId = socket.id;
-      await communicationManager.removePlayer(roomStore.roomId, playerSocketId, hostSocketId); // Pass roomId
+      await communicationManager.removePlayer(roomStore.roomId, playerSocketId); // Pass roomId
       console.log(`Jugador con socketId ${playerSocketId} eliminado.`);
     } catch (error) {
       console.error('Error al eliminar jugador:', error);
@@ -69,8 +85,7 @@ const removePlayer = async (playerSocketId) => {
 const makeHost = async (targetPlayerSocketId) => {
   if (isAdmin.value) {
     try {
-      const currentHostSocketId = socket.id;
-      await communicationManager.makeHost(roomStore.roomId, currentHostSocketId, targetPlayerSocketId); // Pass roomId
+      await communicationManager.makeHost(roomStore.roomId, targetPlayerSocketId); // Pass roomId
       console.log(`Jugador con socketId ${targetPlayerSocketId} es ahora el host.`);
     } catch (error) {
       console.error('Error al hacer host al jugador:', error);
@@ -90,7 +105,7 @@ const toggleReady = () => {
 
 function iniciarJuego() {
   if (isAdmin.value) {
-    communicationManager.startGame()
+    communicationManager.startGame(roomStore.roomId)
       .then(response => {
         console.log(response.data.message)
       })
