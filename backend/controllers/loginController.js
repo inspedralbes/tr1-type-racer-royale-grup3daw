@@ -41,7 +41,7 @@ exports.handleLogin = (req, res) => {
     } else {
       // Si el token existe pero el jugador no se encuentra (ej. el servidor se reinició y los datos se perdieron).
       // Intenta registrar al jugador nuevamente con el token existente y los datos proporcionados.
-      // Primero, verifica si el nombre ya está en uso por otro jugador activo (no por este token).
+      // Primero, verifica si el nombre ya está en uso por otro jugador activo.
       const existingPlayerByName = Object.values(stateManager.registeredPlayers).find(p => p.name === name);
       if (existingPlayerByName) {
         // Si el nombre está en uso por otro jugador, retorna un conflicto.
@@ -52,7 +52,6 @@ exports.handleLogin = (req, res) => {
       return res.status(200).json(reRegisteredPlayer);
     }
   }
-
   // Si no hay token, o el token era inválido y no se pudo re-registrar, procede como un nuevo inicio de sesión.
   // Verifica si el nombre ya está en uso por un jugador actualmente registrado.
   const existingPlayer = Object.values(stateManager.registeredPlayers).find(p => p.name === name);
