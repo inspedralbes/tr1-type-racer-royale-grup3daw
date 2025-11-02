@@ -53,6 +53,21 @@ apiClient.interceptors.request.use((config) => {
   return config;
 });
 
+// Interceptor de respuestas de Axios. Se ejecuta después de recibir cada respuesta.
+// Ideal para manejar errores de API de forma centralizada.
+apiClient.interceptors.response.use(
+  (response) => response, // Si la respuesta es exitosa (2xx), no hace nada.
+  (error) => {
+    // Si hay un error en la respuesta.
+    console.error('Error en la llamada API:', error.response?.data?.message || error.message);
+    // Aquí podrías despachar una acción a un store de notificaciones para mostrar el error en la UI.
+    // Ejemplo: notificationStore.showError(error.response?.data?.message || 'Ocurrió un error inesperado.');
+    
+    // Rechaza la promesa para que el .catch() en el lugar de la llamada original aún pueda ejecutarse si es necesario.
+    return Promise.reject(error);
+  }
+);
+
 // Creación de la instancia del cliente de Socket.IO.
 // `autoConnect: false` significa que la conexión no se establecerá hasta que se llame a `socket.connect()`.
 export const socket = io(SOCKET_URL, {
@@ -91,11 +106,10 @@ export function setupSocketListeners() {
     const publicRoomsStore = usePublicRoomsStore();
 
     // Limpia el sessionStorage y resetea los stores
-    sessionStore.clearSession(); 
+    sessionStore.resetState(); // Corregido: La función en stores/session.js se llama resetState.
     gameStore.resetState();
     roomStore.resetState();
     publicRoomsStore.resetState();
-    sessionStore.resetState(); // Asegura que el estado en memoria también se limpie
 
     gameStore.setEtapa('room-selection');
   });
@@ -109,9 +123,8 @@ export function setupSocketListeners() {
   // Evento: 'join-room-error' - Maneja errores al intentar unirse a una sala.
   socket.on('join-room-error', (error) => {
     console.error('Error al unirse a la sala:', error.message);
-    // Aquí podrías añadir lógica para mostrar el error al usuario,
-    // por ejemplo, usando un store de notificaciones o un alert.
-    alert(error.message);
+    // SUGERENCIA: En lugar de alert, usar un sistema de notificaciones no intrusivo.
+    alert(`Error al unirse a la sala: ${error.message}`);
   });
 
   socket.on('join-room-success', (room) => {
@@ -151,6 +164,15 @@ export const communicationManager = {
     return response;
   },
 
+  // Emite un evento para notificar al backend que el usuario ha cerrado sesión voluntariamente.
+  logout() {
+    const sessionStore = useSessionStore();
+    const token = sessionStore.token;
+    if (token) {
+      socket.emit('explicit-logout', token);
+    }
+  },
+
   // --- Métodos de Juego (REST) ---
 
   // Obtiene la lista de palabras para la partida.
@@ -187,20 +209,9 @@ export const communicationManager = {
     return apiClient.get(`/rooms/${roomId}`);
   },
 
-  // Obtiene la lista de jugadores en una sala.
-  async getPlayersInRoom(roomId) {
-    const response = await apiClient.get(`/rooms/${roomId}`);
-    return response.data.players;
-  },
-
   // Envía la señal para iniciar la partida en una sala.
   async startGame(roomId) {
     return apiClient.post(`/rooms/${roomId}/start`);
-  },
-
-  // (Obsoleto/No usado) Resetea una sala.
-  async resetRoom() {
-    return apiClient.delete('/rooms');
   },
 
   async removePlayer(roomId, playerSocketId) {
@@ -240,6 +251,16 @@ export const communicationManager = {
     socket.emit('join-room', { roomId, player });
   },
 
+  // Emite el evento para cambiar el estado de "listo" del jugador.
+  sendReadyStatus(isReady) {
+    const roomStore = useRoomStore();
+    const roomId = roomStore.roomId;
+    if (roomId) {
+      // El backend espera el evento 'set-ready' con el roomId y el estado.
+      socket.emit('set-ready', { roomId, isReady });
+    }
+  },
+
   /**
    * Proceso combinado de conexión y registro.
    * 1. Asegura que el socket esté conectado.
@@ -265,5 +286,5 @@ export const communicationManager = {
     sessionStore.setPlayerName(response.data.name);
     return response.data;
   },
-
-  // Em
+};
+    
