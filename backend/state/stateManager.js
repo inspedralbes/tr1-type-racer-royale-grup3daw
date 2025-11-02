@@ -132,6 +132,12 @@ const addPlayerToRoom = (roomId, player, isHost = false) => {
     return { player: existingPlayer, room };
   }
 
+  // Actualizar el jugador registrado con el roomId
+  const registeredPlayer = findRegisteredPlayerByToken(token);
+  if (registeredPlayer) {
+    registeredPlayer.roomId = roomId;
+  }
+
   const newPlayer = {
     name,
     score: 0,
@@ -143,7 +149,6 @@ const addPlayerToRoom = (roomId, player, isHost = false) => {
   };
 
   room.players.push(newPlayer);
-  newPlayer.roomId = roomId; // Guardar roomId en el objeto del jugador
   return { room };
 };
 
@@ -182,6 +187,12 @@ const removePlayerFromRoom = (roomId, playerSocketId) => {
   }
 
   const removedPlayer = room.players.splice(index, 1)[0];
+
+  // Limpiar el roomId del jugador registrado
+  const registeredPlayer = findRegisteredPlayerByToken(removedPlayer.token);
+  if (registeredPlayer) {
+    delete registeredPlayer.roomId;
+  }
 
   if (room.players.length === 0) {
     delete rooms[roomId];

@@ -105,32 +105,41 @@ const initializeSockets = (app) => {
 
       if (token) {
         const player = stateManager.findRegisteredPlayerByToken(token);
-        if (player && player.roomId) {
-          // En lugar de eliminarlo inmediatamente, lo marca como desconectado.
-          const { room } = stateManager.setPlayerDisconnected(player.roomId, token, true);
-          broadcastPlayerList(player.roomId);
-
-          // Inicia un temporizador. Si el jugador no se ha reconectado cuando el temporizador
-          // termine, será eliminado permanentemente de la sala y del registro.
-          setTimeout(() => {
-            const roomAfterTimeout = stateManager.getRoom(player.roomId);
-            if (roomAfterTimeout) {
-              const playerAfterTimeout = roomAfterTimeout.players.find(p => p.token === token);
-
-              // Si el jugador todavía existe y sigue desconectado, eliminarlo
-              if (playerAfterTimeout && playerAfterTimeout.disconnected) {
-                console.log(`Tiempo de reconexión agotado para el jugador con token ${token}. Eliminando...`);
-                const result = stateManager.removePlayerFromRoomByToken(player.roomId, token);
-                stateManager.removeRegisteredPlayer(token); // Eliminar del registro global
-
-                if (result.roomDeleted) {
-                  broadcastPublicRoomList();
-                } else if (result.room) {
-                  broadcastPlayerList(player.roomId);
+        if (player) {
+          if (player.roomId) {
+            // CASO 1: El jugador estaba en una sala.
+            // Lo marcamos como desconectado y le damos tiempo para reconectarse.
+            console.log(`Jugador con token ${token} desconectado de la sala ${player.roomId}. Iniciando temporizador de reconexión.`);
+            stateManager.setPlayerDisconnected(player.roomId, token, true);
+            broadcastPlayerList(player.roomId);
+  
+            // Inicia un temporizador. Si el jugador no se ha reconectado cuando el temporizador
+            // termine, será eliminado permanentemente de la sala y del registro.
+            setTimeout(() => {
+              const roomAfterTimeout = stateManager.getRoom(player.roomId);
+              if (roomAfterTimeout) {
+                const playerAfterTimeout = roomAfterTimeout.players.find(p => p.token === token);
+  
+                // Si el jugador todavía existe y sigue desconectado, eliminarlo.
+                if (playerAfterTimeout && playerAfterTimeout.disconnected) {
+                  console.log(`Tiempo de reconexión agotado para el jugador con token ${token}. Eliminando...`);
+                  const result = stateManager.removePlayerFromRoomByToken(player.roomId, token);
+                  stateManager.removeRegisteredPlayer(token); // Eliminar del registro global
+  
+                  if (result.roomDeleted) {
+                    broadcastPublicRoomList();
+                  } else if (result.room) {
+                    broadcastPlayerList(player.roomId);
+                  }
                 }
               }
-            }
-          }, 30000); // 30 segundos de tiempo de gracia
+            }, 30000); // 30 segundos de tiempo de gracia
+          } else {
+            // CASO 2: El jugador no estaba en ninguna sala (ej. en la pantalla de selección).
+            // Lo eliminamos del registro inmediatamente.
+            console.log(`Jugador con token ${token} desconectado (no estaba en una sala). Eliminando del registro.`);
+            stateManager.removeRegisteredPlayer(token);
+          }
         }
       }
     });
