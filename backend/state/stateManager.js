@@ -132,6 +132,10 @@ const addPlayerToRoom = (roomId, player, isHost = false) => {
     return { player: existingPlayer, room };
   }
 
+  if (room.isPlaying) {
+    return { error: 'La partida ya ha comenzado.' };
+  }
+
   const newPlayer = {
     name,
     score: 0,

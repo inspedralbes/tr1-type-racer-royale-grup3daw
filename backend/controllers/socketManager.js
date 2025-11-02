@@ -61,15 +61,21 @@ const initializeSockets = (app) => {
         socket.emit('join-room-error', { message: 'Faltan datos para unirse a la sala.' });
         return;
       }
+      const result = stateManager.addPlayerToRoom(roomId, player);
+      if (result.error) {
+        socket.emit('join-room-error', { message: result.error });
+        return;
+      }
+
       socket.join(roomId);
-      socket.data.roomId = roomId; // Almacenamos el roomId en el objeto socket para fácil acceso.
+      socket.data.roomId = roomId;
       console.log(`Socket ${socket.id} se unió a la sala ${roomId}`);
 
-      // Añadir jugador a la sala y notificar
-      const result = stateManager.addPlayerToRoom(roomId, player);
-      if (!result.error) {
-        broadcastPlayerList(roomId);
-      }
+      // Emit success event to the joining client
+      socket.emit('join-room-success', result.room);
+
+      // Notificar a todos en la sala sobre el nuevo jugador
+      broadcastPlayerList(roomId);
     });
 
     // Listener para cuando un cliente abandona una sala.
