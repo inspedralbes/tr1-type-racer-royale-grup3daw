@@ -85,9 +85,9 @@ const fetchPublicRooms = async () => {
   }
 };
 
-const joinRoom = async () => {
+const joinRoom = () => {
   if (!joinRoomId.value) return;
-  await joinRoomById(joinRoomId.value);
+  joinRoomById(joinRoomId.value);
 };
 
 /**
@@ -97,15 +97,7 @@ const joinRoom = async () => {
  * - Cambia la etapa del juego a 'lobby' para mostrar la sala de espera.
  */
 const joinRoomById = (roomId) => {
-  try {
-    communicationManager.joinRoom(roomId);
-    roomStore.setRoomId(roomId);
-    sessionStore.setRoomId(roomId);
-    gameStore.setEtapa('lobby');
-  } catch (error) {
-    console.error('Error al unirse a la sala:', error);
-    alert('Error al unirse a la sala: ' + (error.response?.data?.message || error.message));
-  }
+  communicationManager.joinRoom(roomId);
 };
 
 /**

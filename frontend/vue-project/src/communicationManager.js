@@ -111,6 +111,17 @@ export function setupSocketListeners() {
     // por ejemplo, usando un store de notificaciones o un alert.
     alert(error.message);
   });
+
+  socket.on('join-room-success', (room) => {
+    const roomStore = useRoomStore();
+    const sessionStore = useSessionStore();
+    const gameStore = useGameStore();
+
+    roomStore.setRoomId(room.id);
+    roomStore.setRoomState(room);
+    sessionStore.setRoomId(room.id);
+    gameStore.setEtapa('lobby');
+  });
 }
 
 // Objeto que agrupa todos los métodos de comunicación con el backend.
