@@ -34,16 +34,14 @@ exports.handleLogin = (req, res) => {
     if (player) {
       // Si el jugador es encontrado, actualiza su socketId (ya que pudo haber cambiado).
       stateManager.updateRegisteredPlayerSocketId(token, socketId);
-      // Busca si el jugador está en alguna sala para devolver el roomId.
-      const room = Object.values(stateManager.getRooms()).find(r => r.players.some(p => p.token === token));
-      const roomId = room ? room.id : null;
+      // El roomId ya está en el objeto del jugador registrado.
       
       // Retorna los datos del jugador, incluyendo la página actual y el ID de la sala si está en una.
-      return res.status(200).json({ ...player, currentPage: player.currentPage, roomId: roomId });
+      return res.status(200).json({ ...player, currentPage: player.currentPage, roomId: player.roomId || null });
     } else {
       // Si el token existe pero el jugador no se encuentra (ej. el servidor se reinició y los datos se perdieron).
       // Intenta registrar al jugador nuevamente con el token existente y los datos proporcionados.
-      // Primero, verifica si el nombre ya está en uso por otro jugador activo (no por este token).
+      // Primero, verifica si el nombre ya está en uso por otro jugador activo.
       const existingPlayerByName = Object.values(stateManager.registeredPlayers).find(p => p.name === name);
       if (existingPlayerByName) {
         // Si el nombre está en uso por otro jugador, retorna un conflicto.
@@ -54,7 +52,6 @@ exports.handleLogin = (req, res) => {
       return res.status(200).json(reRegisteredPlayer);
     }
   }
-
   // Si no hay token, o el token era inválido y no se pudo re-registrar, procede como un nuevo inicio de sesión.
   // Verifica si el nombre ya está en uso por un jugador actualmente registrado.
   const existingPlayer = Object.values(stateManager.registeredPlayers).find(p => p.name === name);

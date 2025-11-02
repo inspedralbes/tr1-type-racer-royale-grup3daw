@@ -144,8 +144,9 @@ Actualiza la puntuación de un jugador.
 *   **Request Body (JSON):**
     ```json
     {
-      "name": "nombreDelJugador",
-      "score": 120
+      "roomId": "id_de_la_sala",
+      "name": "nombreDelJugador", // O mejor, el token del jugador
+      "score": 120 
     }
     ```
 *   **Efecto Secundario:** Emite un evento `updatePlayerList` a todos los clientes.
