@@ -90,10 +90,12 @@ export function setupSocketListeners() {
     const roomStore = useRoomStore();
     const publicRoomsStore = usePublicRoomsStore();
 
-    sessionStore.resetState();
+    // Limpia el sessionStorage y resetea los stores
+    sessionStore.clearSession(); 
     gameStore.resetState();
     roomStore.resetState();
     publicRoomsStore.resetState();
+    sessionStore.resetState(); // Asegura que el estado en memoria también se limpie
 
     gameStore.setEtapa('room-selection');
   });
@@ -264,14 +266,4 @@ export const communicationManager = {
     return response.data;
   },
 
-  // Emite el evento para cambiar el estado de "listo" del jugador.
-  sendReadyStatus(isReady) {
-    const roomStore = useRoomStore(); // Get roomStore
-    socket.emit('set-ready', { roomId: roomStore.roomId, isReady }); // Send roomId
-  },
-
-  // Desconecta el socket.
-  disconnect() {
-    socket.disconnect();
-  }
-};
+  // Em

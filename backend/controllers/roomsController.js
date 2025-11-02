@@ -148,6 +148,13 @@ exports.startGame = (req, res) => {
  */
 exports.removePlayer = (req, res) => {
   const { roomId, socketId } = req.params;
+  const io = req.app.get('io');
+
+  // Obtener el socket del jugador a eliminar
+  const socketToRemove = io.sockets.sockets.get(socketId);
+  if (socketToRemove) {
+    socketToRemove.leave(roomId);
+  }
 
   // Elimina al jugador de la sala a través del stateManager.
   const result = stateManager.removePlayerFromRoom(roomId, socketId);
@@ -167,7 +174,6 @@ exports.removePlayer = (req, res) => {
   }
 
   // Notifica al jugador específico que ha sido expulsado de la sala.
-  const io = req.app.get('io');
   io.to(socketId).emit('player-removed');
 
   // Elimina al jugador del registro global de jugadores.

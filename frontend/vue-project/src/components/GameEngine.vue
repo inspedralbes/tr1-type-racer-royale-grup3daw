@@ -134,11 +134,12 @@ const { jugadores, roomState, roomId } = storeToRefs(roomStore);
           alert('Error al reconectar la sesión: ' + error.message);
           // Si la reconexión falla, limpia todos los datos de sesión y estado,
           // y redirige al usuario a la pantalla de login.
-          sessionStore.resetState();
-          gameStore.resetState(); // Also reset gameStore to clear playerName
+          sessionStore.clearSession();
+          gameStore.resetState();
           roomStore.resetState();
           publicRoomsStore.resetState();
-          gameStore.setEtapa('login');
+          sessionStore.resetState(); // Limpia el estado en memoria de pinia
+          gameStore.setEtapa('login'); // Finalmente, redirige a login
         }
       } else {
         // Si no hay sesión, se asegura de que el estado esté limpio y muestra la pantalla de login.
