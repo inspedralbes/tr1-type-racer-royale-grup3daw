@@ -8,13 +8,12 @@
         3. Crear una nueva sala, lo que le llevará a la pantalla de configuración (`RoomSettings`).
         También incluye un botón de "Logout" para cerrar la sesión.
       -->
-      <button class="lobby-button logout-button" @click="logoutAndReset">Logout</button>
       <h2>Seleccionar Sala</h2>
 
       <div class="section">
         <h3>Unirse a una sala existente</h3>
         <input type="text" v-model="joinRoomId" placeholder="ID de la sala" />
-        <button @click="joinRoom">Unirse</button>
+        <button class="joinId-button" @click="joinRoom">Unirse</button>
       </div>
 
       <div class="section">
@@ -22,17 +21,18 @@
         <ul v-if="publicRooms.length">
           <li v-for="room in publicRooms" :key="room.id">
             {{ room.name }} (ID: {{ room.id }}) - {{ room.players.length }} jugadores
-            <button @click="joinRoomById(room.id)">Unirse</button>
+            <button class="joinPublic-button" @click="joinRoomById(room.id)">Unirse</button>
           </li>
         </ul>
         <p v-else>No hay salas públicas disponibles.</p>
-        <button @click="fetchPublicRooms">Actualizar Salas</button>
+        <button class="actualizar-button" @click="fetchPublicRooms">Actualizar Salas</button>
       </div>
 
       <div class="section">
         <h3>Crear nueva sala</h3>
-        <button @click="createRoom">Crear Sala</button>
+        <button class="crear-button" @click="createRoom">Crear Sala</button>
       </div>
+      <button class="logout-button" @click="logoutAndReset">Logout</button>
     </div>
   </div>
 </template>

@@ -32,3 +32,70 @@ div.room-selection-container{
   text-align: center;
   padding: 20px;
 }
+
+button.logout-button{
+  font-family: 'PressStart2P', sans-serif;
+  background-color: rgba(255, 255, 255, 0.8);
+  color: black;
+  border: 2px solid black;
+  padding: 8px 10px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 0.6em;
+  margin: 10px 0 0 5px;
+  transition: background-color 0.2s, color 0.2s;
+  position: absolute;
+  left: 1%;
+  top: 85%;
+}
+
+button.joinId-button{
+  font-family: 'PressStart2P', sans-serif;
+  background-color: rgba(255, 255, 255, 0.8);
+  color: black;
+  border: 2px solid black;
+  border-radius: 5px;
+  padding: 7px 10px;
+  margin: 5px;
+  cursor: pointer;
+  font-size: 0.8em;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+button.joinPublic-button{
+  font-family: 'PressStart2P', sans-serif;
+  background-color: rgba(255, 255, 255, 0.8);
+  color: black;
+  border: 2px solid black;
+  border-radius: 5px;
+  padding: 5px 7px 5px 10px;
+  cursor: pointer;
+  font-size: 0.8em;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+button.actualizar-button{
+  font-family: 'PressStart2P', sans-serif;
+  background-color: rgba(255, 255, 255, 0.8);
+  color: black;
+  border: 2px solid black;
+  border-radius: 5px;
+  padding: 7px 10px;
+  margin: 5px;
+  cursor: pointer;
+  font-size: 0.8em;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+button.crear-button{
+  font-family: 'PressStart2P', sans-serif;
+  background-color: rgba(255, 255, 255, 0.8);
+  color: black;
+  border: 2px solid black;
+  border-radius: 5px;
+  padding: 7px 10px;
+  margin: 5px;
+  cursor: pointer;
+  font-size: 0.8em;
+  transition: background-color 0.2s, color 0.2s;
+}
