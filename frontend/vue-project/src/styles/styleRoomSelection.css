@@ -99,3 +99,18 @@ button.crear-button{
   font-size: 0.8em;
   transition: background-color 0.2s, color 0.2s;
 }
+
+ul.roomList{
+    background-color: rgba(255, 255, 255, 0.8);
+    border: 2px solid black;
+    padding: 20px 30px;
+    border-radius: 5px;
+}
+
+li.room{
+  padding: 5px;
+}
+
+h3{
+  text-decoration: underline;
+ }

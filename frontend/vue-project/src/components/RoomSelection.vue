@@ -18,8 +18,8 @@
 
       <div class="section">
         <h3>Salas Públicas</h3>
-        <ul v-if="publicRooms.length">
-          <li v-for="room in publicRooms" :key="room.id">
+        <ul class="roomList" v-if="publicRooms.length">
+          <li class="room" v-for="room in publicRooms" :key="room.id">
             {{ room.name }} (ID: {{ room.id }}) - {{ room.players.length }} jugadores
             <button class="joinPublic-button" @click="joinRoomById(room.id)">Unirse</button>
           </li>
