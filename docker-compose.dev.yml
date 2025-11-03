@@ -17,7 +17,7 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
     environment:
-      - VITE_NODE_ENV=development
+      VITE_NODE_ENV: development
     ports:
       - "5173:5173" # Expone el puerto de desarrollo de Vite al host.
     volumes:

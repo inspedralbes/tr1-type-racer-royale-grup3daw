@@ -154,16 +154,6 @@ export const communicationManager = {
     sessionStore.setToken(token);
   },
 
-  // Realiza el login o registro en el backend.
-  async login(name, socketId) {
-    const token = this.getToken();
-    const response = await apiClient.post('/login', { name, socketId, token });
-    if (response.data.token) {
-      this.setToken(response.data.token);
-    }
-    return response;
-  },
-
   // Emite un evento para notificar al backend que el usuario ha cerrado sesión voluntariamente.
   logout() {
     const sessionStore = useSessionStore();
@@ -267,10 +257,8 @@ export const communicationManager = {
    * 2. Llama al endpoint de login/registro del backend, que gestiona tanto nuevos jugadores como reconexiones.
    * 3. Devuelve los datos del jugador recibidos del backend.
    */
-  async connectAndRegister(name) {
+  async connectAndRegister(username) {
     const sessionStore = useSessionStore();
-    const existingToken = sessionStore.token;
-
     this.connect();
     await new Promise((resolve) => {
       if (socket.connected) return resolve();
@@ -279,12 +267,13 @@ export const communicationManager = {
 
     console.log('Socket conectado con ID:', socket.id);
 
-    // Llama al método de login, pasando el token existente si lo hay.
-    // El backend se encargará de la lógica de si es un login nuevo o una reconexión.
-    const response = await this.login(name, socket.id, existingToken);
+    // The token is already in the session store and will be sent with the socket connection
+    // The backend will handle the rest
+    socket.auth = { token: sessionStore.token };
+    socket.connect();
 
-    sessionStore.setPlayerName(response.data.name);
-    return response.data;
+    sessionStore.setPlayerName(username);
+    return { name: username };
   },
 };
     

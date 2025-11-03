@@ -152,8 +152,16 @@ const initializeSockets = (app) => {
 
     // Listener para un logout explícito (ej. el usuario cierra sesión).
     socket.on('explicit-logout', (token) => {
-      // Elimina al jugador del registro global inmediatamente.
       console.log(`Jugador con token ${token} ha solicitado logout explícito.`);
+      const player = stateManager.findRegisteredPlayerByToken(token);
+      if (player && player.roomId) {
+        const result = stateManager.removePlayerFromRoomByToken(player.roomId, token);
+        if (result.roomDeleted) {
+          broadcastPublicRoomList();
+        } else if (result.room) {
+          broadcastPlayerList(player.roomId);
+        }
+      }
       stateManager.removeRegisteredPlayer(token);
     });
   });
