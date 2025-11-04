@@ -1,9 +1,9 @@
 main {
   height: 100vh;
   width: 100vw;
-  display: flex; /* Make main a flex container */
-  justify-content: center; /* Center horizontally */
-  align-items: center; /* Center vertically */
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 div.joc-background {
@@ -22,13 +22,37 @@ div.joc-background {
   display: flex;
   justify-content: center;
   align-items: center;
-  background-color: #b0d7ff;
+  background-color: rgba(255, 255, 255, 0.5);
 }
 
 .game-content-wrapper {
   display: flex;
-  gap: 20px; /* Spacing between elements */
-  align-items: flex-start; /* Align items to the top */
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  width: 100%;
+  min-height: 400px;
+}
+
+/* Create a central column that will be centered in the viewport. Side panels are positioned absolutely so
+   they don't affect the flow and push the center off-screen. */
+.game-center-column {
+  width: 640px; /* center column width - room for the word and input */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.game-info-left {
+  position: absolute;
+  left: 30px;
+  top: 50%;
+  transform: translateY(-40%);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background-color: #d15cff;
+  padding: 10px;
 }
 
 .paraules-previstes {
@@ -45,8 +69,14 @@ div.joc-background {
 }
 
 .paraula-actual {
-    background-color: #9dff9d;
-    padding: 20px;
+  background-color: #9dff9d;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 45%;
+  box-sizing: border-box;
 }
 
 .paraula-actual h1 {
@@ -60,9 +90,13 @@ div.joc-background {
 }
 
 .puntuacions {
-  width: 350px;
+  width: 320px;
+  max-width: 35vw;
   background-color: #ff5c5c;
-  padding: 20px;
+  padding: 10px;
+  position: absolute;
+  right: 30px;
+  top: 10%;
 }
 
 .puntuacions h2 {
@@ -73,4 +107,13 @@ div.joc-background {
   list-style: none;
   padding: 0;
   background-color: #5badff;
+}
+
+.back-button {
+  position: absolute;
+  top: -27%;
+  left: 2%;
+  background: none;
+  border: none;
+  cursor: pointer;
 }

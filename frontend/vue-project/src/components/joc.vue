@@ -258,55 +258,39 @@
     <!-- Contenedor principal del juego con un fondo específico. -->
     <div class="joc-background">
         <div class="game-container">
-        <!-- Botón para regresar al lobby. -->
-        <button class="back-button" @click="backToLobby">←</button>
-        <!-- Saludo al jugador. -->
-        <h2>Ànims, {{ nombreJugador }}!</h2>
-
-        <!-- Contenido del juego mientras no ha terminado. -->
-        <div v-if="!gameEnded">
-            <p>Tiempo restante: {{ timeLeft }}s</p>
-            <p>Puntuación: {{ score }}</p>
-            <main class="joc" v-if="estatDelJoc.paraules.length > 0">
-                <div class="game-content-wrapper">
-                    <div class="paraula-actual">
-                        <!-- Muestra la palabra actual letra por letra, aplicando estilos según si son correctas o incorrectas. -->
-                        <h1>
-                            <span v-for="(lletra, index) in paraulaActiva.text" :key="index" :class="obtenirClasseLletra(lletra, index)">
-                                {{ lletra }}
-                            </span>
-                        </h1>
-                        <!-- Campo de entrada para que el usuario escriba la palabra. -->
-                        <input type="text" v-model="estatDelJoc.textEntrat" @input="validarProgres" autofocus />
+            <!-- Contenido del juego mientras no ha terminado. -->
+            <div v-if="!gameEnded">
+                <!-- Botón para regresar al lobby. -->
+                <main class="joc" v-if="estatDelJoc.paraules.length > 0">
+                    <div class="game-content-wrapper">
+                        <button class="back-button" @click="backToLobby">←</button>
+                        <!-- Left info column -->
+                        <div class="game-info-left">
+                            <p>Tiempo restante: {{ timeLeft }}s</p>
+                            <p>Puntuación: {{ score }}</p>
+                        </div>
+                        <!-- Centered word input -->
+                        <div class="paraula-actual">
+                            <h1>
+                                <span v-for="(lletra, index) in paraulaActiva.text" :key="index" :class="obtenirClasseLletra(lletra, index)">
+                                    {{ lletra }}
+                                </span>
+                            </h1>
+                            <input type="text" v-model="estatDelJoc.textEntrat" @input="validarProgres" autofocus />
+                        </div>
+                        <!-- Right: player scores -->
+                        <div class="puntuacions">
+                            <h2>Classificació</h2>
+                            <ul id="llista-jugadors">
+                                <li v-for="jugador in jugadores" :key="jugador.name">
+                                    <strong>{{ jugador.name }}</strong> - {{ jugador.score }} punts
+                                </li>
+                            </ul>
+                        </div>
                     </div>
-
-                    <!-- Sección lateral con la clasificación de jugadores. -->
-                    <div class="puntuacions">
-                        <h2>Classificació</h2>
-                        <ul id="llista-jugadors">
-                            <li v-for="jugador in jugadores" :key="jugador.name">
-                                <strong>{{ jugador.name }}</strong> - {{ jugador.score }} punts
-                            </li>
-                        </ul>
-                    </div>
-                </div>
-            </main>
+                </main>
+            </div>
         </div>
-
-        <!-- Pantalla de fin de juego, visible cuando `gameEnded` es true. -->
-        <div v-else class="game-end-screen">
-            <h2>¡Juego Terminado!</h2>
-            <p>Tu puntuación final: {{ score }}</p>
-            <h3>Clasificación Final</h3>
-            <ul id="llista-jugadors-final">
-                <li v-for="jugador in jugadores" :key="jugador.name">
-                    <strong>{{ jugador.name }}</strong> - {{ jugador.score }} punts
-                </li>
-            </ul>
-            <!-- Botón para volver al lobby después de que el juego ha terminado. -->
-            <button class="lobby-button" @click="backToLobby">Volver al Lobby</button>
-        </div>
-    </div>
     </div>
     
 </template>
