@@ -14,6 +14,7 @@ div.selection-background{
   position: absolute;
   top: 0;
   left: 0;
+  background-image: url(../img/estacion.png);
   width: 100vw;
   height: 100vh;
   background-repeat: no-repeat;
@@ -23,7 +24,6 @@ div.selection-background{
 
 div.room-selection-container{
   position: absolute;
-  background-image: url(../img/estacion.png);
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);

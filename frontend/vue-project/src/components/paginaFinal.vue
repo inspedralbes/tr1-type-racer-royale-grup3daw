@@ -57,7 +57,7 @@ function volverAJugar() {
           <span v-else>#{{ index + 1 }}</span>
         </span>
         
-        <span>{{ jugador.nombre }}</span>
+        <span>{{ jugador.nombre }}&nbsp;</span>
         <span >{{ jugador.puntuacion }} Puntos</span>
       </li>
     </ol>
