@@ -18,6 +18,7 @@ const scoresRoutes = require('./routes/scoresRoutes');
 const wordsRoutes = require('./routes/wordsRoutes');
 const playerRoutes = require('./routes/playerRoutes');
 const userRoutes = require('./routes/userRoutes');
+const userAdminRoutes = require('./routes/userAdminRoutes');
 const { initializeSockets } = require('./controllers/socketManager');
 
 // Creación de la aplicación Express y el servidor HTTP.
@@ -69,6 +70,7 @@ app.use('/api/scores', scoresRoutes);
 app.use('/api/words', wordsRoutes);
 app.use('/api/player', playerRoutes);
 app.use('/api/user', userRoutes);
+app.use('/api/user-admin', userAdminRoutes);
 
 // Middleware de depuración temporal para las rutas de jugador.
 app.use('/api/player', (req, res, next) => {
