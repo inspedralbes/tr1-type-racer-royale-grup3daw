@@ -28,6 +28,7 @@
       <button class="lobby-button" v-if="isAdmin" @click="goToRoomSettings">Editar Sala</button>
       <button class="lobby-button" v-if="isAdmin" @click="iniciarJuego" :disabled="!isAdmin || !areAllPlayersReady">Començar Joc</button>
     </div>
+    <img class="naves" :src="naveActual" @click="cambiarNave" />
   </div>
 </template>
 
@@ -36,7 +37,7 @@
 
 <script setup>
 // Importaciones de Vue y Pinia para la gestión del estado y la reactividad.
-import { computed, onMounted } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { storeToRefs } from 'pinia'
 // Importaciones de módulos de comunicación y stores personalizados.
 import { communicationManager, socket } from '../communicationManager'
@@ -45,11 +46,35 @@ import { useRoomStore } from '../stores/room';
 import { useSessionStore } from '../stores/session';
 import { usePublicRoomsStore } from '../stores/publicRooms';
 
+import imgNaveRoja from '../img/naveRoja.png'
+import imgNaveAzul from '../img/naveAzul.png'
+import imgNaveVerde from '../img/naveVerde.png'
+import imgNaveAmarilla from '../img/naveAmarilla.png'
+
 // Inicialización de los stores.
 const gameStore = useGameStore();
 const roomStore = useRoomStore();
 const sessionStore = useSessionStore();
 const publicRoomsStore = usePublicRoomsStore();
+
+//Carrusel de imagenes
+const naveRoja = ref(imgNaveRoja);
+const naveAzul = ref(imgNaveAzul);
+const naveVerde = ref(imgNaveVerde);
+const naveAmarilla = ref(imgNaveAmarilla);
+const naveActual = ref(naveRoja.value);
+
+function cambiarNave() {
+  if (naveActual.value === naveRoja.value) {
+    naveActual.value = naveAzul.value;
+  } else if (naveActual.value === naveAzul.value) {
+    naveActual.value = naveVerde.value;
+  } else if (naveActual.value === naveVerde.value) {
+    naveActual.value = naveAmarilla.value;
+  } else {
+    naveActual.value = naveRoja.value;
+  }
+}
 
 // Hook `onMounted` que se ejecuta cuando el componente ha sido montado.
 onMounted(async () => {
