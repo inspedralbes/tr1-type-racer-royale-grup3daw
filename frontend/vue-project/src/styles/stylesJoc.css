@@ -46,11 +46,10 @@ div.joc-background {
 .game-info-left {
   position: absolute;
   left: 30px;
-  top: 50%;
+  top: 20%;
   transform: translateY(-40%);
   display: flex;
   flex-direction: column;
-  gap: 8px;
   background-color: #d15cff;
   padding: 10px;
 }
@@ -75,7 +74,7 @@ div.joc-background {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  width: 45%;
+  width: 42%;
   box-sizing: border-box;
 }
 
@@ -96,7 +95,7 @@ div.joc-background {
   padding: 10px;
   position: absolute;
   right: 30px;
-  top: 10%;
+  top: -10%;
 }
 
 .puntuacions h2 {
