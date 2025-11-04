@@ -22,7 +22,7 @@ div.joc-background {
   display: flex;
   justify-content: center;
   align-items: center;
-  background-color: rgba(255, 255, 255, 0.5);
+  background-color: rgba(255, 255, 255, 0.0);
 }
 
 .game-content-wrapper {
@@ -34,13 +34,14 @@ div.joc-background {
   min-height: 400px;
 }
 
-/* Create a central column that will be centered in the viewport. Side panels are positioned absolutely so
-   they don't affect the flow and push the center off-screen. */
-.game-center-column {
-  width: 640px; /* center column width - room for the word and input */
+.center-column {
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
+  gap: 12px;
+  /* make sure it doesn't push other absolute elements */
+  margin: 0 12px;
 }
 
 .game-info-left {
@@ -50,32 +51,83 @@ div.joc-background {
   transform: translateY(-40%);
   display: flex;
   flex-direction: column;
-  background-color: #d15cff;
   padding: 10px;
-}
-
-.paraules-previstes {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-  background-color: #fff022;
-  padding: 10px;
-}
-
-.paraules-previstes .paraula.active-word {
-  font-weight: bold;
-  color: blue; /* Ejemplo de estilo para la palabra activa */
+  background-color: rgba(0, 0, 0, 0.5);
+  border-radius: 15px;
+  border: rgb(197, 197, 197) 3px solid;
+  color: rgb(197, 197, 197);
 }
 
 .paraula-actual {
-  background-color: #9dff9d;
   padding: 20px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  width: 42%;
+  width: 100%;
   box-sizing: border-box;
+  background-color: rgba(0, 0, 0, 1);
+  border-radius: 15px;
+  border: rgb(197, 197, 197) 3px solid;
+  color: rgb(197, 197, 197);
+}
+
+/* Stack container inside the active word box */
+.stack-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end; /* bottom item is the current word */
+  gap: 8px;
+  width: 100%;
+  --stack-item-height: 56px;
+  /* Reserve space for up to 5 stacked items (4 upcoming + current) */
+  height: calc(var(--stack-item-height) * 5 + 8px * 4);
+  box-sizing: border-box;
+  overflow: hidden;
+  position: relative;
+}
+.stack-item {
+  height: var(--stack-item-height);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  font-size: 1.8rem;
+  color: #007baf;
+  background: transparent;
+}
+
+/* Stack transition: current word vanishes, next slides down and scales up */
+.stack-enter-from {
+  opacity: 0;
+  transform: translateY(-28px) scale(0.75);
+}
+.stack-enter-active {
+  transition: transform 360ms cubic-bezier(.22,.9,.34,1), opacity 260ms ease;
+}
+.stack-leave-to {
+  opacity: 0;
+  transform: translateY(8px) scale(0.7);
+}
+.stack-leave-active {
+  transition: transform 220ms ease, opacity 180ms ease;
+}
+.stack-move {
+  transition: transform 240ms cubic-bezier(.22,.9,.34,1);
+}
+
+/* Current item target size */
+.stack-item.current {
+  font-size: 2rem;
+  color: #00a3d6;
+  transform: scale(1);
+}
+
+.visually-hidden {
+  position: absolute !important;
+  height: 1px; width: 1px;
+  overflow: hidden; clip: rect(1px, 1px, 1px, 1px);
 }
 
 .paraula-actual h1 {
@@ -115,4 +167,52 @@ div.joc-background {
   background: none;
   border: none;
   cursor: pointer;
+}
+
+
+/* Vertical preview placed outside the main active-word box */
+.next-words-vertical {
+  display: flex;
+  /* visually stack so the last item (index 0 is top) appears at the bottom */
+  flex-direction: column-reverse;
+  gap: 8px;
+  align-self: center;
+  max-width: 320px;
+  width: 100%;
+  text-align: center;
+  /* Reserve fixed space for up to 4 items to avoid page reflow when they move */
+  --preview-item-height: 40px;
+  height: calc(var(--preview-item-height) * 4 + 8px * 3);
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+/* Transition-group animations for preview list */
+.preview-enter-from,
+.preview-leave-to {
+  opacity: 0;
+  transform: translateY(10px);
+}
+.preview-enter-active,
+.preview-leave-active {
+  /* only animate transform and opacity to avoid layout reflow */
+  transition: transform 500ms ease, opacity 500ms ease;
+}
+.preview-move {
+  transition: transform 500ms ease;
+}
+.next-word-vertical {
+  background: rgba(255,255,255,0.05);
+  padding: 8px 12px;
+  border-radius: 10px;
+  color: #dcdcdc;
+  border: 1px solid rgba(197,197,197,0.12);
+  text-align: center;
+  word-break: break-word;
+  /* fixed height to keep container size stable */
+  height: var(--preview-item-height);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
 }

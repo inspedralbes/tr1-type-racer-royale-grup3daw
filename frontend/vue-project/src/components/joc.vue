@@ -176,6 +176,32 @@
         return estatDelJoc.value.paraules[estatDelJoc.value.indexParaulaActiva];
     });
 
+    // Computed: next up to 4 words that the player will have to type after the active one
+    const nextWords = computed(() => {
+        const start = estatDelJoc.value.indexParaulaActiva + 1;
+        if (!estatDelJoc.value.paraules || estatDelJoc.value.paraules.length === 0) return [];
+        return estatDelJoc.value.paraules.slice(start, start + 4).map(p => p.text);
+    });
+
+    // Stack of word objects to render inside the active-word box.
+    // Order: top = furthest upcoming, bottom = current active word (so the next word is just above the current)
+    const stackWords = computed(() => {
+        const list = [];
+        const baseIndex = estatDelJoc.value.indexParaulaActiva;
+        if (!estatDelJoc.value.paraules) return list;
+        // push up to 4 upcoming, from furthest to nearest (so nearest is just above current)
+        for (let i = baseIndex + 4; i > baseIndex; i--) {
+            if (i < estatDelJoc.value.paraules.length) {
+                list.push({ id: i, text: estatDelJoc.value.paraules[i].text });
+            }
+        }
+        // finally push current at the bottom
+        if (baseIndex < estatDelJoc.value.paraules.length) {
+            list.push({ id: baseIndex, text: estatDelJoc.value.paraules[baseIndex].text });
+        }
+        return list;
+    });
+
     let temps = 0;
     /**
      * @description Inicia el cronómetro para medir el tiempo de escritura de una palabra.
@@ -269,14 +295,23 @@
                             <p>Tiempo restante: {{ timeLeft }}s</p>
                             <p>Puntuación: {{ score }}</p>
                         </div>
-                        <!-- Centered word input -->
-                        <div class="paraula-actual">
-                            <h1>
-                                <span v-for="(lletra, index) in paraulaActiva.text" :key="index" :class="obtenirClasseLletra(lletra, index)">
-                                    {{ lletra }}
-                                </span>
-                            </h1>
-                            <input type="text" v-model="estatDelJoc.textEntrat" @input="validarProgres" autofocus />
+                        <!-- Center column: preview above the active word -->
+                        <div class="center-column">
+                            <div class="paraula-actual">
+                                <!-- Stack: top = furthest upcoming, bottom = current word -->
+                                <transition-group name="stack" tag="div" class="stack-container">
+                                    <div class="stack-item" v-for="w in stackWords" :key="w.id" :class="{ current: w.id === estatDelJoc.indexParaulaActiva }">{{ w.text }}</div>
+                                </transition-group>
+
+                                <!-- keep an accessible hidden H1 for letter-by-letter classes if needed -->
+                                <h1 class="visually-hidden">
+                                    <span v-for="(lletra, index) in paraulaActiva.text" :key="index" :class="obtenirClasseLletra(lletra, index)">
+                                        {{ lletra }}
+                                    </span>
+                                </h1>
+
+                                <input type="text" v-model="estatDelJoc.textEntrat" @input="validarProgres" autofocus />
+                            </div>
                         </div>
                         <!-- Right: player scores -->
                         <div class="puntuacions">
