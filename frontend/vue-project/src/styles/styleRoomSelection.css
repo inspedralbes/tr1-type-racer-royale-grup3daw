@@ -1,0 +1,116 @@
+body {
+  font-family: 'PressStart2P', sans-serif;
+  background-repeat: no-repeat;
+  background-size: cover;
+  background-position: center;
+  margin: 0;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  position: relative; 
+}
+
+div.selection-background{
+  position: absolute;
+  top: 0;
+  left: 0;
+  background-image: url(../img/estacion.png);
+  width: 100vw;
+  height: 100vh;
+  background-repeat: no-repeat;
+  background-size: cover;
+  background-position: center;
+}
+
+div.room-selection-container{
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background-color: rgba(255, 255, 255, 0.7);
+  border-radius: 10px;
+  text-align: center;
+  padding: 20px;
+}
+
+button.logout-button{
+  font-family: 'PressStart2P', sans-serif;
+  background-color: rgba(255, 255, 255, 0.8);
+  color: black;
+  border: 2px solid black;
+  padding: 8px 10px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 0.6em;
+  margin: 10px 0 0 5px;
+  transition: background-color 0.2s, color 0.2s;
+  position: absolute;
+  left: 1%;
+  top: 85%;
+}
+
+button.joinId-button{
+  font-family: 'PressStart2P', sans-serif;
+  background-color: rgba(255, 255, 255, 0.8);
+  color: black;
+  border: 2px solid black;
+  border-radius: 5px;
+  padding: 7px 10px;
+  margin: 5px;
+  cursor: pointer;
+  font-size: 0.8em;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+button.joinPublic-button{
+  font-family: 'PressStart2P', sans-serif;
+  background-color: rgba(255, 255, 255, 0.8);
+  color: black;
+  border: 2px solid black;
+  border-radius: 5px;
+  padding: 5px 7px 5px 10px;
+  cursor: pointer;
+  font-size: 0.8em;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+button.actualizar-button{
+  font-family: 'PressStart2P', sans-serif;
+  background-color: rgba(255, 255, 255, 0.8);
+  color: black;
+  border: 2px solid black;
+  border-radius: 5px;
+  padding: 7px 10px;
+  margin: 5px;
+  cursor: pointer;
+  font-size: 0.8em;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+button.crear-button{
+  font-family: 'PressStart2P', sans-serif;
+  background-color: rgba(255, 255, 255, 0.8);
+  color: black;
+  border: 2px solid black;
+  border-radius: 5px;
+  padding: 7px 10px;
+  margin: 5px;
+  cursor: pointer;
+  font-size: 0.8em;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+ul.roomList{
+    background-color: rgba(255, 255, 255, 0.8);
+    border: 2px solid black;
+    padding: 20px 30px;
+    border-radius: 5px;
+}
+
+li.room{
+  padding: 5px;
+}
+
+h3{
+  text-decoration: underline;
+ }

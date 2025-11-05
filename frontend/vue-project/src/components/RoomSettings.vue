@@ -1,5 +1,6 @@
 <template>
-  <div class="room-settings-container">
+    <div class="room-settings-container">
+      <div class="settings">
     <!--
       Este componente presenta un formulario para que el usuario configure los parámetros de una sala de juego.
       Permite tanto la creación de una nueva sala como la edición de una existente si el usuario es el host.
@@ -9,35 +10,38 @@
     <h2>Configuración de la Sala</h2>
     <form @submit.prevent="saveSettings">
       <div class="form-group" v-if="room.id">
-        <label for="roomId">ID de la Sala</label>
-        <input type="text" id="roomId" :value="room.id" disabled>
+        <label for="roomId">ID de la Sala: </label>
+        <input class="room-id" type="text" id="roomId" :value="room.id" disabled>
       </div>
       <div class="form-group">
-        <label for="roomName">Nombre de la Sala</label>
-        <input type="text" id="roomName" v-model="room.name" :disabled="!!room.id" required>
+        <label for="roomName">Nombre de la Sala: </label>
+        <input class="room-name" type="text" id="roomName" v-model="room.name" :disabled="!!room.id" required>
       </div>
       <div class="form-group">
-        <label for="isPublic">Visibilidad</label>
+        <label for="isPublic">Visibilidad:</label>
         <select id="isPublic" v-model="room.isPublic">
           <option :value="true">Pública</option>
           <option :value="false">Privada</option>
         </select>
       </div>
       <div class="form-group">
-        <label for="gameMode">Modo de Juego</label>
+        <label for="gameMode">Modo de Juego:</label>
         <select id="gameMode" v-model="room.gameMode">
           <option value="normal">Normal</option>
         </select>
       </div>
       <div class="form-group">
-        <label for="gameTime">Tiempo de Juego (segundos)</label>
-        <input type="number" id="gameTime" v-model.number="room.time" min="30" max="120" required>
+        <label for="gameTime">Tiempo de Juego (segundos):</label>
+        <input class="room-time" type="number" id="gameTime" v-model.number="room.time" min="30" max="120" required>
       </div>
       <div class="form-actions">
-        <button type="submit">Guardar</button>
+        <button class="submit" type="submit">Guardar</button>
       </div>
     </form>
+    </div>
   </div>
+
+  
 </template>
 
 <script setup>
@@ -118,29 +122,4 @@ const saveSettings = async () => {
 };
 </script>
 
-<style scoped>
-.room-settings-container {
-  max-width: 500px;
-  margin: 2rem auto;
-  padding: 2rem;
-  border: 1px solid #ccc;
-  border-radius: 8px;
-}
-.form-group {
-  margin-bottom: 1rem;
-}
-label {
-  display: block;
-  margin-bottom: 0.5rem;
-}
-input[type="text"],
-input[type="number"] {
-  width: 100%;
-  padding: 0.5rem;
-}
-.form-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 1rem;
-}
-</style>
+<style src="../styles/styleRoomCreator.css"></style>

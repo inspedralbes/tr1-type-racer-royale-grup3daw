@@ -1,36 +1,38 @@
 <template>
-  <div class="room-selection-container">
-    <!--
-      Este componente es el "hub" principal después del login. Ofrece al usuario tres opciones:
-      1. Unirse a una sala existente introduciendo su ID.
-      2. Ver una lista de salas públicas y unirse a una de ellas.
-      3. Crear una nueva sala, lo que le llevará a la pantalla de configuración (`RoomSettings`).
-      También incluye un botón de "Logout" para cerrar la sesión.
-    -->
-    <button class="lobby-button logout-button" @click="logoutAndReset">Logout</button>
-    <h2>Seleccionar Sala</h2>
+  <div class="selection-background">
+    <div class="room-selection-container">
+      <!--
+        Este componente es el "hub" principal después del login. Ofrece al usuario tres opciones:
+        1. Unirse a una sala existente introduciendo su ID.
+        2. Ver una lista de salas públicas y unirse a una de ellas.
+        3. Crear una nueva sala, lo que le llevará a la pantalla de configuración (`RoomSettings`).
+        También incluye un botón de "Logout" para cerrar la sesión.
+      -->
+      <h2>Seleccionar Sala</h2>
 
-    <div class="section">
-      <h3>Unirse a una sala existente</h3>
-      <input type="text" v-model="joinRoomId" placeholder="ID de la sala" />
-      <button @click="joinRoom">Unirse</button>
-    </div>
+      <div class="section">
+        <h3>Unirse a una sala existente</h3>
+        <input type="text" v-model="joinRoomId" placeholder="ID de la sala" />
+        <button class="joinId-button" @click="joinRoom">Unirse</button>
+      </div>
 
-    <div class="section">
-      <h3>Salas Públicas</h3>
-      <ul v-if="publicRooms.length">
-        <li v-for="room in publicRooms" :key="room.id">
-          {{ room.name }} (ID: {{ room.id }}) - {{ room.players.length }} jugadores
-          <button @click="joinRoomById(room.id)">Unirse</button>
-        </li>
-      </ul>
-      <p v-else>No hay salas públicas disponibles.</p>
-      <button @click="fetchPublicRooms">Actualizar Salas</button>
-    </div>
+      <div class="section">
+        <h3>Salas Públicas</h3>
+        <ul class="roomList" v-if="publicRooms.length">
+          <li class="room" v-for="room in publicRooms" :key="room.id">
+            {{ room.name }} (ID: {{ room.id }}) - {{ room.players.length }} jugadores
+            <button class="joinPublic-button" @click="joinRoomById(room.id)">Unirse</button>
+          </li>
+        </ul>
+        <p v-else>No hay salas públicas disponibles.</p>
+        <button class="actualizar-button" @click="fetchPublicRooms">Actualizar Salas</button>
+      </div>
 
-    <div class="section">
-      <h3>Crear nueva sala</h3>
-      <button @click="createRoom">Crear Sala</button>
+      <div class="section">
+        <h3>Crear nueva sala</h3>
+        <button class="crear-button" @click="createRoom">Crear Sala</button>
+      </div>
+      <button class="logout-button" @click="logoutAndReset">Logout</button>
     </div>
   </div>
 </template>
@@ -132,52 +134,6 @@ const logoutAndReset = () => {
 };
 </script>
 
-<style scoped>
-.room-selection-container {
-  max-width: 600px;
-  margin: 2rem auto;
-  padding: 2rem;
-  border: 1px solid #ccc;
-  border-radius: 8px;
-  position: relative; /* Added for absolute positioning of back button */
-}
-.section {
-  margin-bottom: 1.5rem;
-  padding-bottom: 1.5rem;
-  border-bottom: 1px solid #eee;
-}
-.section:last-child {
-  border-bottom: none;
-}
-input[type="text"] {
-  padding: 0.5rem;
-  margin-right: 0.5rem;
-  width: 200px;
-}
-button {
-  padding: 0.5rem 1rem;
-  cursor: pointer;
-}
-ul {
-  list-style: none;
-  padding: 0;
-}
-li {
-  background-color: #f9f9f9;
-  margin-bottom: 0.5rem;
-  padding: 0.8rem;
-  border-radius: 4px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-.back-button {
-  position: absolute;
-  top: 1rem;
-  left: 1rem;
-  font-size: 1.5rem;
-  background: none;
-  border: none;
-  cursor: pointer;
-}
+<style src="../styles/styleRoomSelection.css">
+
 </style>
