@@ -82,12 +82,14 @@ export const socket = io(SOCKET_URL, {
 export function setupSocketListeners() {
   // Evento: 'updatePlayerList' - Actualiza la lista de jugadores en la sala.
   socket.on('updatePlayerList', (playerList) => {
+    console.log('updatePlayerList event received:', playerList);
     const roomStore = useRoomStore();
     roomStore.setJugadores(playerList);
   });
 
   // Evento: 'updateRoomState' - Actualiza el estado de la sala (ej. si la partida ha empezado).
   socket.on('updateRoomState', (roomState) => {
+    console.log('updateRoomState event received:', roomState);
     const roomStore = useRoomStore();
     roomStore.setRoomState(roomState);
     // Si el estado indica que el juego está en curso, cambia la etapa del juego.
@@ -229,11 +231,6 @@ export const communicationManager = {
 
   // --- Métodos de Socket.IO ---
 
-  // Conecta el socket si no está ya conectado.
-  connect() {
-    if (!socket.connected) socket.connect();
-  },
-
   // Emite el evento para unirse a una sala.
   joinRoom(roomId) {
     const sessionStore = useSessionStore();
@@ -241,13 +238,18 @@ export const communicationManager = {
     socket.emit('join-room', { roomId, player });
   },
 
-  // Emite el evento para cambiar el estado de "listo" del jugador.
-  sendReadyStatus(isReady) {
-    const roomStore = useRoomStore();
-    const roomId = roomStore.roomId;
-    if (roomId) {
-      // El backend espera el evento 'set-ready' con el roomId y el estado.
-      socket.emit('set-ready', { roomId, isReady });
+  /**
+   * Conecta el socket al servidor.
+   * El token de autenticación se obtiene del sessionStore y se adjunta
+   * automáticamente para que el backend pueda identificar al usuario.
+   */
+  connect() {
+    const sessionStore = useSessionStore();
+    if (!socket.connected) {
+      // Adjunta el token al objeto 'auth' del socket antes de conectar.
+      // El backend lo recibirá en el evento 'connection'.
+      socket.auth = { token: sessionStore.token };
+      socket.connect();
     }
   },
 

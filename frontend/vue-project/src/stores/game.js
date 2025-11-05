@@ -1,9 +1,10 @@
+
 import { defineStore } from 'pinia';
 
 export const useGameStore = defineStore('game', {
   state: () => ({
     nombreJugador: '',
-    etapa: 'login', // login, room-selection, room-settings, lobby, game, final
+    etapa: 'room-selection', // login, room-selection, room-settings, lobby, game, done
     words: null,
     wordsLoaded: false,
     finalResults: [],
@@ -27,10 +28,11 @@ export const useGameStore = defineStore('game', {
     },
     resetState() {
       this.nombreJugador = '';
-      this.etapa = 'login';
+      this.etapa = 'room-selection';
       this.words = null;
       this.wordsLoaded = false;
       this.finalResults = [];
     },
   },
 });
+

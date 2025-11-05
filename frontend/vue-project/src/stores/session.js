@@ -16,6 +16,7 @@ export const useSessionStore = defineStore('session', {
       sessionStorage.setItem('sessionToken', token);
       sessionStorage.setItem('playerName', playerName);
       sessionStorage.setItem('email', email);
+      console.log('Session data set:', { token, playerName, email });
     },
     setToken(token) {
       this.token = token;

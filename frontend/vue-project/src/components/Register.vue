@@ -19,6 +19,8 @@
         placeholder="Contrasenya"
       />
       <button class="login-button" @click="register">Registrar-se</button>
+      <p>O</p>
+      <button class="login-button" @click="goToGuestLogin()">Entrar com a convidat</button>
       <p>Ja tens un compte? <router-link to="/login">Inicia sessió</router-link></p>
     </div>
   </div>
@@ -64,6 +66,10 @@ const register = async () => {
     alert('Hi ha hagut un problema al servidor.');
   }
 };
+
+const goToGuestLogin = () => {
+  router.push('/guest-login');
+}
 </script>
 
 <style src="../styles/styleLogin.css"></style>

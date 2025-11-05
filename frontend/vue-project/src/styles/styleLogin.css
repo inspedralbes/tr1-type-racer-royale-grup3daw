@@ -1,18 +1,23 @@
 
+@font-face {
+  font-family: 'PressStart2P';
+  src: url('../fonts/PressStart2P-Regular.ttf') format('truetype');
+}
+
+* {
+  box-sizing: border-box;
+}
 
 body {
   font-family: 'PressStart2P', sans-serif;
-  background-repeat: no-repeat;
-  background-size: cover;
-  background-position: center;
   margin: 0;
   width: 100vw;
   height: 100vh;
   overflow: hidden;
-  position: relative; 
 }
+
 div.login-background {
-  background-image: url(../img/estacion.png);
+  background-image: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), url(../img/espacio.png);
   position: absolute;
   top: 0;
   left: 0;
@@ -20,60 +25,106 @@ div.login-background {
   height: 100%;
   background-size: cover;
   background-position: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
+
 div.login-contenedor {
-  background-color: rgba(255, 255, 255, 0.7);
-  color: black;
-  width: 50%;
-  max-width: 600px;
-  padding: 2vw;
+  background-color: rgba(10, 2, 29, 0.85);
+  color: #f0f0f0;
+  width: 90%;
+  max-width: 450px;
+  padding: 2.5em;
   text-align: center;
-  border-radius: 10px;
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
+  border-radius: 15px;
+  border: 2px solid #7b03a8;
+  box-shadow: 0 0 25px rgba(123, 3, 168, 0.5);
 }
+
 div.login-contenedor h2 {
-  margin: 1em;
+  margin-top: 0;
+  margin-bottom: 1.5em;
+  font-size: 1.8em;
+  color: #fff;
+  text-shadow: 0 0 10px #d039f7;
+}
+
+input[type="text"],
+input[type="email"],
+input[type="password"] {
+  font-family: 'PressStart2P', sans-serif;
+  background-color: rgba(0, 0, 0, 0.3);
+  color: #fff;
+  border: 1px solid #7b03a8;
+  padding: 15px;
+  border-radius: 5px;
+  font-size: 0.9em;
+  width: 100%;
+  margin-bottom: 1em;
+  transition: all 0.3s ease;
+}
+
+input[type="text"]::placeholder,
+input[type="email"]::placeholder,
+input[type="password"]::placeholder {
+  font-family: 'PressStart2P', sans-serif;
+  color: #aaa;
+}
+
+input[type="text"]:focus,
+input[type="email"]:focus,
+input[type="password"]:focus {
+  outline: none;
+  border-color: #d039f7;
+  box-shadow: 0 0 15px rgba(208, 57, 247, 0.5);
 }
 
 .login-button {
   font-family: 'PressStart2P', sans-serif;
-  background-color: rgba(255, 255, 255, 0.8);
-  color: black;
-  border: 2px solid black;
-  padding: 8px 15px;
+  background-color: #7b03a8;
+  color: white;
+  border: none;
+  padding: 15px;
   border-radius: 5px;
   cursor: pointer;
-  font-size: 0.8em;
-  margin: 5px;
-  transition: background-color 0.2s, color 0.2s;
+  font-size: 1em;
+  width: 100%;
+  margin: 10px 0;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
 }
 
-.lobby-login:hover {
-  background-color: black;
-  color: white;
+.login-button:hover {
+  background-color: #d039f7;
+  box-shadow: 0 0 20px rgba(208, 57, 247, 0.7);
+  transform: translateY(-2px);
+}
+
+.login-button:active {
+  transform: translateY(0);
 }
 
 .login-button:disabled {
-  background-color: rgba(128, 128, 128, 0.5);
+  background-color: #555;
   cursor: not-allowed;
-  border-color: gray;
-  color: #333;
+  color: #888;
+  box-shadow: none;
+  transform: none;
 }
 
-input[type="text"] {
-  border: 2px solid black;
-  font-family: PressStart2P, sans-serif;
-  color: black;
-  font-size: 16px;
-  padding: 12px 12px;
+p {
+  color: #ccc;
+  margin: 1.5em 0 0;
 }
 
-input[type="text"]::placeholder {
-  font-family: PressStart2P, sans-serif;
-  color: black;
-  opacity: 1;
+a {
+  color: #d039f7;
+  text-decoration: none;
+  transition: color 0.3s ease;
+}
 
+a:hover {
+  color: #fff;
+  text-decoration: underline;
 }

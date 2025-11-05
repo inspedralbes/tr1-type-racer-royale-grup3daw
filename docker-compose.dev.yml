@@ -8,8 +8,6 @@
 # Para levantar este entorno, se debe usar el comando:
 # docker compose -f docker-compose.dev.yml up --build
 
-version: '3.8'
-
 services:
   # Servicio del frontend (Vue.js con Vite)
   frontend:

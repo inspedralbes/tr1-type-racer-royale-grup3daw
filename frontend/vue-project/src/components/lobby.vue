@@ -12,7 +12,8 @@
       <ul class="lista-jugadores">
         <li v-for="(jugador) in jugadores" :key="jugador.name">
           {{ jugador.name }} <span v-if="jugador.role === 'admin'">⭐</span>
-          <span v-if="jugador.role !== 'admin'">
+          <span v-if="jugador.disconnected"> (Desconectado)</span>
+          <span v-else-if="jugador.role !== 'admin'">
             <span v-if="jugador.isReady"> (Listo)</span><span v-else> (No listo)</span>
           </span>
           <!-- Botones de acción para el administrador: eliminar jugador y hacer host. -->
@@ -84,7 +85,7 @@ const isPlayerReady = computed(() => {
  * @returns {boolean} - Verdadero si todos los jugadores están listos, falso en caso contrario.
  */
 const areAllPlayersReady = computed(() => {
-  return jugadores.value.every(p => p.role === 'admin' || p.isReady);
+  return jugadores.value.every(p => !p.disconnected && (p.role === 'admin' || p.isReady));
 });
 
 /**
@@ -151,7 +152,7 @@ function iniciarJuego() {
   if (isAdmin.value) {
     communicationManager.startGame(roomStore.roomId)
       .then(response => {
-        console.log(response.data.message)
+        console.log('Game started:', response.data)
       })
       .catch(error => {
         console.error('Error al iniciar el juego:', error)

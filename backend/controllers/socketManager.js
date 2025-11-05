@@ -118,6 +118,12 @@ const initializeSockets = (app) => {
             console.log(`Jugador con token ${token} desconectado de la sala ${player.roomId}. Iniciando temporizador de reconexión.`);
             stateManager.setPlayerDisconnected(player.roomId, token, true);
             broadcastPlayerList(player.roomId);
+
+            const room = stateManager.getRoom(player.roomId);
+            if (room && room.players.every(p => p.disconnected)) {
+              stateManager.deleteRoom(player.roomId);
+              broadcastPublicRoomList();
+            }
   
             // Inicia un temporizador. Si el jugador no se ha reconectado cuando el temporizador
             // termine, será eliminado permanentemente de la sala y del registro.
