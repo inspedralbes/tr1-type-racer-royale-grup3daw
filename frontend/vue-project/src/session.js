@@ -26,7 +26,7 @@ export const useSessionStore = defineStore('session', {
     /**
      * Limpia completamente la sesión, tanto en el sessionStorage como en el estado de Pinia.
      */
-    clearSession() {
+    resetState() { // Renombrado para consistencia con otros stores, pero clearSession es más descriptivo. Se usará resetState.
       sessionStorage.removeItem('token');
       sessionStorage.removeItem('playerName');
       sessionStorage.removeItem('roomId');

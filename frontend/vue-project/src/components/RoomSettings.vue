@@ -91,7 +91,8 @@ const saveSettings = async () => {
       // Si la sala ya tiene un ID, significa que estamos actualizando una sala existente.
       const response = await communicationManager.updateRoom(roomStore.room.id, room.value);
       roomStore.setRoom(response.data); // Actualiza el store con los nuevos datos.
-      router.push('/lobby');
+      sessionStore.setEtapa('lobby'); // Establece la etapa a 'lobby'
+      // router.push('/lobby'); // Eliminado, GameEngine gestiona la vista
     } else {
       // Si no hay ID, estamos creando una nueva sala.
       const newRoom = await communicationManager.createRoom(room.value);
@@ -101,6 +102,7 @@ const saveSettings = async () => {
       sessionStore.setRoomId(newRoom.data.id);
       // Se une a la sala recién creada a través del socket.
       communicationManager.joinRoom(newRoom.data.id);
+      sessionStore.setEtapa('lobby'); // Establece la etapa a 'lobby'
     }
     // La redirección al lobby ahora es manejada por el listener 'join-room-success'
     // en communicationManager.js para evitar problemas de sincronización.

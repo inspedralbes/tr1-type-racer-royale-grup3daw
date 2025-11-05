@@ -10,6 +10,7 @@
       - 'game': La partida en sí.
       - 'done': Pantalla de resultados finales.
     -->
+    <!-- <p>Current Etapa: {{ etapa }}</p> --> <!-- Removed this line after debugging -->
 
     <RoomSelection v-if="etapa === 'room-selection'" />
     <RoomSettings v-else-if="etapa === 'room-settings'" />
@@ -23,6 +24,7 @@
       <Joc
         v-if="wordsLoaded"
         :words="words"
+        :wordsLoaded="wordsLoaded"
         :playerName="nombreJugador"
         :jugadores="jugadores"
         :roomState="roomState"
@@ -57,6 +59,7 @@
  */
 import { onMounted, watch } from 'vue'
 import { storeToRefs } from 'pinia'
+import { useRouter } from 'vue-router'; // Add this import
 import Lobby from './lobby.vue'
 import Joc from './joc.vue' 
 import Final from './paginaFinal.vue'
@@ -69,12 +72,14 @@ import { useRoomStore } from '../stores/room';
 import { usePublicRoomsStore } from '../stores/publicRooms';
 
 // Inicialización de los stores de Pinia para gestionar el estado global.
+const router = useRouter(); // Add this line
 const gameStore = useGameStore();
 const roomStore = useRoomStore();
 const sessionStore = useSessionStore();
 const publicRoomsStore = usePublicRoomsStore();
 
-const { etapa, nombreJugador, words, wordsLoaded, finalResults } = storeToRefs(gameStore);
+const { nombreJugador, words, wordsLoaded, finalResults } = storeToRefs(gameStore);
+const { etapa } = storeToRefs(sessionStore);
 const { jugadores, roomState, roomId } = storeToRefs(roomStore);
 
     /**
@@ -85,6 +90,7 @@ const { jugadores, roomState, roomId } = storeToRefs(roomStore);
      */
     onMounted(async () => {
       console.log('GameEngine mounted. Initial etapa:', etapa.value);
+      console.log('GameEngine mounted. Current route:', router.currentRoute.value.path); // Add this line
   
       const token = sessionStore.token;
       const roomIdFromSession = sessionStore.roomId;
@@ -102,33 +108,23 @@ const { jugadores, roomState, roomId } = storeToRefs(roomStore);
           // 1. Conectar el socket. El token se envía automáticamente.
           communicationManager.connect();
           gameStore.setNombreJugador(playerNameFromSession);
-
+  
           // Si el jugador estaba en una sala, recuperamos su estado.
           if (roomIdFromSession) {
-            roomStore.setRoomId(roomIdFromSession);
-            sessionStore.setRoomId(roomIdFromSession);
+            // Simplemente emitimos 'joinRoom'. El listener 'join-room-success'
+            // o los eventos 'updateRoomState' se encargarán de poner al jugador
+            // en la etapa correcta ('lobby' o 'game') con el estado actualizado.
             communicationManager.joinRoom(roomIdFromSession);
-
-            // Obtiene los detalles completos de la sala para restaurar el estado.
-            const roomDetails = await communicationManager.getRoomDetails(roomIdFromSession);
-            roomStore.setRoom(roomDetails.data);
-
-            // Decide la etapa basándose en el estado de la sala recuperado.
-            if (roomDetails.data.isPlaying) {
-              gameStore.setEtapa('game');
-            } else {
-              gameStore.setEtapa('lobby');
-            }
           } else {
             // Si no estaba en ninguna sala, va a la selección de sala.
-            gameStore.setEtapa('room-selection');
+            sessionStore.setEtapa('room-selection');
           }
         } catch (error) {
           console.error('Error al reconectar la sesión:', error);
           alert('Error al reconectar la sesión: ' + error.message);
           // Si la reconexión falla, limpia todos los datos de sesión y estado,
           // y redirige al usuario a la pantalla de login.
-          sessionStore.resetState();
+          sessionStore.clearSession();
           gameStore.resetState();
           roomStore.resetState();
           publicRoomsStore.resetState();
@@ -140,7 +136,7 @@ const { jugadores, roomState, roomId } = storeToRefs(roomStore);
         // Esto debería ser manejado por un guardia de ruta (router guard).
         // Por ahora, simplemente reseteamos el estado y esperamos la redirección del router.
         console.log('onMounted - No valid token or playerName found. Resetting state.');
-        sessionStore.resetState();
+        sessionStore.clearSession();
         gameStore.resetState();
         roomStore.resetState();
         publicRoomsStore.resetState();
@@ -155,10 +151,15 @@ async function fetchWordsForGame() {
   console.log('fetchWordsForGame called.');
   try {
     const response = await communicationManager.getWords()
-    console.log('API response for words:', response.data); // Add this log
-    gameStore.setWords(response.data)
-    gameStore.setWordsLoaded(true)
-    console.log('Words fetched successfully. wordsLoaded:', wordsLoaded.value, 'words:', words.value);
+    console.log('API response for words:', response.data);
+    if (response.data && Object.keys(response.data).length > 0) { // Check if data is not empty
+      gameStore.setWords(response.data)
+      gameStore.setWordsLoaded(true)
+      console.log('Words fetched successfully. wordsLoaded:', wordsLoaded.value, 'words:', words.value);
+    } else {
+      console.warn('fetchWordsForGame: API returned empty or invalid word data.');
+      gameStore.setWordsLoaded(false);
+    }
   } catch (error) {
     console.error('Error al obtener las palabras:', error)
     gameStore.setWordsLoaded(false); // Ensure loading state is false on error
@@ -172,8 +173,9 @@ async function fetchWordsForGame() {
  */
 watch(etapa, async (newEtapa) => {
   console.log('GameEngine etapa changed to:', newEtapa);
+  console.log('Current wordsLoaded:', wordsLoaded.value); // Add this line
   await communicationManager.updatePlayerPage(newEtapa);
-  if (newEtapa === 'game') {
+  if (newEtapa === 'game' && !wordsLoaded.value) {
     console.log('Etapa is game. Resetting wordsLoaded and fetching words.'); // Add this log
     gameStore.setWordsLoaded(false); // Reset wordsLoaded
     fetchWordsForGame(); // Always fetch words when entering game stage
@@ -198,7 +200,7 @@ const onGameOver = async (resultados) => {
   gameStore.setFinalResults(finalScores);
 
   // Cambia a la pantalla final.
-  gameStore.setEtapa('done')
+  sessionStore.setEtapa('done')
   
   // Resetea el estado de las palabras para la siguiente partida.
   gameStore.setWordsLoaded(false)
@@ -217,7 +219,7 @@ const onGameOver = async (resultados) => {
  * Resetea el estado del juego y devuelve al usuario al lobby para jugar de nuevo.
  */
 const onReiniciar = () => {
-  gameStore.setEtapa('lobby')
+  sessionStore.setEtapa('lobby')
   gameStore.setFinalResults([])
   gameStore.setWords(null)
   gameStore.setWordsLoaded(false)

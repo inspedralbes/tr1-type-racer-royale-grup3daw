@@ -4,7 +4,7 @@
     // Importación de Pinia para desestructurar propiedades reactivas de los stores.
     import { storeToRefs } from 'pinia';
         import { useRouter } from 'vue-router';
-        // Importación del gestor de comunicación para interactuar con el backend.    import { communicationManager } from '@/communicationManager';
+import { communicationManager } from '../communicationManager';
         // Importación de los stores de Pinia para la gestión del estado global de la aplicación.
         import { useGameStore } from '../stores/game';
         import { useRoomStore } from '../stores/room';
@@ -62,26 +62,19 @@
     onMounted(async () => {
       await communicationManager.updatePlayerPage('joc');
       console.log('joc.vue mounted. roomState:', roomState.value);
-    });
-
-    // Observa si el juego comienza (cuando `isPlaying` pasa a `true`).
-    watch(() => roomState.value.isPlaying, (newIsPlaying, oldIsPlaying) => {
-        if (newIsPlaying && !oldIsPlaying) {
-            console.log('El juego ha comenzado. Inicializando...');
-            // No inicializamos aquí, esperamos a que las palabras estén cargadas.
-        }
+      console.log('joc.vue mounted. props.wordsLoaded:', props.wordsLoaded); // Add this line
     });
 
     // Observa cuando las palabras están cargadas y el juego está activo para inicializar.
-    watch([() => props.words, () => props.wordsLoaded, () => props.roomState.isPlaying], ([newWords, newWordsLoaded, newIsPlaying]) => {
-      console.log('joc.vue watch triggered. newWordsLoaded:', newWordsLoaded, 'newWords:', newWords, 'newIsPlaying:', newIsPlaying, 'gameEnded:', gameEnded.value);
-      if (newWordsLoaded && newWords && newIsPlaying && !gameEnded.value) {
+    watch([() => props.words, () => props.roomState.isPlaying], ([newWords, newIsPlaying]) => {
+      console.log('joc.vue watch triggered. props.wordsLoaded:', props.wordsLoaded, 'newWords:', newWords, 'newIsPlaying:', newIsPlaying, 'gameEnded:', gameEnded.value);
+      if (props.wordsLoaded && newWords && newIsPlaying && !gameEnded.value) {
         console.log('Words loaded and game is playing. Initializing game.');
         initializeGame();
       } else {
         console.log('Conditions not met for initializeGame.');
       }
-    }, { immediate: true });
+    }, { immediate: true, deep: true }); // Added immediate: true back
 
     /**
      * @description Inicializa el juego, cargando las palabras y comenzando el temporizador.
@@ -176,7 +169,7 @@
             puntuacion: p.score
         }));
         gameStore.setFinalResults(finalScores);
-        gameStore.setEtapa('done');
+        sessionStore.setEtapa('done');
     }
 
     /**
@@ -261,7 +254,7 @@
      */
     const backToLobby = () => {
         console.log('Navigating to lobby');
-        gameStore.setEtapa('lobby');
+        sessionStore.setEtapa('lobby');
     };
 </script>
 

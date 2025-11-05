@@ -38,17 +38,16 @@ onMounted(async () => {
         roomStore.setRoom(roomDetails.data);
 
         if (roomDetails.data.isPlaying) {
-          gameStore.setEtapa('game');
+          sessionStore.setEtapa('game');
         } else {
-          gameStore.setEtapa('lobby');
+          sessionStore.setEtapa('lobby');
         }
-      } else {
-        gameStore.setEtapa('room-selection');
-      }
-    } catch (error) {
+                } else {
+                  sessionStore.setEtapa('room-selection');
+                }    } catch (error) {
       console.error('Error al reconectar la sesión:', error);
       alert('Error al reconectar la sesión: ' + error.message);
-      sessionStore.resetState();
+      sessionStore.clearSession();
       gameStore.resetState();
       roomStore.resetState();
       publicRoomsStore.resetState();
@@ -56,7 +55,7 @@ onMounted(async () => {
     }
   } else {
     console.log('App.vue onMounted - No valid token or playerName found. Resetting state and redirecting to login.');
-    sessionStore.resetState();
+    sessionStore.clearSession();
     gameStore.resetState();
     roomStore.resetState();
     publicRoomsStore.resetState();

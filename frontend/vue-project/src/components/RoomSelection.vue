@@ -103,7 +103,7 @@ const joinRoomById = (roomId) => {
  * Cambia la etapa del juego a 'room-settings' para que se muestre el componente de configuración de sala.
  */
 const createRoom = () => {
-  router.push('/room-settings');
+  sessionStore.setEtapa('room-settings');
 };
 
 /**
@@ -115,14 +115,13 @@ const createRoom = () => {
  * 4. Cambia la etapa del juego de vuelta a 'login'.
  */
 const logoutAndReset = () => {
-  // Emit explicit-logout with the player's token to ensure backend cleanup
-  if (sessionStore.token) {
-    socket.emit('explicit-logout', sessionStore.token);
-  }
+  // Llama al método centralizado de logout que notifica al backend y limpia la sesión.
+  communicationManager.logout();
+
   // Disconnect the socket after emitting the logout event
   socket.disconnect();
   
-  sessionStore.resetState();
+  // Resetea los stores de estado del juego y de las salas.
   gameStore.resetState();
   roomStore.resetState();
   publicRoomsStore.resetState();

@@ -7,6 +7,8 @@ export const useSessionStore = defineStore('session', {
     playerName: sessionStorage.getItem('playerName') || null,
     email: sessionStorage.getItem('email') || null,
     roomId: sessionStorage.getItem('roomId') || null,
+    // La etapa actual del juego ('login', 'room-selection', 'lobby', 'game', 'final')
+    etapa: 'login',
   }),
   actions: {
     setSession(token, playerName, email) {
@@ -34,11 +36,18 @@ export const useSessionStore = defineStore('session', {
         sessionStorage.removeItem('roomId');
       }
     },
-    resetState() {
+    setEtapa(etapa) {
+      this.etapa = etapa;
+    },
+    /**
+     * Limpia completamente la sesión, tanto en el sessionStorage como en el estado de Pinia.
+     */
+    clearSession() {
       this.token = null;
       this.playerName = null;
       this.email = null;
       this.roomId = null;
+      this.etapa = 'login';
       sessionStorage.removeItem('sessionToken');
       sessionStorage.removeItem('playerName');
       sessionStorage.removeItem('email');

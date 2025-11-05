@@ -30,7 +30,7 @@ const ranking = computed(() => {
 
 function volverAJugar() {
   gameStore.setFinalResults([]);
-  gameStore.setEtapa('lobby');
+  sessionStore.setEtapa('lobby');
 }
 </script>
 
