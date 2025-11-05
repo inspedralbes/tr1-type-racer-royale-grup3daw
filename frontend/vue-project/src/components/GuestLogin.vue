@@ -1,13 +1,19 @@
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { communicationManager } from '@/communicationManager'
 import { useSessionStore } from '@/stores/session';
+import { useGameStore } from '@/stores/game';
 
 const nom = ref('')
 const session = useSessionStore()
+const gameStore = useGameStore()
 const router = useRouter()
+
+onMounted(async () => {
+  await communicationManager.updatePlayerPage('guest-login');
+});
 
 const loginAsGuest = async () => {
   if (nom.value.trim() === '') {
@@ -27,8 +33,10 @@ const loginAsGuest = async () => {
     if (response.ok) {
       const { token, username, email } = await response.json();
       session.setSession(token, username, email);
+      gameStore.setNombreJugador(username);
       communicationManager.connect(); // Conecta el socket después del login
-      router.push('/game');
+      await communicationManager.waitUntilConnected(); // Ensure socket is connected
+      router.push('/rooms');
     } else {
       const error = await response.json();
       alert(error.message);
@@ -41,8 +49,8 @@ const loginAsGuest = async () => {
 </script>
 
 <template>
-  <div class="login-background">
-    <div class="login-contenedor">
+  <div class="main-background">
+    <div class="themed-container">
       <h2>Entrar como Invitado</h2>
       <input
         maxlength="12"
@@ -51,7 +59,7 @@ const loginAsGuest = async () => {
         placeholder="Escriu el teu nom"
         @keyup.enter="loginAsGuest"
       />
-      <button class="login-button" @click="loginAsGuest()">Entrar</button>
+      <button class="btn" @click="loginAsGuest()">Entrar</button>
       <p>O</p>
       <p><router-link to="/login">Inicia sessió</router-link> o <router-link to="/register">Registra't</router-link></p>
     </div>

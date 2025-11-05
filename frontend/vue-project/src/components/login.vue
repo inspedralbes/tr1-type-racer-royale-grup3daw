@@ -4,15 +4,18 @@ import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { communicationManager } from '@/communicationManager'
 import { useSessionStore } from '@/stores/session';
+import { useGameStore } from '@/stores/game';
 
 const email = ref('')
 const password = ref('')
 const session = useSessionStore()
+const gameStore = useGameStore()
 const router = useRouter()
 
 // Limpia los campos cuando el componente se monta. Se usa un setTimeout
 // para asegurar que se ejecute después de cualquier autocompletado del navegador.
-onMounted(() => {
+onMounted(async () => {
+  await communicationManager.updatePlayerPage('login');
   setTimeout(() => {
     email.value = '';
     password.value = '';
@@ -38,8 +41,10 @@ const login = async () => {
       const { token, username, email } = await response.json();
       console.log('Login successful:', { token, username, email });
       session.setSession(token, username, email);
+      gameStore.setNombreJugador(username);
       communicationManager.connect(); // Conecta el socket después del login
-      router.push('/game');
+      await communicationManager.waitUntilConnected(); // Ensure socket is connected
+      router.push('/rooms');
     } else {
       const error = await response.json();
       alert(error.message);
@@ -56,8 +61,8 @@ const goToGuestLogin = () => {
 </script>
 
 <template>
-  <div class="login-background">
-    <div class="login-contenedor">
+  <div class="main-background">
+    <div class="themed-container">
       <h2>Inici de sessió</h2>
       <input
         v-model="email"
@@ -73,9 +78,9 @@ const goToGuestLogin = () => {
         @keyup.enter="login"
         autocomplete="new-password"
       />
-      <button class="login-button" @click="login()">Entrar</button>
+      <button class="btn" @click="login()">Entrar</button>
       <p>O</p>
-      <button class="login-button" @click="goToGuestLogin()">Entrar com a convidat</button>
+      <button class="btn" @click="goToGuestLogin()">Entrar com a convidat</button>
       <p>No tens un compte? <router-link to="/register">Registra't</router-link></p>
     </div>
   </div>

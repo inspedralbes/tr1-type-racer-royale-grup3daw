@@ -1,96 +1,32 @@
-body {
-  font-family: 'PressStart2P', sans-serif;
-  background-repeat: no-repeat;
-  background-size: cover;
-  background-position: center;
-  margin: 0;
-  width: 100vw;
-  height: 100vh;
-  overflow: hidden;
-  position: relative; 
+div.room-settings-container {
+  max-width: 700px; /* Allow more width for form */
 }
 
-div.room-settings-container{
-  position: absolute;
-  top: 0;
-  left: 0;
-  background-image: url(../img/estacion.png);
-  width: 100vw;
-  height: 100vh;
-  background-repeat: no-repeat;
-  background-size: cover;
-  background-position: center;
+.form-group {
+  margin: 1.5em 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
 
-div.settings{
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    background-color: rgba(255, 255, 255, 0.7);
-    border-radius: 10px;
-    text-align: center;
-    padding: 20px;
+.form-group label {
+  flex-basis: 40%; /* Adjust label width */
+  text-align: left;
+  margin-right: 1em;
 }
 
-div.form-group{
-    margin: 15px 0;
+.form-group input,
+.form-group select {
+  flex-basis: 55%; /* Adjust input/select width */
+  width: auto; /* Override global 100% width */
+  margin-bottom: 0; /* Remove global margin */
 }
 
-input.room-id{
-    font-family: 'PressStart2P', sans-serif;
-    padding: 8px;
-    border: 2px solid black;
-    border-radius: 5px;
-    font-size: 0.8em;
-    width: 40%;
-    margin: 0 10px;
+.form-actions {
+  margin-top: 2em;
 }
 
-input.room-name{
-    font-family: 'PressStart2P', sans-serif;
-    padding: 8px;
-    border: 2px solid black;
-    border-radius: 5px;
-    font-size: 0.8em;
-    width: 40%;
-    margin: 0 10px;
-}
-
-input.room-time{
-    font-family: 'PressStart2P', sans-serif;
-    padding: 8px;
-    border: 2px solid black;
-    border-radius: 5px;
-    font-size: 0.8em;
-    width: 12%;
-    margin: 0 10px;
-}
-
-select{
-    font-family: 'PressStart2P', sans-serif;
-    padding: 8px;
-    border: 2px solid black;
-    border-radius: 5px;
-    font-size: 0.8em;
-    width: 20%;
-    margin: 0 10px;
-}
-
-button.back-button {
-  position: absolute;
-  top: 2px;
-  left: 20px;
-  background-color: transparent;
-  border: none;
-  cursor: pointer;
-}
-
-button.submit{
-  font-family: 'PressStart2P', sans-serif;
-  padding: 8px;
-  border: 2px solid black;
-  border-radius: 5px;
-  font-size: 0.8em;
-  cursor: pointer;
+.form-actions .btn {
+  width: auto; /* Override global 100% width */
+  padding: 10px 25px;
 }

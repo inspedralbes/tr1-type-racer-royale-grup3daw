@@ -1,7 +1,7 @@
 
 <template>
-  <div class="login-background">
-    <div class="login-contenedor">
+  <div class="main-background">
+    <div class="themed-container">
       <h2>Registre</h2>
       <input
         v-model="username"
@@ -18,22 +18,27 @@
         type="password"
         placeholder="Contrasenya"
       />
-      <button class="login-button" @click="register">Registrar-se</button>
+      <button class="btn" @click="register">Registrar-se</button>
       <p>O</p>
-      <button class="login-button" @click="goToGuestLogin()">Entrar com a convidat</button>
+      <button class="btn" @click="goToGuestLogin()">Entrar com a convidat</button>
       <p>Ja tens un compte? <router-link to="/login">Inicia sessió</router-link></p>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
+import { communicationManager } from '@/communicationManager';
 
 const username = ref('');
 const email = ref('');
 const password = ref('');
 const router = useRouter();
+
+onMounted(async () => {
+  await communicationManager.updatePlayerPage('register');
+});
 
 const register = async () => {
   if (username.value.trim() === '' || email.value.trim() === '' || password.value.trim() === '') {

@@ -3,19 +3,29 @@
     import { ref, computed, onMounted, watch, onUnmounted } from 'vue';
     // Importación de Pinia para desestructurar propiedades reactivas de los stores.
     import { storeToRefs } from 'pinia';
-    // Importación del gestor de comunicación para interactuar con el backend.
-    import { communicationManager } from '../communicationManager';
-    // Importación de los stores de Pinia para la gestión del estado global de la aplicación.
-    import { useGameStore } from '../stores/game';
-    import { useRoomStore } from '../stores/room';
-
-    // Inicialización de los stores.
-    const gameStore = useGameStore();
-    const roomStore = useRoomStore();
-
-    // Desestructuración de propiedades reactivas de los stores.
-    const { nombreJugador, words } = storeToRefs(gameStore);
-    const { jugadores, roomState, remainingTime } = storeToRefs(roomStore);
+        import { useRouter } from 'vue-router';
+        // Importación del gestor de comunicación para interactuar con el backend.    import { communicationManager } from '@/communicationManager';
+        // Importación de los stores de Pinia para la gestión del estado global de la aplicación.
+        import { useGameStore } from '../stores/game';
+        import { useRoomStore } from '../stores/room';
+    
+        // Definición de props para el componente.
+        const props = defineProps({
+          words: { type: Object, default: null },
+          wordsLoaded: { type: Boolean, default: false },
+          playerName: { type: String, required: true },
+          jugadores: { type: Array, default: () => [] },
+          roomState: { type: Object, required: true },
+        });
+    
+        // Inicialización de los stores.
+        const gameStore = useGameStore();
+        const roomStore = useRoomStore();
+    const router = useRouter();
+    
+        // Desestructuración de propiedades reactivas de los stores.
+        const { nombreJugador } = storeToRefs(gameStore);
+        const { jugadores, roomState, remainingTime } = storeToRefs(roomStore);
 
     // Definición de puntos por dificultad de palabra.
     const POINTS_PER_DIFFICULTY = {
@@ -49,33 +59,35 @@
     const gameEnded = ref(false); // Estado para controlar si el juego ha terminado.
 
     // Hook `onMounted` que se ejecuta cuando el componente ha sido montado.
-    onMounted(() => {
-        console.log('joc.vue mounted. roomState:', roomState.value);
-        // Si el juego ya está en curso y tiene un tiempo de inicio, inicializa el juego.
-        if (roomState.value.isPlaying && roomState.value.gameStartTime) {
-            initializeGame();
-        }
-    });
-
-    // Hook `onUnmounted` que se ejecuta cuando el componente va a ser desmontado.
-    onUnmounted(() => {
-        // Limpia el intervalo del juego para evitar fugas de memoria.
-        clearInterval(gameInterval);
+    onMounted(async () => {
+      await communicationManager.updatePlayerPage('joc');
+      console.log('joc.vue mounted. roomState:', roomState.value);
     });
 
     // Observa si el juego comienza (cuando `isPlaying` pasa a `true`).
     watch(() => roomState.value.isPlaying, (newIsPlaying, oldIsPlaying) => {
         if (newIsPlaying && !oldIsPlaying) {
             console.log('El juego ha comenzado. Inicializando...');
-            initializeGame();
+            // No inicializamos aquí, esperamos a que las palabras estén cargadas.
         }
     });
+
+    // Observa cuando las palabras están cargadas y el juego está activo para inicializar.
+    watch([() => props.words, () => props.wordsLoaded, () => props.roomState.isPlaying], ([newWords, newWordsLoaded, newIsPlaying]) => {
+      console.log('joc.vue watch triggered. newWordsLoaded:', newWordsLoaded, 'newWords:', newWords, 'newIsPlaying:', newIsPlaying, 'gameEnded:', gameEnded.value);
+      if (newWordsLoaded && newWords && newIsPlaying && !gameEnded.value) {
+        console.log('Words loaded and game is playing. Initializing game.');
+        initializeGame();
+      } else {
+        console.log('Conditions not met for initializeGame.');
+      }
+    }, { immediate: true });
 
     /**
      * @description Inicializa el juego, cargando las palabras y comenzando el temporizador.
      */
     function initializeGame() {
-        initializeWords(words.value);
+        initializeWords(props.words);
         startGameTimer();
     }
 
@@ -159,13 +171,12 @@
         }
         gameEnded.value = true;
 
-        const resultados = {
-            jugador: nombreJugador.value,
-            puntuacion: score.value,
-            stats: [...estatDelJoc.value.stats],
-            errorTotal: estatDelJoc.value.errorTotal,
-        }
-        emits('done', resultados);
+        const finalScores = jugadores.value.map(p => ({
+            nombre: p.name,
+            puntuacion: p.score
+        }));
+        gameStore.setFinalResults(finalScores);
+        gameStore.setEtapa('done');
     }
 
     /**
@@ -249,38 +260,32 @@
      * @description Navega de vuelta al lobby. Emite un evento 'done' al componente padre.
      */
     const backToLobby = () => {
-        console.log('Emitting done event');
-        emits('done');
+        console.log('Navigating to lobby');
+        gameStore.setEtapa('lobby');
     };
 </script>
 
 <template>
-    <!-- Contenedor principal del juego con un fondo específico. -->
-    <div class="joc-background">
+    <div class="main-background">
         <div class="game-container">
-        <!-- Botón para regresar al lobby. -->
-        <button class="back-button" @click="backToLobby">←</button>
-        <!-- Saludo al jugador. -->
         <h2>Ànims, {{ nombreJugador }}!</h2>
 
-        <!-- Contenido del juego mientras no ha terminado. -->
         <div v-if="!gameEnded">
-            <p>Tiempo restante: {{ timeLeft }}s</p>
-            <p>Puntuación: {{ score }}</p>
+            <div class="game-info">
+                <p>Tiempo restante: {{ timeLeft }}s</p>
+                <p>Puntuación: {{ score }}</p>
+            </div>
             <main class="joc" v-if="estatDelJoc.paraules.length > 0">
                 <div class="game-content-wrapper">
                     <div class="paraula-actual">
-                        <!-- Muestra la palabra actual letra por letra, aplicando estilos según si son correctas o incorrectas. -->
                         <h1>
                             <span v-for="(lletra, index) in paraulaActiva.text" :key="index" :class="obtenirClasseLletra(lletra, index)">
                                 {{ lletra }}
                             </span>
                         </h1>
-                        <!-- Campo de entrada para que el usuario escriba la palabra. -->
                         <input type="text" v-model="estatDelJoc.textEntrat" @input="validarProgres" autofocus />
                     </div>
 
-                    <!-- Sección lateral con la clasificación de jugadores. -->
                     <div class="puntuacions">
                         <h2>Classificació</h2>
                         <ul id="llista-jugadors">
@@ -293,7 +298,6 @@
             </main>
         </div>
 
-        <!-- Pantalla de fin de juego, visible cuando `gameEnded` es true. -->
         <div v-else class="game-end-screen">
             <h2>¡Juego Terminado!</h2>
             <p>Tu puntuación final: {{ score }}</p>
@@ -303,8 +307,7 @@
                     <strong>{{ jugador.name }}</strong> - {{ jugador.score }} punts
                 </li>
             </ul>
-            <!-- Botón para volver al lobby después de que el juego ha terminado. -->
-            <button class="lobby-button" @click="backToLobby">Volver al Lobby</button>
+            <button class="btn" @click="backToLobby">Volver al Lobby</button>
         </div>
     </div>
     </div>

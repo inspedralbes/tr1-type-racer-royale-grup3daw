@@ -55,6 +55,15 @@ const initializeSockets = (app) => {
     // Listener para cuando un nuevo cliente se conecta.
     console.log(`Nuevo player conectado: ${socket.id}`);
 
+    const token = socket.handshake.auth.token;
+    if (token) {
+      const player = stateManager.findRegisteredPlayerByToken(token);
+      if (player) {
+        console.log(`Jugador ${player.name} (re)conectado con socket ID: ${socket.id}`);
+        stateManager.updateRegisteredPlayerSocketId(token, socket.id);
+      }
+    }
+
     socket.on('join-room', (data) => {
       const { roomId, player } = data;
       if (!roomId || !player) {
@@ -155,6 +164,7 @@ const initializeSockets = (app) => {
         }
       }
     });
+
 
     // Listener para un logout explícito (ej. el usuario cierra sesión).
     socket.on('explicit-logout', (token) => {

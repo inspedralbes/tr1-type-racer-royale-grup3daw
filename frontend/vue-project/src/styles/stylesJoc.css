@@ -1,76 +1,131 @@
-main {
-  height: 100vh;
-  width: 100vw;
-  display: flex; /* Make main a flex container */
-  justify-content: center; /* Center horizontally */
-  align-items: center; /* Center vertically */
-}
 
-div.joc-background {
-  background-image: url(../img/espacio.png);
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-size: cover;
-  background-position: center;
-}
-
-.joc {
-  flex: 1;
+.game-container {
   display: flex;
-  justify-content: center;
+  flex-direction: column;
   align-items: center;
-  background-color: #b0d7ff;
+  justify-content: center;
+  width: 90%;
+  max-width: 1000px;
+  background-color: rgba(10, 2, 29, 0.85);
+  color: var(--color-text-light);
+  padding: 2.5em;
+  border-radius: 15px;
+  border: 2px solid var(--color-primary-purple);
+  box-shadow: 0 0 25px var(--shadow-color-glow);
+}
+
+.game-info {
+  display: flex;
+  justify-content: space-around;
+  width: 100%;
+  margin-bottom: 1.5em;
+  font-size: 1.2em;
 }
 
 .game-content-wrapper {
   display: flex;
-  gap: 20px; /* Spacing between elements */
-  align-items: flex-start; /* Align items to the top */
-}
-
-.paraules-previstes {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-  background-color: #fff022;
-  padding: 10px;
-}
-
-.paraules-previstes .paraula.active-word {
-  font-weight: bold;
-  color: blue; /* Ejemplo de estilo para la palabra activa */
+  width: 100%;
+  gap: 2em;
 }
 
 .paraula-actual {
-    background-color: #9dff9d;
-    padding: 20px;
+  flex: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(0, 0, 0, 0.3);
+  padding: 2em;
+  border-radius: 10px;
+  border: 1px solid var(--color-primary-purple);
 }
 
 .paraula-actual h1 {
-  font-size: 2rem;
-  color: #007baf;
+  font-size: 2.5em;
+  margin-bottom: 1em;
+  word-wrap: break-word;
+  text-align: center;
 }
 
 .paraula-actual input {
-  font-size: 1.5rem;
-  padding: 5px;
+  font-size: 1.2em;
+  padding: 10px;
+  text-align: center;
+}
+
+.lletra-correcta {
+  color: #0f0; /* Green */
+}
+
+.lletra-incorrecta {
+  color: #f00; /* Red */
 }
 
 .puntuacions {
-  width: 350px;
-  background-color: #ff5c5c;
-  padding: 20px;
+  flex: 1;
+  background-color: rgba(0, 0, 0, 0.3);
+  padding: 1.5em;
+  border-radius: 10px;
+  border: 1px solid var(--color-primary-purple);
 }
 
 .puntuacions h2 {
   margin-top: 0;
+  margin-bottom: 1em;
+  font-size: 1.5em;
 }
 
 #llista-jugadors {
   list-style: none;
   padding: 0;
-  background-color: #5badff;
+}
+
+#llista-jugadors li {
+  padding: 0.5em 0;
+  border-bottom: 1px dashed rgba(123, 3, 168, 0.3);
+  display: flex;
+  justify-content: space-between;
+}
+
+#llista-jugadors li:last-child {
+  border-bottom: none;
+}
+
+.game-end-screen {
+  text-align: center;
+}
+
+.game-end-screen h2 {
+  font-size: 2em;
+  margin-bottom: 1em;
+}
+
+.game-end-screen p {
+  font-size: 1.2em;
+  margin-bottom: 1.5em;
+}
+
+#llista-jugadors-final {
+  list-style: none;
+  padding: 0;
+  margin-top: 1.5em;
+  border: 1px solid var(--color-primary-purple);
+  border-radius: 5px;
+  background-color: rgba(0, 0, 0, 0.2);
+}
+
+#llista-jugadors-final li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.8em 1em;
+  border-bottom: 1px solid rgba(123, 3, 168, 0.3);
+}
+
+#llista-jugadors-final li:last-child {
+  border-bottom: none;
+}
+
+#llista-jugadors-final li span {
+  font-size: 1.1em;
 }

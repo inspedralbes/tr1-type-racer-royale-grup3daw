@@ -1,99 +1,65 @@
-
-
-body {
-  font-family: 'PressStart2P', sans-serif;
-  background-repeat: no-repeat;
-  background-size: cover;
-  background-position: center;
-  margin: 0;
-  width: 100vw;
-  height: 100vh;
-  overflow: hidden;
-  position: relative; 
-}
-
-div.lobby-background {
-  background-image: url(../img/estacion.png);
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-size: cover;
-  background-position: center;
+div.lobby-contenedor {
+  max-width: 700px;
 }
 
 ul.lista-jugadores {
-  border: 1px solid black;
-  margin: 10px;
-  text-align: left;
+  list-style: none;
+  padding: 0;
+  margin-top: 1.5em;
+  max-height: 250px; /* Limit height for scrollability */
+  overflow-y: auto;
+  border: 1px solid var(--color-primary-purple);
+  border-radius: 5px;
+  background-color: rgba(0, 0, 0, 0.2);
 }
 
 ul.lista-jugadores li {
   display: flex;
   align-items: center;
-  margin: 10px 0;
-  
+  justify-content: space-between; /* Distribute items */
+  padding: 0.8em 1em;
+  border-bottom: 1px solid rgba(123, 3, 168, 0.3);
 }
 
-ul.lista-jugadores li::before {
-  content: '•';             
-  color: black;
-  margin-right: 10px;   
-  font-size: 1.2em;
+ul.lista-jugadores li:last-child {
+  border-bottom: none;
 }
 
-ul.lista-jugadores li .lobby-button:first-of-type {
-  margin-left: auto; 
+ul.lista-jugadores li span {
+  margin-right: 0.5em;
 }
 
+ul.lista-jugadores li .btn-small {
+  margin-left: 0.5em; /* Spacing between buttons */
+}
 
-div.lobby-contenedor{
-  background-color: rgba(255, 255, 255, 0.7);
-  color: black;
-  border-radius: 10px;
-  width: 50%;
-  height: auto;
-  text-align: center;
+.lobby-button-group {
+  margin-top: 1.5em;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+}
+
+.lobby-button-group .btn {
+  width: auto; /* Override global 100% width */
+  padding: 10px 20px;
+}
+
+.back-button {
   position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  
-}
-
-div.lobby-contenedor h1, h2 {
-  text-align: center;
-}
-
-.lobby-button {
-  font-family: 'PressStart2P', sans-serif;
-  background-color: rgba(255, 255, 255, 0.8);
-  color: black;
-  border: 2px solid black;
-  padding: 8px 15px;
-  border-radius: 5px;
+  top: 15px;
+  left: 15px;
+  font-size: 1.5rem;
+  color: var(--color-text-light);
+  background: none;
+  border: none;
   cursor: pointer;
-  font-size: 0.8em;
-  margin: 5px;
-  transition: background-color 0.2s, color 0.2s;
+  z-index: 10;
+  transition: all 0.2s ease;
 }
 
-.lobby-button:hover {
-  background-color: black;
-  color: white;
-}
-
-.lobby-button:disabled {
-  background-color: rgba(128, 128, 128, 0.5);
-  cursor: not-allowed;
-  border-color: gray;
-  color: #333;
-}
-
-img.naves{
-  position: absolute;
-  top: 70%;
-  left: 83%;
-  height: 35%;
+.back-button:hover {
+  color: var(--color-accent-pink);
+  transform: scale(1.1);
 }

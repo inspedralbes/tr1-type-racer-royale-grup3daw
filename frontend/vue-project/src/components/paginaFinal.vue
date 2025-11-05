@@ -10,28 +10,27 @@
  * - Ofrece un botón para "Volver a jugar", que emite un evento `reiniciar` al componente padre
  *   (`GameEngine.vue`) para volver al lobby.
  */
-import { computed } from 'vue'
+import { computed, onMounted } from 'vue'
+import { useRouter } from 'vue-router';
+import { useGameStore } from '../stores/game';
+import { communicationManager } from '../communicationManager';
 
-// Define las propiedades que el componente espera recibir del padre.
-const props = defineProps({
-  resultados: {
-    type: Array,
-    required: true
-  }
-})
+const router = useRouter();
+const gameStore = useGameStore();
 
-// Define los eventos que el componente puede emitir hacia el padre.
-const emit = defineEmits(['reiniciar'])
+onMounted(async () => {
+  await communicationManager.updatePlayerPage('final');
+});
 
 // `ranking` es una propiedad computada que ordena los resultados recibidos.
 // Se recalculará automáticamente si la prop `resultados` cambia.
 const ranking = computed(() => {
-  return [...props.resultados].sort((a, b) => b.puntuacion - a.puntuacion)
+  return [...gameStore.finalResults].sort((a, b) => b.puntuacion - a.puntuacion)
 })
 
 function volverAJugar() {
-  // Emite el evento 'reiniciar' para que el componente padre (GameEngine) pueda manejarlo.
-  emit('reiniciar')
+  gameStore.setFinalResults([]);
+  gameStore.setEtapa('lobby');
 }
 </script>
 

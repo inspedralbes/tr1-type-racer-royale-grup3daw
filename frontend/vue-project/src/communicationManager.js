@@ -15,6 +15,7 @@ import { io } from 'socket.io-client';
 import { useSessionStore } from './stores/session';
 import { useRoomStore } from './stores/room';
 import { useGameStore } from './stores/game';
+import { useRouter } from 'vue-router';
 
 import { usePublicRoomsStore } from './stores/publicRooms';
 
@@ -79,7 +80,8 @@ export const socket = io(SOCKET_URL, {
  * Configura los listeners para los eventos que el servidor puede emitir a través de Socket.IO.
  * Estos listeners actualizan los stores de Pinia correspondientes para mantener la UI sincronizada.
  */
-export function setupSocketListeners() {
+export function setupSocketListeners(router) {
+  const gameStore = useGameStore();
   // Evento: 'updatePlayerList' - Actualiza la lista de jugadores en la sala.
   socket.on('updatePlayerList', (playerList) => {
     console.log('updatePlayerList event received:', playerList);
@@ -94,26 +96,29 @@ export function setupSocketListeners() {
     roomStore.setRoomState(roomState);
     // Si el estado indica que el juego está en curso, cambia la etapa del juego.
     if (roomState.isPlaying) {
-      const gameStore = useGameStore();
+      // En lugar de navegar directamente, cambiamos la etapa en el store.
+      // GameEngine se encargará de mostrar el componente Joc.
       gameStore.setEtapa('game');
     }
   });
 
   // Evento: 'player-removed' - Se emite al cliente cuando es expulsado de una sala.
   // Resetea todo el estado local y lo devuelve a la pantalla de selección de sala.
-  socket.on('player-removed', () => {
-    const sessionStore = useSessionStore();
-    const gameStore = useGameStore();
-    const roomStore = useRoomStore();
-    const publicRoomsStore = usePublicRoomsStore();
+  socket.on('player-removed', (data) => {
+    if (data.socketId === socket.id) {
+      const sessionStore = useSessionStore();
+      const gameStore = useGameStore();
+      const roomStore = useRoomStore();
+      const publicRoomsStore = usePublicRoomsStore();
 
-    // Limpia el sessionStorage y resetea los stores
-    sessionStore.resetState(); // Corregido: La función en stores/session.js se llama resetState.
-    gameStore.resetState();
-    roomStore.resetState();
-    publicRoomsStore.resetState();
+      // Limpia el sessionStorage y resetea los stores
+      sessionStore.resetState(); // Corregido: La función en stores/session.js se llama resetState.
+      gameStore.resetState();
+      roomStore.resetState();
+      publicRoomsStore.resetState();
 
-    gameStore.setEtapa('room-selection');
+      router.push('/rooms');
+    }
   });
 
   // Evento: 'updatePublicRoomList' - Actualiza la lista de salas públicas disponibles.
@@ -132,11 +137,15 @@ export function setupSocketListeners() {
   socket.on('join-room-success', (room) => {
     const roomStore = useRoomStore();
     const sessionStore = useSessionStore();
-    const gameStore = useGameStore();
 
+    // Actualiza el estado local con los datos recibidos ANTES de redirigir.
+    // Esto asegura que el lobby tenga la información correcta desde el principio.
     roomStore.setRoomId(room.id);
     roomStore.setRoomState(room);
     sessionStore.setRoomId(room.id);
+    roomStore.setJugadores(room.players); // ¡Esta es la línea clave!
+    // En lugar de navegar directamente, cambiamos la etapa en el store.
+    const gameStore = useGameStore()
     gameStore.setEtapa('lobby');
   });
 }
@@ -186,6 +195,7 @@ export const communicationManager = {
 
   // Crea una nueva sala.
   async createRoom(roomSettings) {
+    await this.waitUntilConnected();
     const sessionStore = useSessionStore();
     const hostPlayer = { name: sessionStore.playerName, socketId: socket.id, token: sessionStore.token };
     return apiClient.post('/rooms', { ...roomSettings, hostPlayer });
@@ -229,13 +239,31 @@ export const communicationManager = {
     return Promise.resolve();
   },
 
+  // Espera hasta que el socket esté conectado.
+  async waitUntilConnected() {
+    if (socket.connected) {
+      return Promise.resolve();
+    }
+    return new Promise((resolve) => {
+      socket.once('connect', resolve);
+    });
+  },
+
+  // Emite el estado de "listo" del jugador a la sala.
+  sendReadyStatus(isReady) {
+    const roomStore = useRoomStore();
+    socket.emit('set-ready', { roomId: roomStore.roomId, isReady });
+  },
+
   // --- Métodos de Socket.IO ---
 
   // Emite el evento para unirse a una sala.
   joinRoom(roomId) {
-    const sessionStore = useSessionStore();
-    const player = { name: sessionStore.playerName, socketId: socket.id, token: sessionStore.token };
-    socket.emit('join-room', { roomId, player });
+    this.waitUntilConnected().then(() => {
+      const sessionStore = useSessionStore();
+      const player = { name: sessionStore.playerName, socketId: socket.id, token: sessionStore.token };
+      socket.emit('join-room', { roomId, player });
+    });
   },
 
   /**
@@ -278,4 +306,3 @@ export const communicationManager = {
     return { name: username };
   },
 };
-    

@@ -161,7 +161,7 @@ const areAllPlayersReady = (roomId) => {
   if (!room) {
     return false;
   }
-  return room.players.every(p => !p.disconnected && p.isReady);
+  return room.players.every(p => p.isReady && !p.disconnected);
 };
 
 const startGame = (roomId) => {

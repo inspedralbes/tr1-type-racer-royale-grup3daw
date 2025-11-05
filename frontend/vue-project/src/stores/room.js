@@ -1,4 +1,5 @@
-import { defineStore } from 'pinia'
+import { defineStore } from 'pinia';
+import { useSessionStore } from './session';
 
 export const useRoomStore = defineStore('room', {
   state: () => ({
@@ -34,11 +35,13 @@ export const useRoomStore = defineStore('room', {
         };
         this.jugadores = roomDetails.players;
       } else {
+        const sessionStore = useSessionStore();
         // Reset room state if roomDetails is null
         this.room = null;
         this.roomId = null;
         this.roomState = { isPlaying: false };
         this.jugadores = [];
+        sessionStore.setRoomId(null);
       }
     },
     resetState() {

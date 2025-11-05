@@ -28,7 +28,11 @@ export const useSessionStore = defineStore('session', {
     },
     setRoomId(roomId) {
       this.roomId = roomId;
-      sessionStorage.setItem('roomId', roomId);
+      if (roomId) {
+        sessionStorage.setItem('roomId', roomId);
+      } else {
+        sessionStorage.removeItem('roomId');
+      }
     },
     resetState() {
       this.token = null;

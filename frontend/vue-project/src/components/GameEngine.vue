@@ -155,6 +155,7 @@ async function fetchWordsForGame() {
   console.log('fetchWordsForGame called.');
   try {
     const response = await communicationManager.getWords()
+    console.log('API response for words:', response.data); // Add this log
     gameStore.setWords(response.data)
     gameStore.setWordsLoaded(true)
     console.log('Words fetched successfully. wordsLoaded:', wordsLoaded.value, 'words:', words.value);
@@ -173,6 +174,7 @@ watch(etapa, async (newEtapa) => {
   console.log('GameEngine etapa changed to:', newEtapa);
   await communicationManager.updatePlayerPage(newEtapa);
   if (newEtapa === 'game') {
+    console.log('Etapa is game. Resetting wordsLoaded and fetching words.'); // Add this log
     gameStore.setWordsLoaded(false); // Reset wordsLoaded
     fetchWordsForGame(); // Always fetch words when entering game stage
   }

@@ -1,19 +1,12 @@
 <template>
-  <div class="selection-background">
-    <div class="room-selection-container">
-      <!--
-        Este componente es el "hub" principal después del login. Ofrece al usuario tres opciones:
-        1. Unirse a una sala existente introduciendo su ID.
-        2. Ver una lista de salas públicas y unirse a una de ellas.
-        3. Crear una nueva sala, lo que le llevará a la pantalla de configuración (`RoomSettings`).
-        También incluye un botón de "Logout" para cerrar la sesión.
-      -->
+  <div class="main-background">
+    <div class="themed-container room-selection-container">
       <h2>Seleccionar Sala</h2>
 
       <div class="section">
         <h3>Unirse a una sala existente</h3>
         <input type="text" v-model="joinRoomId" placeholder="ID de la sala" />
-        <button class="joinId-button" @click="joinRoom">Unirse</button>
+        <button class="btn btn-small" @click="joinRoom">Unirse</button>
       </div>
 
       <div class="section">
@@ -21,18 +14,18 @@
         <ul class="roomList" v-if="publicRooms.length">
           <li class="room" v-for="room in publicRooms" :key="room.id">
             {{ room.name }} (ID: {{ room.id }}) - {{ room.players.length }} jugadores
-            <button class="joinPublic-button" @click="joinRoomById(room.id)">Unirse</button>
+            <button class="btn btn-small" @click="joinRoomById(room.id)">Unirse</button>
           </li>
         </ul>
         <p v-else>No hay salas públicas disponibles.</p>
-        <button class="actualizar-button" @click="fetchPublicRooms">Actualizar Salas</button>
+        <button class="btn btn-small" @click="fetchPublicRooms">Actualizar Salas</button>
       </div>
 
       <div class="section">
         <h3>Crear nueva sala</h3>
-        <button class="crear-button" @click="createRoom">Crear Sala</button>
+        <button class="btn" @click="createRoom">Crear Sala</button>
       </div>
-      <button class="logout-button" @click="logoutAndReset">Logout</button>
+      <button class="btn logout-button" @click="logoutAndReset">Logout</button>
     </div>
   </div>
 </template>
@@ -58,7 +51,10 @@ import { useSessionStore } from '../stores/session';
 import { usePublicRoomsStore } from '../stores/publicRooms';
 import { communicationManager, socket } from '../communicationManager';
 
+import { useRouter } from 'vue-router';
+
 // Inicialización de los stores de Pinia.
+const router = useRouter();
 const gameStore = useGameStore();
 const roomStore = useRoomStore();
 const sessionStore = useSessionStore();
@@ -73,7 +69,8 @@ const { rooms: publicRooms } = storeToRefs(publicRoomsStore);
  * Hook `onMounted`: Se ejecuta al montar el componente y llama a la función
  * para obtener la lista de salas públicas.
  */
-onMounted(() => {
+onMounted(async () => {
+  await communicationManager.updatePlayerPage('rooms');
   fetchPublicRooms();
 });
 
@@ -106,7 +103,7 @@ const joinRoomById = (roomId) => {
  * Cambia la etapa del juego a 'room-settings' para que se muestre el componente de configuración de sala.
  */
 const createRoom = () => {
-  gameStore.setEtapa('room-settings');
+  router.push('/room-settings');
 };
 
 /**
@@ -130,7 +127,7 @@ const logoutAndReset = () => {
   roomStore.resetState();
   publicRoomsStore.resetState();
 
-  gameStore.setEtapa('login');
+  router.push('/login');
 };
 </script>
 

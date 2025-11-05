@@ -1,33 +1,28 @@
 <template>
-  <!-- Contenedor principal del lobby con un fondo específico. -->
-  <div class="lobby-background">
-    <!-- Contenedor central del lobby. -->
-    <div class="lobby-contenedor">
-      <!-- Botón para regresar a la selección de sala. -->
+  <div class="main-background">
+    <div class="themed-container lobby-contenedor">
       <button class="back-button" @click="goBack">←</button>
       <h1>Lobby</h1>
-      <!-- Muestra el nombre del jugador actual. -->
       <h2>Benvingut, {{ nombreJugador }}!</h2>
-      <!-- Lista de jugadores en la sala. -->
       <ul class="lista-jugadores">
         <li v-for="(jugador) in jugadores" :key="jugador.name">
-          {{ jugador.name }} <span v-if="jugador.role === 'admin'">⭐</span>
+          <span>{{ jugador.name }} <span v-if="jugador.role === 'admin'">⭐</span></span>
           <span v-if="jugador.disconnected"> (Desconectado)</span>
-          <span v-else-if="jugador.role !== 'admin'">
+          <span v-else-if="jugador.role !== 'admin'"> 
             <span v-if="jugador.isReady"> (Listo)</span><span v-else> (No listo)</span>
           </span>
-          <!-- Botones de acción para el administrador: eliminar jugador y hacer host. -->
-          <button class="lobby-button" v-if="isAdmin && jugador.socketId !== socket.id" @click="removePlayer(jugador.socketId)">Eliminar</button>
-          <button class="lobby-button" v-if="isAdmin && jugador.socketId !== socket.id" @click="makeHost(jugador.socketId)">Hacer Host</button>
+          <div class="lobby-button-group" v-if="isAdmin && jugador.name !== nombreJugador">
+            <button class="btn btn-small" @click="removePlayer(jugador.socketId)">Eliminar</button>
+            <button class="btn btn-small" @click="makeHost(jugador.socketId)">Hacer Host</button>
+          </div>
         </li>
       </ul>
 
-      <!-- Botón para cambiar el estado de 'listo' del jugador (no visible para el administrador). -->
-      <button class="lobby-button" v-if="!isAdmin" @click="toggleReady">{{ isPlayerReady ? 'No listo' : 'Listo' }}</button>
-
-      <!-- Botones de acción para el administrador: editar sala e iniciar juego. -->
-      <button class="lobby-button" v-if="isAdmin" @click="goToRoomSettings">Editar Sala</button>
-      <button class="lobby-button" v-if="isAdmin" @click="iniciarJuego" :disabled="!isAdmin || !areAllPlayersReady">Començar Joc</button>
+      <div class="lobby-button-group">
+        <button class="btn" v-if="!isAdmin" @click="toggleReady">{{ isPlayerReady ? 'No listo' : 'Listo' }}</button>
+        <button class="btn" v-if="isAdmin" @click="goToRoomSettings">Editar Sala</button>
+        <button class="btn" v-if="isAdmin" @click="iniciarJuego" :disabled="!isAdmin || !areAllPlayersReady">Començar Joc</button>
+      </div>
     </div>
   </div>
 </template>
@@ -39,6 +34,7 @@
 // Importaciones de Vue y Pinia para la gestión del estado y la reactividad.
 import { computed, onMounted } from 'vue'
 import { storeToRefs } from 'pinia'
+import { useRouter } from 'vue-router';
 // Importaciones de módulos de comunicación y stores personalizados.
 import { communicationManager, socket } from '../communicationManager'
 import { useGameStore } from '../stores/game';
@@ -51,6 +47,7 @@ const gameStore = useGameStore();
 const roomStore = useRoomStore();
 const sessionStore = useSessionStore();
 const publicRoomsStore = usePublicRoomsStore();
+const router = useRouter();
 
 // Hook `onMounted` que se ejecuta cuando el componente ha sido montado.
 onMounted(async () => {
@@ -85,7 +82,7 @@ const isPlayerReady = computed(() => {
  * @returns {boolean} - Verdadero si todos los jugadores están listos, falso en caso contrario.
  */
 const areAllPlayersReady = computed(() => {
-  return jugadores.value.every(p => !p.disconnected && (p.role === 'admin' || p.isReady));
+  return jugadores.value.length > 0 && jugadores.value.every(p => p.isReady && !p.disconnected);
 });
 
 /**
@@ -94,8 +91,9 @@ const areAllPlayersReady = computed(() => {
  */
 const goBack = () => {
   socket.emit('leave-room', roomStore.roomId);
-  roomStore.resetState();
-  gameStore.setEtapa('room-selection');
+    roomStore.resetState();
+  sessionStore.setRoomId(null); // Clear roomId from sessionStore
+  router.push('/rooms');
 };
 
 /**
@@ -167,6 +165,6 @@ function iniciarJuego() {
  * @description Función para navegar a la pantalla de configuración de la sala. Solo accesible para el administrador.
  */
 function goToRoomSettings() {
-  gameStore.setEtapa('room-settings');
+  router.push('/room-settings');
 }
 </script>
