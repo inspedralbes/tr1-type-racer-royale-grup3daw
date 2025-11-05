@@ -300,7 +300,19 @@
                             <div class="paraula-actual">
                                 <!-- Stack: top = furthest upcoming, bottom = current word -->
                                 <transition-group name="stack" tag="div" class="stack-container">
-                                    <div class="stack-item" v-for="w in stackWords" :key="w.id" :class="{ current: w.id === estatDelJoc.indexParaulaActiva }">{{ w.text }}</div>
+                                    <div class="stack-item" v-for="w in stackWords" :key="w.id" :class="{ current: w.id === estatDelJoc.indexParaulaActiva }">
+                                        <!-- If this is the current active word, render per-letter spans so we can mark incorrect letters -->
+                                        <template v-if="w.id === estatDelJoc.indexParaulaActiva">
+                                            <h1>
+                                                <span v-for="(lletra, idx) in paraulaActiva.text" :key="idx" :class="obtenirClasseLletra(lletra, idx)">
+                                                    {{ lletra }}
+                                                </span>
+                                            </h1>
+                                        </template>
+                                        <template v-else>
+                                            {{ w.text }}
+                                        </template>
+                                    </div>
                                 </transition-group>
 
                                 <!-- keep an accessible hidden H1 for letter-by-letter classes if needed -->
