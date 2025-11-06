@@ -62,8 +62,19 @@ apiClient.interceptors.response.use(
   (error) => {
     // Si hay un error en la respuesta.
     console.error('Error en la llamada API:', error.response?.data?.message || error.message);
-    // Aquí podrías despachar una acción a un store de notificaciones para mostrar el error en la UI.
-    // Ejemplo: notificationStore.showError(error.response?.data?.message || 'Ocurrió un error inesperado.');
+    
+    try {
+      const notificationStore = useNotificationStore();
+      // Solo mostramos notificación si no es un 404 de updatePlayerPage (caso especial manejado)
+      if (!(error.config.url === '/player/page' && error.response?.status === 404)) {
+        notificationStore.pushNotification({ 
+          type: 'error', 
+          message: error.response?.data?.message || 'Error de conexión con el servidor'
+        });
+      }
+    } catch (e) {
+      console.warn('Could not show error notification:', e);
+    }
     
     // Rechaza la promesa para que el .catch() en el lugar de la llamada original aún pueda ejecutarse si es necesario.
     return Promise.reject(error);
@@ -177,6 +188,11 @@ export function setupSocketListeners(router) {
 // Objeto que agrupa todos los métodos de comunicación con el backend.
 export const communicationManager = {
   // --- Métodos de Autenticación y Sesión (REST) ---
+
+  // Login como invitado
+  async loginAsGuest(username) {
+    return apiClient.post('/auth/login-as-guest', { username });
+  },
 
   // Obtiene el token de la sesión actual.
   getToken() {

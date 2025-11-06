@@ -24,16 +24,9 @@ const loginAsGuest = async () => {
   }
 
   try {
-    const response = await fetch('http://localhost:3000/api/auth/login-as-guest', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ username: nom.value }),
-    });
-
-    if (response.ok) {
-      const { token, username, email } = await response.json();
+    const response = await communicationManager.loginAsGuest(nom.value);
+    if (response && response.data) {
+      const { token, username, email } = response.data;
       session.setSession(token, username, email);
       gameStore.setNombreJugador(username);
       communicationManager.connect(); // Conecta el socket después del login
