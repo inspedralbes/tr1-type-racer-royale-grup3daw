@@ -50,6 +50,7 @@ import { useRoomStore } from '../stores/room';
 import { useSessionStore } from '../stores/session';
 import { usePublicRoomsStore } from '../stores/publicRooms';
 import { communicationManager, socket } from '../communicationManager';
+import { useNotificationStore } from '../stores/notification';
 
 import { useRouter } from 'vue-router';
 
@@ -79,7 +80,8 @@ const fetchPublicRooms = async () => {
     publicRooms.value = response.data;
   } catch (error) {
     console.error('Error al obtener salas públicas:', error);
-    alert('Error al obtener salas públicas.');
+    const notificationStore = useNotificationStore();
+    notificationStore.pushNotification({ type: 'error', message: 'Error al obtener salas públicas.' });
   }
 };
 

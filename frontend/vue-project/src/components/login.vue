@@ -5,6 +5,7 @@ import { useRouter } from 'vue-router'
 import { communicationManager } from '@/communicationManager'
 import { useSessionStore } from '@/stores/session';
 import { useGameStore } from '@/stores/game';
+import { useNotificationStore } from '../stores/notification';
 
 const email = ref('')
 const password = ref('')
@@ -24,7 +25,8 @@ onMounted(async () => {
 
 const login = async () => {
   if (email.value.trim() === '' || password.value.trim() === '') {
-    alert('Por favor, introduce tu email y contraseña.')
+    const notificationStore = useNotificationStore();
+    notificationStore.pushNotification({ type: 'error', message: 'Por favor, introduce tu email y contraseña.' });
     return
   }
 
@@ -47,11 +49,13 @@ const login = async () => {
       router.push('/game/select-room');
     } else {
       const error = await response.json();
-      alert(error.message);
+      const notificationStore = useNotificationStore();
+      notificationStore.pushNotification({ type: 'error', message: error.message });
     }
   } catch (error) {
     console.error('Error al iniciar sessió:', error)
-    alert('Hi ha hagut un problema al servidor')
+    const notificationStore = useNotificationStore();
+    notificationStore.pushNotification({ type: 'error', message: 'Hi ha hagut un problema al servidor' });
   }
 }
 

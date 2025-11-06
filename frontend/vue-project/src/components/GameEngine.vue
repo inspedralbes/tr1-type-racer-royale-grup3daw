@@ -21,6 +21,7 @@ import { onMounted, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useRouter } from 'vue-router';
 import { communicationManager, socket } from '../communicationManager'
+import { useNotificationStore } from '../stores/notification';
 import { useSessionStore } from '../stores/session';
 import { useGameStore } from '../stores/game';
 import { useRoomStore } from '../stores/room';
@@ -115,7 +116,8 @@ const navigateByEtapa = (currentEtapa) => {
           navigateByEtapa(sessionStore.etapa);
         } catch (error) {
           console.error('Error al reconectar la sesión:', error);
-          alert('Error al reconectar la sesión: ' + error.message);
+          const notificationStore = useNotificationStore();
+          notificationStore.pushNotification({ type: 'error', message: 'Error al reconectar la sesión: ' + (error.message || '') });
           // Si la reconexión falla, limpia todos los datos de sesión y estado,
           // y redirige al usuario a la pantalla de login.
           sessionStore.clearSession();
@@ -156,6 +158,10 @@ async function fetchWordsForGame() {
     }
   } catch (error) {
     console.error('Error al obtener las palabras:', error)
+    try {
+      const notificationStore = useNotificationStore();
+      notificationStore.pushNotification({ type: 'error', message: 'Error al obtener las palabras del servidor.' });
+    } catch (e) {}
     gameStore.setWordsLoaded(false); // Ensure loading state is false on error
   }
 }
@@ -201,6 +207,10 @@ const onGameOver = async (resultados) => {
     await communicationManager.resetReadyStatus(roomStore.roomId);
   } catch (error) {
     console.error('Error resetting ready status after game over:', error)
+    try {
+      const notificationStore = useNotificationStore();
+      notificationStore.pushNotification({ type: 'error', message: 'Error al resetear el estado de listo tras finalizar la partida.' });
+    } catch (e) {}
   }
 };
 

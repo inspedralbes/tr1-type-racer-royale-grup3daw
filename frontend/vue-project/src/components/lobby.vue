@@ -37,6 +37,7 @@ import { storeToRefs } from 'pinia'
 import { useRouter } from 'vue-router';
 // Importaciones de módulos de comunicación y stores personalizados.
 import { communicationManager, socket } from '../communicationManager'
+import { useNotificationStore } from '../stores/notification'
 import { useGameStore } from '../stores/game';
 import { useRoomStore } from '../stores/room';
 import { useSessionStore } from '../stores/session';
@@ -111,7 +112,8 @@ const removePlayer = async (playerSocketId) => {
       console.log(`Jugador con socketId ${playerSocketId} eliminado.`);
     } catch (error) {
       console.error('Error al eliminar jugador:', error);
-      alert(error.response?.data?.message || 'Error al eliminar jugador.');
+      const notificationStore = useNotificationStore();
+      notificationStore.pushNotification({ type: 'error', message: error.response?.data?.message || 'Error al eliminar jugador.' });
     }
   } else {
     console.warn('Solo el administrador puede eliminar jugadores.');
@@ -129,7 +131,8 @@ const makeHost = async (targetPlayerSocketId) => {
       console.log(`Jugador con socketId ${targetPlayerSocketId} es ahora el host.`);
     } catch (error) {
       console.error('Error al hacer host al jugador:', error);
-      alert(error.response?.data?.message || 'Error al hacer host al jugador.');
+      const notificationStore = useNotificationStore();
+      notificationStore.pushNotification({ type: 'error', message: error.response?.data?.message || 'Error al hacer host al jugador.' });
     }
   } else {
     console.warn('Solo el administrador puede hacer host a otros jugadores.');
@@ -159,7 +162,8 @@ function iniciarJuego() {
       })
       .catch(error => {
         console.error('Error al iniciar el juego:', error);
-        alert(error.response?.data?.message || 'Error al iniciar el juego.');
+        const notificationStore = useNotificationStore();
+        notificationStore.pushNotification({ type: 'error', message: error.response?.data?.message || 'Error al iniciar el juego.' });
       });
   } else {
     console.warn('Solo el administrador puede iniciar el juego.');

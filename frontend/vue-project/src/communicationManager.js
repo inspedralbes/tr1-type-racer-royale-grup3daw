@@ -18,6 +18,7 @@ import { useGameStore } from './stores/game';
 import { useRouter } from 'vue-router';
 
 import { usePublicRoomsStore } from './stores/publicRooms';
+import { useNotificationStore } from './stores/notification';
 
 let API_BASE_URL;
 let SOCKET_URL;
@@ -141,8 +142,13 @@ export function setupSocketListeners(router) {
   // Evento: 'join-room-error' - Maneja errores al intentar unirse a una sala.
   socket.on('join-room-error', (error) => {
     console.error('Error al unirse a la sala:', error.message);
-    // SUGERENCIA: En lugar de alert, usar un sistema de notificaciones no intrusivo.
-    alert(`Error al unirse a la sala: ${error.message}`);
+    // Use notification store instead of alert for visual feedback
+    try {
+      const notificationStore = useNotificationStore();
+      notificationStore.pushNotification({ type: 'error', message: `Error al unirse a la sala: ${error.message}` });
+    } catch (e) {
+      console.warn('Could not push notification for join-room-error', e);
+    }
   });
 
   socket.on('join-room-success', (room) => {
@@ -157,6 +163,13 @@ export function setupSocketListeners(router) {
     roomStore.setJugadores(room.players); // ¡Esta es la línea clave!
     // En lugar de navegar directamente, cambiamos la etapa en el store.
     sessionStore.setEtapa('lobby');
+    // Informar al usuario que se unió correctamente
+    try {
+      const notificationStore = useNotificationStore();
+      notificationStore.pushNotification({ type: 'success', message: `Te has unido a la sala ${room.name || room.id}` });
+    } catch (e) {
+      // ignore
+    }
     // router.push('/lobby'); // Redirige al lobby - Eliminado, GameEngine gestiona la vista
   });
 }

@@ -30,6 +30,7 @@
 import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { communicationManager } from '@/communicationManager';
+import { useNotificationStore } from '../stores/notification';
 
 const username = ref('');
 const email = ref('');
@@ -42,7 +43,8 @@ onMounted(async () => {
 
 const register = async () => {
   if (username.value.trim() === '' || email.value.trim() === '' || password.value.trim() === '') {
-    alert('Si us plau, omple tots els camps.');
+    const notificationStore = useNotificationStore();
+    notificationStore.pushNotification({ type: 'error', message: 'Si us plau, omple tots els camps.' });
     return;
   }
 
@@ -60,15 +62,18 @@ const register = async () => {
     });
 
     if (response.ok) {
-      alert('Registre exitós. Si us plau, revisa el teu correu per a verificar el teu compte.');
+      const notificationStore = useNotificationStore();
+      notificationStore.pushNotification({ type: 'success', message: 'Registre exitós. Si us plau, revisa el teu correu per a verificar el teu compte.' });
       router.push('/login');
     } else {
       const error = await response.json();
-      alert(error.message);
+      const notificationStore = useNotificationStore();
+      notificationStore.pushNotification({ type: 'error', message: error.message });
     }
   } catch (error) {
     console.error('Error en el registre:', error);
-    alert('Hi ha hagut un problema al servidor.');
+    const notificationStore = useNotificationStore();
+    notificationStore.pushNotification({ type: 'error', message: 'Hi ha hagut un problema al servidor.' });
   }
 };
 

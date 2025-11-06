@@ -7,6 +7,7 @@
 import { communicationManager } from '../../communicationManager';
         // Importación de los stores de Pinia para la gestión del estado global de la aplicación.
         import { useGameStore } from '../../stores/game';
+        import { useNotificationStore } from '../../stores/notification';
         import { useRoomStore } from '../../stores/room';
         import { useSessionStore } from '../../stores/session';
     
@@ -150,11 +151,17 @@ import { communicationManager } from '../../communicationManager';
      * @param {Object} wordsData - Objeto que contiene arrays de palabras por dificultad (facil, normal, dificil).
      */
     const initializeWords = (wordsData) => {
-        if (!wordsData) {
-            console.error("initializeWords: wordsData es nulo o indefinido.");
-            estatDelJoc.value.paraules = [];
-            return;
-        }
+                if (!wordsData) {
+                        console.error("initializeWords: wordsData es nulo o indefinido.");
+                        try {
+                            const notificationStore = useNotificationStore();
+                            notificationStore.pushNotification({ type: 'error', message: 'No se han podido cargar las palabras para la partida.' });
+                        } catch (e) {
+                            // ignore if store not available
+                        }
+                        estatDelJoc.value.paraules = [];
+                        return;
+                }
 
         let allWords = [];
         // Concatena las palabras de cada dificultad con su etiqueta.

@@ -5,6 +5,7 @@ import { useRouter } from 'vue-router'
 import { communicationManager } from '@/communicationManager'
 import { useSessionStore } from '@/stores/session';
 import { useGameStore } from '@/stores/game';
+import { useNotificationStore } from '../stores/notification';
 
 const nom = ref('')
 const session = useSessionStore()
@@ -17,7 +18,8 @@ onMounted(async () => {
 
 const loginAsGuest = async () => {
   if (nom.value.trim() === '') {
-    alert('Por favor, introduce un nombre para continuar.')
+    const notificationStore = useNotificationStore();
+    notificationStore.pushNotification({ type: 'error', message: 'Por favor, introduce un nombre para continuar.' });
     return
   }
 
@@ -39,11 +41,13 @@ const loginAsGuest = async () => {
       router.push('/game/select-room');
     } else {
       const error = await response.json();
-      alert(error.message);
+      const notificationStore = useNotificationStore();
+      notificationStore.pushNotification({ type: 'error', message: error.message });
     }
   } catch (error) {
     console.error('Error al iniciar sessió:', error)
-    alert('Hi ha hagut un problema al servidor')
+    const notificationStore = useNotificationStore();
+    notificationStore.pushNotification({ type: 'error', message: 'Hi ha hagut un problema al servidor' });
   }
 }
 </script>

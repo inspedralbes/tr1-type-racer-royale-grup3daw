@@ -61,6 +61,7 @@ import { useRoomStore } from '../stores/room';
 import { useGameStore } from '../stores/game';
 import { useSessionStore } from '../stores/session';
 import { communicationManager } from '../communicationManager';
+import { useNotificationStore } from '../stores/notification';
 import { useRouter } from 'vue-router';
 
 // Inicialización de los stores de Pinia.
@@ -105,12 +106,20 @@ const saveSettings = async () => {
       // Si la sala ya tiene un ID, significa que estamos actualizando una sala existente.
       const response = await communicationManager.updateRoom(roomStore.room.id, room.value);
       roomStore.setRoom(response.data); // Actualiza el store con los nuevos datos.
+      try {
+        const notificationStore = useNotificationStore();
+        notificationStore.pushNotification({ type: 'success', message: 'Configuración de sala actualizada.' });
+      } catch (e) {}
       sessionStore.setEtapa('lobby'); // Establece la etapa a 'lobby'
     } else {
       // Si no hay ID, estamos creando una nueva sala.
       const newRoom = await communicationManager.createRoom(room.value);
       // Guarda la nueva sala en el store.
       roomStore.setRoom(newRoom.data);
+      try {
+        const notificationStore = useNotificationStore();
+        notificationStore.pushNotification({ type: 'success', message: 'Sala creada correctamente.' });
+      } catch (e) {}
       // Guarda el ID de la sala en la sesión para persistencia.
       sessionStore.setRoomId(newRoom.data.id);
       // Se une a la sala recién creada a través del socket.
@@ -119,7 +128,8 @@ const saveSettings = async () => {
     }
   } catch (error) {
     console.error('Error al guardar la configuración de la sala:', error);
-    alert('Error al guardar la configuración.');
+    const notificationStore = useNotificationStore();
+    notificationStore.pushNotification({ type: 'error', message: 'Error al guardar la configuración.' });
   }
 };
 </script>
