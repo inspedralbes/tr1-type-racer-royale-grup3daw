@@ -15,18 +15,64 @@ div.room-settings-container {
   margin-right: 1em;
 }
 
-.form-group input,
-.form-group select {
-  flex-basis: 55%; /* Adjust input/select width */
-  width: auto; /* Override global 100% width */
-  margin-bottom: 0; /* Remove global margin */
+div.form-group {
+    display: grid;
+    grid-template-columns: 1fr 1fr; 
+    align-items: center; 
+    gap: 15px; 
+    margin: 15px 0; 
 }
 
-.form-actions {
-  margin-top: 2em;
+div.form-group label {
+    text-align: right; 
 }
 
-.form-actions .btn {
-  width: auto; /* Override global 100% width */
-  padding: 10px 25px;
+input.room-id{
+    font-family: 'PressStart2P', sans-serif;
+    padding: 8px;
+    border: 2px solid black;
+    border-radius: 5px;
+    font-size: 0.8em;
+    width: 40%;
+    margin: 0 10px;
+}
+
+input.room-id,
+input.room-name,
+input.room-time,
+select {
+    font-family: 'PressStart2P', sans-serif;
+    padding: 8px;
+    border: 2px solid black;
+    border-radius: 5px;
+    font-size: 0.8em;
+    width: 100%;
+    margin: 0;
+    box-sizing: border-box; 
+}
+
+button.back-button {
+  position: absolute;
+  top: 35px;
+  left: 0; 
+  transform: translateY(-60%);
+  font-size: 1.5em; 
+  background-color: transparent;
+  border: none;
+  cursor: pointer;
+}
+
+button.submit{
+  font-family: 'PressStart2P', sans-serif;
+  padding: 8px;
+  border: 2px solid black;
+  border-radius: 5px;
+  font-size: 0.8em;
+  cursor: pointer;
+}
+
+div.settings h2 {
+  margin-top: 0;
+  line-height: 1.5;
+  margin-bottom: 15px; 
 }
