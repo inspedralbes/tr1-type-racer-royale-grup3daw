@@ -8,7 +8,7 @@
  * - Configurar las URLs del API y del socket según el entorno (desarrollo/producción).
  * - Crear una instancia de Axios (`apiClient`) con un interceptor para añadir automáticamente el token de autenticación a las peticiones.
  * - Gestionar la conexión y los eventos de Socket.IO.
- * - Proporcionar un objeto `communicationManager` con métodos claros y concisos para interactuar con el backend.
+ * - Proporcionar un objeto `communicationManager` con métodos claros y concisos para interactuar con el backend
  */
 import axios from 'axios';
 import { io } from 'socket.io-client';
