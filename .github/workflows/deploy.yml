@@ -58,11 +58,19 @@ jobs:
             echo "VITE_API_URL=${{ secrets.FRONTEND_URL }}" >> .env
             echo "VITE_SOCKET_URL=${{ secrets.FRONTEND_URL }}" >> .env
 
-            # Run docker-compose
-            echo "Starting docker-compose..."
-            # Actualiza los servicios: reconstruye las imágenes que han cambiado y reinicia
-            # los contenedores correspondientes. Los datos de las bases de datos se conservan.
-            docker compose -f docker-compose.prod.yml up --build -d --remove-orphans
+            # Stop and remove all containers, but keep DB volumes
+            echo "Stopping and removing containers..."
+            docker compose -f docker-compose.prod.yml down --remove-orphans
 
-            # Limpia cualquier otra imagen de Docker que no se esté utilizando.
+            # Remove all unused images and build cache
+            echo "Cleaning Docker system..."
+            docker image prune -af
+            docker builder prune -f
+
+            # Start everything fresh
+            echo "Starting docker-compose with fresh builds..."
+            docker compose -f docker-compose.prod.yml up --build -d --no-deps --force-recreate
+
+            # Clean up old images
+            echo "Final cleanup of old images..."
             docker image prune -f
