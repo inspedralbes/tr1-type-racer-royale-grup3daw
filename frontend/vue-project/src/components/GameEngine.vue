@@ -42,6 +42,8 @@
     :resultados="finalResults"
     @reiniciar="onReiniciar"
     />
+
+    <PlayerStats v-else-if="etapa === 'player-stats'" />
   </div>
 </template>
 
@@ -67,6 +69,7 @@ import Joc from './joc.vue'
 import Final from './paginaFinal.vue'
 import RoomSettings from './RoomSettings.vue'
 import RoomSelection from './RoomSelection.vue' // New import
+import PlayerStats from './PlayerStats.vue' // New import
 import { communicationManager, socket } from '../communicationManager'
 import { useSessionStore } from '../stores/session';
 import { useGameStore } from '../stores/game';

@@ -49,14 +49,8 @@ exports.saveScore = async (req, res) => {
   }
 
   try {
-    // Buscar el email del jugador en la base de datos MySQL (Sequelize)
-    const user = await db.User.findOne({ where: { username: playerName } });
-
-    if (!user) {
-      return res.status(404).json({ error: 'Usuario no encontrado en la base de datos de usuarios.' });
-    }
-
-    const playerEmail = user.email;
+    // No longer fetching email from MySQL, playerEmail will be null or an empty string
+    const playerEmail = null; // Or an empty string if preferred
 
     // Crear y guardar la nueva puntuación en MongoDB
     const newScore = new Score({

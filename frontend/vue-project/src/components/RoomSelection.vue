@@ -30,9 +30,13 @@
 
       <div class="section">
         <h3>Crear nueva sala</h3>
-        <button class="crear-button" @click="createRoom">Crear Sala</button>
+        <button class="create-room-button" @click="createRoom">Crear Sala</button>
+        <button class="stats-button" @click="goToPlayerStats">Ver Estadísticas</button>
       </div>
-      <button class="logout-button" @click="logoutAndReset">Logout</button>
+
+      <div class="room-list">
+        <button class="logout-button" @click="logoutAndReset">Logout</button>
+      </div>
     </div>
   </div>
 </template>
@@ -109,14 +113,10 @@ const createRoom = () => {
   gameStore.setEtapa('room-settings');
 };
 
-/**
- * Gestiona el proceso completo de cierre de sesión.
- * 1. Emite un evento 'explicit-logout' al backend con el token del jugador para que el servidor
- *    pueda limpiar el estado del jugador inmediatamente.
- * 2. Desconecta el socket.
- * 3. Resetea el estado de todos los stores de Pinia a sus valores iniciales.
- * 4. Cambia la etapa del juego de vuelta a 'login'.
- */
+const goToPlayerStats = () => {
+  gameStore.setEtapa('player-stats');
+};
+
 const logoutAndReset = () => {
   // Emit explicit-logout with the player's token to ensure backend cleanup
   if (sessionStore.token) {

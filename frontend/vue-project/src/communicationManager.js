@@ -190,6 +190,11 @@ export const communicationManager = {
     return apiClient.post('/scores/save', { playerName, score, wpm });
   },
 
+  // Obtiene estadísticas agregadas de los jugadores.
+  async getPlayerStats() {
+    return apiClient.get('/stats/player');
+  },
+
   // --- Métodos de Salas (REST) ---
 
   // Obtiene la lista de salas públicas.

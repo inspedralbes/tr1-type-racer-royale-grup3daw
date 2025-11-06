@@ -7,7 +7,7 @@ const ScoreSchema = new mongoose.Schema({
   },
   playerEmail: {
     type: String,
-    required: true,
+    required: false, // Made optional
   },
   score: {
     type: Number,

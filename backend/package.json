@@ -6,7 +6,7 @@
   "scripts": {
     "start": "node server.js",
     "dev": "nodemon -L server.js",
-    "start:dev": "sequelize db:migrate && nodemon -L server.js",
+    "start:dev": "sleep 10 && sequelize db:migrate && nodemon -L server.js",
     "start:prod": "sequelize db:migrate && node server.js",
     "db:migrate": "sequelize db:migrate",
     "db:migrate:undo": "sequelize db:migrate:undo"
@@ -20,7 +20,8 @@
     "mysql2": "^3.15.3",
     "sequelize": "^6.37.7",
     "socket.io": "^4.6.1",
-    "dotenv": "^16.4.5"
+    "dotenv": "^16.4.5",
+    "mongoose": "^8.0.0"
   },
   "devDependencies": {
     "nodemon": "^2.0.22",
