@@ -212,7 +212,8 @@ const onGameOver = async (resultados) => {
   // por los eventos de socket. Se mapea a un formato simple para la pantalla final.
   const finalScores = jugadores.value.map(p => ({
     nombre: p.name,
-    puntuacion: p.score
+    puntuacion: p.score,
+    wpm: p.name === resultados.jugador ? resultados.wpm : 0, // Assuming WPM is only for the current player
   }));
   
   gameStore.setFinalResults(finalScores);
@@ -224,10 +225,14 @@ const onGameOver = async (resultados) => {
   gameStore.setWordsLoaded(false)
 
   try {
+    // Guarda la puntuación final en el backend
+    await communicationManager.saveGameResult(resultados.jugador, resultados.puntuacion, resultados.wpm);
+    console.log('Puntuación final guardada en MongoDB.');
+
     // Pide al backend que resetee el estado de "listo" de todos los jugadores en la sala.
     await communicationManager.resetReadyStatus(roomStore.roomId);
   } catch (error) {
-    console.error('Error resetting ready status after game over:', error)
+    console.error('Error resetting ready status after game over or saving score:', error)
   }
 }
 

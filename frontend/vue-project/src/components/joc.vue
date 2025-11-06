@@ -47,6 +47,7 @@
     });
     let gameInterval = null; // Variable para almacenar el ID del intervalo del juego.
     const gameEnded = ref(false); // Estado para controlar si el juego ha terminado.
+    let gameStartTime = null; // Variable para almacenar el tiempo de inicio real de la escritura.
 
     // Hook `onMounted` que se ejecuta cuando el componente ha sido montado.
     onMounted(() => {
@@ -159,11 +160,21 @@
         }
         gameEnded.value = true;
 
+        let wpm = 0;
+        if (gameStartTime) {
+            const durationInSeconds = (Date.now() - gameStartTime) / 1000;
+            const totalTypedCharacters = estatDelJoc.value.stats.reduce((sum, stat) => sum + stat.paraula.length, 0);
+            if (durationInSeconds > 0) {
+                wpm = Math.round((totalTypedCharacters / 5) / (durationInSeconds / 60));
+            }
+        }
+
         const resultados = {
             jugador: nombreJugador.value,
             puntuacion: score.value,
             stats: [...estatDelJoc.value.stats],
             errorTotal: estatDelJoc.value.errorTotal,
+            wpm: wpm,
         }
         emits('done', resultados);
     }
@@ -181,7 +192,9 @@
      * @description Inicia el cronómetro para medir el tiempo de escritura de una palabra.
      */
     function cronometro() {
-        temps = Date.now();
+        if (!gameStartTime) {
+            gameStartTime = Date.now();
+        }
     }
 
     /**

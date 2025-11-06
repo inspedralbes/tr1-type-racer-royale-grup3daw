@@ -185,6 +185,11 @@ export const communicationManager = {
     return apiClient.post('/scores', { name, score, roomId });
   },
 
+  // Guarda el resultado final de la partida en el backend.
+  async saveGameResult(playerName, score, wpm) {
+    return apiClient.post('/scores/save', { playerName, score, wpm });
+  },
+
   // --- Métodos de Salas (REST) ---
 
   // Obtiene la lista de salas públicas.

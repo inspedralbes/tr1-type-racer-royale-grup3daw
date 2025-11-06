@@ -19,10 +19,14 @@ const wordsRoutes = require('./routes/wordsRoutes');
 const playerRoutes = require('./routes/playerRoutes');
 const userRoutes = require('./routes/userRoutes');
 const { initializeSockets } = require('./controllers/socketManager');
+const connectDB = require('./db/mongo');
 
 // Creación de la aplicación Express y el servidor HTTP.
 const app = express();
 const server = http.createServer(app);
+
+// Conectar a la base de datos MongoDB
+connectDB();
 
 const nodeEnv = process.env.NODE_ENV;
 let port;

@@ -59,6 +59,7 @@ function volverAJugar() {
         
         <span>{{ jugador.nombre }}&nbsp;</span>
         <span >{{ jugador.puntuacion }} Puntos</span>
+        <span v-if="jugador.wpm"> ({{ jugador.wpm }} WPM)</span>
       </li>
     </ol>
 
