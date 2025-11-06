@@ -43,7 +43,7 @@
  * - Gestiona el cierre de sesión (logout), limpiando todo el estado local (stores de Pinia, sessionStorage)
  *   y notificando al backend para que también limpie el estado del jugador.
  */
-import { ref, onMounted, computed } from 'vue';
+import { ref, onMounted, computed, watch } from 'vue';
 import { storeToRefs } from 'pinia';
 import { useGameStore } from '../stores/game';
 import { useRoomStore } from '../stores/room';
@@ -70,7 +70,6 @@ const { rooms: publicRooms } = storeToRefs(publicRoomsStore);
  * para obtener la lista de salas públicas.
  */
 onMounted(async () => {
-  await communicationManager.updatePlayerPage('rooms');
   fetchPublicRooms();
 });
 
@@ -93,14 +92,16 @@ const joinRoom = () => {
  * Lógica para unirse a una sala.
  * - Llama a `communicationManager.joinRoom` para emitir el evento de socket.
  * - Actualiza los stores de `roomStore` y `sessionStore` con el ID de la sala.
- * - Cambia la etapa del juego a 'lobby' para mostrar la sala de espera.
+ * - Navega al lobby de la sala.
  */
 const joinRoomById = (roomId) => {
   communicationManager.joinRoom(roomId);
+  sessionStore.setRoomId(roomId);
+  sessionStore.setEtapa('lobby');
 };
 
 /**
- * Cambia la etapa del juego a 'room-settings' para que se muestre el componente de configuración de sala.
+ * Navega a la pantalla de configuración de sala para crear una nueva sala.
  */
 const createRoom = () => {
   sessionStore.setEtapa('room-settings');

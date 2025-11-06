@@ -19,11 +19,16 @@
           </select>
         </div>
         <div class="form-group">
-          <label for="gameMode">Modo de Juego:</label>
-          <select id="gameMode" v-model="room.gameMode">
-            <option value="normal">Normal</option>
+          <label for="gameMode">Modo de Juego (obligatorio):</label>
+          <select id="gameMode" v-model="room.gameMode" required>
+            <option value="" disabled>-- Elige un modo de juego --</option>
+            <option value="cuentaAtrasSimple">Cuenta Atrás Simple</option>
+            <option value="modoJuego2">Modo de Juego 2</option>
+            <option value="modoJuego3">Modo de Juego 3</option>
           </select>
+          <div v-if="validationError" class="validation-error">{{ validationError }}</div>
         </div>
+        
         <div class="form-group">
           <label for="gameTime">Tiempo de Juego (segundos):</label>
           <input type="number" id="gameTime" v-model.number="room.time" min="30" max="120" required>
@@ -51,7 +56,7 @@
  * - Al guardar, llama al método correspondiente del `communicationManager` (`createRoom` o `updateRoom`)
  *   y redirige al usuario al lobby de la sala.
  */
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, watch } from 'vue';
 import { useRoomStore } from '../stores/room';
 import { useGameStore } from '../stores/game';
 import { useSessionStore } from '../stores/session';
@@ -69,9 +74,11 @@ const router = useRouter();
 const room = ref({
   name: sessionStore.playerName ? `${sessionStore.playerName}'s Room` : 'Mi Sala',
   isPublic: true,
-  gameMode: 'normal',
+  gameMode: '',
   time: 60,
 });
+
+const validationError = ref('');
 
 /**
  * Hook `onMounted`: Se ejecuta cuando el componente se monta.
@@ -87,12 +94,18 @@ onMounted(async () => {
 
 const saveSettings = async () => {
   try {
+    // Validación: el campo 'gameMode' es obligatorio para crear/actualizar la sala
+    if (!room.value.gameMode) {
+      validationError.value = 'Debes elegir un modo de juego antes de guardar la sala.';
+      return;
+    }
+    validationError.value = '';
+
     if (roomStore.room && roomStore.room.id) {
       // Si la sala ya tiene un ID, significa que estamos actualizando una sala existente.
       const response = await communicationManager.updateRoom(roomStore.room.id, room.value);
       roomStore.setRoom(response.data); // Actualiza el store con los nuevos datos.
       sessionStore.setEtapa('lobby'); // Establece la etapa a 'lobby'
-      // router.push('/lobby'); // Eliminado, GameEngine gestiona la vista
     } else {
       // Si no hay ID, estamos creando una nueva sala.
       const newRoom = await communicationManager.createRoom(room.value);
@@ -104,8 +117,6 @@ const saveSettings = async () => {
       communicationManager.joinRoom(newRoom.data.id);
       sessionStore.setEtapa('lobby'); // Establece la etapa a 'lobby'
     }
-    // La redirección al lobby ahora es manejada por el listener 'join-room-success'
-    // en communicationManager.js para evitar problemas de sincronización.
   } catch (error) {
     console.error('Error al guardar la configuración de la sala:', error);
     alert('Error al guardar la configuración.');

@@ -34,6 +34,13 @@ export const useRoomStore = defineStore('room', {
           gameMode: roomDetails.gameMode,
         };
         this.jugadores = roomDetails.players;
+        // Persist roomId in session so the page can be restored after reload
+        try {
+          const sessionStore = useSessionStore();
+          if (roomDetails.id) sessionStore.setRoomId(roomDetails.id);
+        } catch (e) {
+          console.warn('Could not persist roomId to sessionStorage', e);
+        }
       } else {
         const sessionStore = useSessionStore();
         // Reset room state if roomDetails is null

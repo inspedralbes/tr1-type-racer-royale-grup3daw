@@ -8,7 +8,8 @@ export const useSessionStore = defineStore('session', {
     email: sessionStorage.getItem('email') || null,
     roomId: sessionStorage.getItem('roomId') || null,
     // La etapa actual del juego ('login', 'room-selection', 'lobby', 'game', 'final')
-    etapa: 'login',
+    // Persistimos la etapa en sessionStorage para poder restaurar la página después de reload
+    etapa: sessionStorage.getItem('etapa') || 'login',
   }),
   actions: {
     setSession(token, playerName, email) {
@@ -38,6 +39,13 @@ export const useSessionStore = defineStore('session', {
     },
     setEtapa(etapa) {
       this.etapa = etapa;
+      // Persist the current page/etapa so on reload we can restore it
+      try {
+        if (etapa) sessionStorage.setItem('etapa', etapa);
+        else sessionStorage.removeItem('etapa');
+      } catch (e) {
+        console.warn('Could not persist etapa to sessionStorage', e);
+      }
     },
     /**
      * Limpia completamente la sesión, tanto en el sessionStorage como en el estado de Pinia.
@@ -52,6 +60,7 @@ export const useSessionStore = defineStore('session', {
       sessionStorage.removeItem('playerName');
       sessionStorage.removeItem('email');
       sessionStorage.removeItem('roomId');
+      sessionStorage.removeItem('etapa');
     },
   },
 });

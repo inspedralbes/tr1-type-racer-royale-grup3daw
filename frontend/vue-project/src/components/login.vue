@@ -44,7 +44,7 @@ const login = async () => {
       gameStore.setNombreJugador(username);
       communicationManager.connect(); // Conecta el socket después del login
       await communicationManager.waitUntilConnected(); // Ensure socket is connected
-      router.push('/game-flow');
+      router.push('/game/select-room');
     } else {
       const error = await response.json();
       alert(error.message);

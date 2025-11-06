@@ -265,7 +265,19 @@ const makeHostInRoom = (roomId, currentHostSocketId, targetPlayerSocketId) => {
 };
 
 const deleteRoom = (roomId) => {
-  if (rooms[roomId]) {
+  const room = rooms[roomId];
+  if (room) {
+    // Clear any registeredPlayers' roomId references for players that were in this room
+    room.players.forEach(p => {
+      if (p && p.token && registeredPlayers[p.token]) {
+        try {
+          delete registeredPlayers[p.token].roomId;
+        } catch (e) {
+          // ignore
+        }
+      }
+    });
+
     delete rooms[roomId];
     return { success: true };
   }

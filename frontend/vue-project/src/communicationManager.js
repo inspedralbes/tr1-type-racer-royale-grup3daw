@@ -87,7 +87,17 @@ export function setupSocketListeners(router) {
   socket.on('updatePlayerList', (playerList) => {
     console.log('updatePlayerList event received:', playerList);
     const roomStore = useRoomStore();
-    roomStore.setJugadores(playerList);
+    // Normalize player objects to guarantee the `disconnected` flag is present and boolean.
+    const normalized = (playerList || []).map(p => ({
+      name: p.name,
+      score: p.score ?? 0,
+      role: p.role ?? 'player',
+      socketId: p.socketId,
+      isReady: !!p.isReady,
+      token: p.token,
+      disconnected: !!p.disconnected,
+    }));
+    roomStore.setJugadores(normalized);
   });
 
   // Evento: 'updateRoomState' - Actualiza el estado de la sala (ej. si la partida ha empezado).
@@ -236,10 +246,29 @@ export const communicationManager = {
   // Informa al backend de la página/etapa actual del jugador.
   async updatePlayerPage(page) {
     const token = this.getToken();
-    if (token) {
-      return apiClient.post('/player/page', { token, page });
+    if (!token) return Promise.resolve();
+
+    // Ensure the socket is connected first — the server registers players on socket connect.
+    try {
+      await this.waitUntilConnected();
+    } catch (e) {
+      // If connection fails or times out, still attempt the REST call, but handle errors below.
+      console.warn('Socket not connected before updatePlayerPage; proceeding with REST call:', e);
     }
-    return Promise.resolve();
+
+    try {
+      return await apiClient.post('/player/page', { token, page });
+    } catch (err) {
+      // If the server responds 404 it means the player is not yet registered on the server-side
+      // (e.g., socket connection/registration hasn't completed). Don't throw to avoid unhandled
+      // watcher errors — just log and swallow the error.
+      if (err.response && err.response.status === 404) {
+        console.warn('updatePlayerPage: player not found on server yet (404). Ignoring.');
+        return Promise.resolve();
+      }
+      // Re-throw other errors so callers can handle them.
+      throw err;
+    }
   },
 
   // Espera hasta que el socket esté conectado.

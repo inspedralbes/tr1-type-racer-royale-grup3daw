@@ -85,6 +85,10 @@ const areAllPlayersReady = computed(() => {
   return jugadores.value.length > 0 && jugadores.value.every(p => p.isReady && !p.disconnected);
 });
 
+function goToRoomSettings() {
+  sessionStore.setEtapa('room-settings');
+}
+
 /**
  * @description Función para regresar a la pantalla de selección de sala.
  * Emite un evento 'leave-room' al servidor y resetea el estado de la sala.
@@ -93,7 +97,7 @@ const goBack = () => {
   socket.emit('leave-room', roomStore.roomId);
     roomStore.resetState();
   sessionStore.setRoomId(null); // Clear roomId from sessionStore
-  router.push('/rooms');
+  sessionStore.setEtapa('room-selection');
 };
 
 /**
@@ -150,21 +154,17 @@ function iniciarJuego() {
   if (isAdmin.value) {
     communicationManager.startGame(roomStore.roomId)
       .then(response => {
-        console.log('Game started:', response.data)
+        console.log('Game started:', response.data);
+        sessionStore.setEtapa('game');
       })
       .catch(error => {
-        console.error('Error al iniciar el juego:', error)
+        console.error('Error al iniciar el juego:', error);
         alert(error.response?.data?.message || 'Error al iniciar el juego.');
-      })
+      });
   } else {
-    console.warn('Solo el administrador puede iniciar el juego.')
+    console.warn('Solo el administrador puede iniciar el juego.');
   }
 }
 
-/**
- * @description Función para navegar a la pantalla de configuración de la sala. Solo accesible para el administrador.
- */
-function goToRoomSettings() {
-  router.push('/room-settings');
-}
+
 </script>

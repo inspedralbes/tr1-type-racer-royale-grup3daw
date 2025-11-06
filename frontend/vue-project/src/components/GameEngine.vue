@@ -1,45 +1,5 @@
 <template>
-  <div>
-    <!--
-      Este componente actúa como un "motor" o "director de orquesta" para la interfaz de usuario.
-      Utiliza la variable de estado `etapa` (del store de Pinia) para renderizar condicionalmente
-      el componente adecuado para cada fase del juego:
-      - 'room-selection': Pantalla de selección de sala.
-      - 'room-settings': Pantalla de configuración de sala.
-      - 'lobby': Sala de espera antes de la partida.
-      - 'game': La partida en sí.
-      - 'done': Pantalla de resultados finales.
-    -->
-    <!-- <p>Current Etapa: {{ etapa }}</p> --> <!-- Removed this line after debugging -->
-
-    <RoomSelection v-if="etapa === 'room-selection'" />
-    <RoomSettings v-else-if="etapa === 'room-settings'" />
-    <Lobby
-      v-else-if="etapa === 'lobby'"
-      :playerName="nombreJugador"
-      :jugadores="jugadores"
-      :roomState="roomState"
-    />
-    <template v-else-if="etapa === 'game'">
-      <Joc
-        v-if="wordsLoaded"
-        :words="words"
-        :wordsLoaded="wordsLoaded"
-        :playerName="nombreJugador"
-        :jugadores="jugadores"
-        :roomState="roomState"
-        @done="onGameOver"
-      />
-      <div v-else>
-        <p>Cargando palabras...</p>
-      </div>
-    </template>
-    <Final
-      v-else-if="etapa === 'done'"
-      :resultados="finalResults"
-      @reiniciar="onReiniciar"
-    />
-  </div>
+  <router-view />
 </template>
 
 <script setup>
@@ -59,20 +19,15 @@
  */
 import { onMounted, watch } from 'vue'
 import { storeToRefs } from 'pinia'
-import { useRouter } from 'vue-router'; // Add this import
-import Lobby from './lobby.vue'
-import Joc from './joc.vue' 
-import Final from './paginaFinal.vue'
-import RoomSettings from './RoomSettings.vue'
-import RoomSelection from './RoomSelection.vue'
+import { useRouter } from 'vue-router';
 import { communicationManager, socket } from '../communicationManager'
 import { useSessionStore } from '../stores/session';
 import { useGameStore } from '../stores/game';
 import { useRoomStore } from '../stores/room';
 import { usePublicRoomsStore } from '../stores/publicRooms';
 
-// Inicialización de los stores de Pinia para gestionar el estado global.
-const router = useRouter(); // Add this line
+// Inicialización de los stores de Pinia.
+const router = useRouter();
 const gameStore = useGameStore();
 const roomStore = useRoomStore();
 const sessionStore = useSessionStore();
@@ -82,6 +37,43 @@ const { nombreJugador, words, wordsLoaded, finalResults } = storeToRefs(gameStor
 const { etapa } = storeToRefs(sessionStore);
 const { jugadores, roomState, roomId } = storeToRefs(roomStore);
 
+// Función para navegar según la etapa actual
+const navigateByEtapa = (currentEtapa) => {
+  console.log('Navigating by etapa:', currentEtapa);
+  switch (currentEtapa) {
+    case 'room-selection':
+      router.push('/game/select-room');
+      break;
+    case 'room-settings':
+      if (roomStore.roomId) {
+        router.push(`/game/room-settings/${roomStore.roomId}`);
+      } else {
+        router.push('/game/room-settings');
+      }
+      break;
+    case 'lobby':
+      if (roomStore.roomId) {
+        router.push(`/game/lobby/${roomStore.roomId}`);
+      } else {
+        router.push('/game/select-room');
+      }
+      break;
+    case 'game':
+      if (roomState.value.gameMode && roomStore.roomId) {
+        router.push(`/game/play/${roomState.value.gameMode}/${roomStore.roomId}`);
+      } else {
+        router.push('/game/select-room');
+      }
+      break;
+    case 'done':
+      router.push('/game/final');
+      break;
+    default:
+      router.push('/login');
+      break;
+  }
+};
+
     /**
      * Hook `onMounted`: Se ejecuta cuando el componente se monta en el DOM.
      * Su principal responsabilidad es gestionar la persistencia de la sesión y la reconexión.
@@ -90,7 +82,7 @@ const { jugadores, roomState, roomId } = storeToRefs(roomStore);
      */
     onMounted(async () => {
       console.log('GameEngine mounted. Initial etapa:', etapa.value);
-      console.log('GameEngine mounted. Current route:', router.currentRoute.value.path); // Add this line
+      console.log('GameEngine mounted. Current route:', router.currentRoute.value.path);
   
       const token = sessionStore.token;
       const roomIdFromSession = sessionStore.roomId;
@@ -119,6 +111,8 @@ const { jugadores, roomState, roomId } = storeToRefs(roomStore);
             // Si no estaba en ninguna sala, va a la selección de sala.
             sessionStore.setEtapa('room-selection');
           }
+          // Después de la reconexión o establecimiento de etapa, navegar
+          navigateByEtapa(sessionStore.etapa);
         } catch (error) {
           console.error('Error al reconectar la sesión:', error);
           alert('Error al reconectar la sesión: ' + error.message);
@@ -128,8 +122,7 @@ const { jugadores, roomState, roomId } = storeToRefs(roomStore);
           gameStore.resetState();
           roomStore.resetState();
           publicRoomsStore.resetState();
-          // No redirigimos a /login aquí, ya que GameEngine no gestiona el login.
-          // El router se encargará de redirigir si no hay sesión válida.
+          router.push('/login'); // Redirigir explícitamente al login
         }
       } else {
         // Si no hay sesión válida, GameEngine no debería estar montado.
@@ -140,6 +133,7 @@ const { jugadores, roomState, roomId } = storeToRefs(roomStore);
         gameStore.resetState();
         roomStore.resetState();
         publicRoomsStore.resetState();
+        router.push('/login'); // Redirigir explícitamente al login
       }
     })
 
@@ -168,18 +162,20 @@ async function fetchWordsForGame() {
 
 /**
  * Observador (`watch`) que reacciona a los cambios en la `etapa` del juego.
- * Cuando la etapa cambia a 'game', resetea el estado de carga de palabras y
- * llama a `fetchWordsForGame` para obtener las palabras para la nueva partida.
+ * Cuando la etapa cambia, navega a la ruta correspondiente.
  */
 watch(etapa, async (newEtapa) => {
   console.log('GameEngine etapa changed to:', newEtapa);
-  console.log('Current wordsLoaded:', wordsLoaded.value); // Add this line
+  console.log('Current wordsLoaded:', wordsLoaded.value);
   await communicationManager.updatePlayerPage(newEtapa);
+  // Solo navegar si la etapa no es 'game' y wordsLoaded no es true, o si es 'game' y wordsLoaded es false
+  // Esto evita navegación redundante si ya estamos en la ruta correcta y solo se actualiza el estado interno
   if (newEtapa === 'game' && !wordsLoaded.value) {
-    console.log('Etapa is game. Resetting wordsLoaded and fetching words.'); // Add this log
+    console.log('Etapa is game. Resetting wordsLoaded and fetching words.');
     gameStore.setWordsLoaded(false); // Reset wordsLoaded
     fetchWordsForGame(); // Always fetch words when entering game stage
   }
+  navigateByEtapa(newEtapa);
 });
 
 /**
@@ -190,8 +186,6 @@ watch(etapa, async (newEtapa) => {
 const onGameOver = async (resultados) => {
   console.log('onGameOver called. resultados:', resultados);
 
-  // La lista de jugadores en `roomStore` ya tiene las puntuaciones finales actualizadas
-  // por los eventos de socket. Se mapea a un formato simple para la pantalla final.
   const finalScores = jugadores.value.map(p => ({
     nombre: p.name,
     puntuacion: p.score
@@ -199,29 +193,21 @@ const onGameOver = async (resultados) => {
   
   gameStore.setFinalResults(finalScores);
 
-  // Cambia a la pantalla final.
-  sessionStore.setEtapa('done')
+  sessionStore.setEtapa('done');
   
-  // Resetea el estado de las palabras para la siguiente partida.
-  gameStore.setWordsLoaded(false)
+  gameStore.setWordsLoaded(false);
 
   try {
-    // Pide al backend que resetee el estado de "listo" de todos los jugadores en la sala.
     await communicationManager.resetReadyStatus(roomStore.roomId);
   } catch (error) {
     console.error('Error resetting ready status after game over:', error)
   }
-}
+};
 
-// Manejar reinicio desde la pantalla final
-/**
- * Se ejecuta cuando el usuario hace clic en "Reiniciar" en la pantalla final.
- * Resetea el estado del juego y devuelve al usuario al lobby para jugar de nuevo.
- */
 const onReiniciar = () => {
-  sessionStore.setEtapa('lobby')
-  gameStore.setFinalResults([])
-  gameStore.setWords(null)
-  gameStore.setWordsLoaded(false)
-}
+  sessionStore.setEtapa('lobby');
+  gameStore.setFinalResults([]);
+  gameStore.setWords(null);
+  gameStore.setWordsLoaded(false);
+};
 </script>
