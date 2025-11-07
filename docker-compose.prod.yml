@@ -18,11 +18,13 @@ services:
 
   backend:
     build: ./backend
-    command: npm start
+    # Use the start:prod script so migrations run before launching the server
+    command: npm run start:prod
     environment:
       - NODE_ENV=${NODE_ENV}
       - PORT=${PORT}
       - FRONTEND_URL=${FRONTEND_URL}
+      - JWT_SECRET=${JWT_SECRET}
       - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
       - MYSQL_PASSWORD=${MYSQL_PASSWORD}
       - MYSQL_DATABASE=${MYSQL_DATABASE}
