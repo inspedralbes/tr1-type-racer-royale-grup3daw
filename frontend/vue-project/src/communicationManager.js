@@ -226,6 +226,19 @@ export const communicationManager = {
     sessionStore.clearSession();
   },
 
+  // Desconecta el socket y elimina cualquier auth pendiente (no notifica al servidor).
+  disconnect() {
+    try {
+      if (socket && socket.connected) {
+        socket.disconnect();
+      }
+      // Clear any auth attached so future connects don't reuse an old token
+      if (socket) socket.auth = {};
+    } catch (e) {
+      console.warn('Error while disconnecting socket:', e);
+    }
+  },
+
   // --- Métodos de Juego (REST) ---
 
   // Obtiene la lista de palabras para la partida.
