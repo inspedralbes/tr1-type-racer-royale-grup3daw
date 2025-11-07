@@ -43,8 +43,9 @@ import { communicationManager } from '../../communicationManager';
         normal: 10,
         dificil: 15,
     };
+    const PENALTY_PER_ERROR = 1; // Puntos que se restan por cada error detectado
 
-    const GAME_WORD_COUNT = 10; // Número fijo de palabras por juego.
+    // No limit on words: use the full word list and keep recycling when exhausted.
 
     // Declaración de eventos que este componente puede emitir.
     const emits = defineEmits(['done']);
@@ -151,17 +152,17 @@ import { communicationManager } from '../../communicationManager';
      * @param {Object} wordsData - Objeto que contiene arrays de palabras por dificultad (facil, normal, dificil).
      */
     const initializeWords = (wordsData) => {
-                if (!wordsData) {
-                        console.error("initializeWords: wordsData es nulo o indefinido.");
-                        try {
-                            const notificationStore = useNotificationStore();
-                            notificationStore.pushNotification({ type: 'error', message: 'No se han podido cargar las palabras para la partida.' });
-                        } catch (e) {
-                            // ignore if store not available
-                        }
-                        estatDelJoc.value.paraules = [];
-                        return;
-                }
+        if (!wordsData) {
+            console.error("initializeWords: wordsData es nulo o indefinido.");
+            try {
+                const notificationStore = useNotificationStore();
+                notificationStore.pushNotification({ type: 'error', message: 'No se han podido cargar las palabras para la partida.' });
+            } catch (e) {
+                // ignore if store not available
+            }
+            estatDelJoc.value.paraules = [];
+            return;
+        }
 
         let allWords = [];
         // Concatena las palabras de cada dificultad con su etiqueta.
@@ -181,8 +182,8 @@ import { communicationManager } from '../../communicationManager';
             [allWords[i], allWords[j]] = [allWords[j], allWords[i]];
         }
 
-        // Asigna un subconjunto de palabras al estado del juego y las inicializa.
-        estatDelJoc.value.paraules = allWords.slice(0, GAME_WORD_COUNT).map(p => ({ ...p, errors: 0, estat: 'pendent' }));
+        // Usa TODAS las palabras disponibles; no hay límite fijo por juego.
+        estatDelJoc.value.paraules = allWords.map(p => ({ ...p, errors: 0, estat: 'pendent' }));
         estatDelJoc.value.indexParaulaActiva = 0;
         estatDelJoc.value.textEntrat = ''; // Limpia el campo de entrada.
     };
@@ -259,7 +260,7 @@ import { communicationManager } from '../../communicationManager';
      * @description Valida el progreso de escritura del usuario, actualiza errores y puntuación.
      * Avanza a la siguiente palabra si la actual se completa correctamente.
      */
-    function validarProgres() {
+    async function validarProgres() {
         const entrada = estatDelJoc.value.textEntrat.toLowerCase();
         estatDelJoc.value.textEntrat = entrada;
 
@@ -275,15 +276,29 @@ import { communicationManager } from '../../communicationManager';
             paraula._errors = paraula._errors || [];
 
             if(entrada[i] !== paraula.text[i] && !paraula._errors[i]){
+                // Se detecta un nuevo error sobre la letra i: contabilizar y aplicar penalización
                 paraula.errors++;
                 estatDelJoc.value.errorTotal++;
                 paraula._errors[i] = true;
+
+                try {
+                    // Calculamos la nueva puntuación y la enviamos al servidor
+                    const newScore = Math.max(0, score.value - PENALTY_PER_ERROR);
+                    await communicationManager.updateScore(playerName.value, newScore, roomStore.roomId);
+                } catch (e) {
+                    console.warn('Error applying penalty score:', e);
+                }
             };
                 };
                 // Si la palabra introducida coincide exactamente con la palabra activa.
                 if (entrada === paraula.text){
                     // Actualiza la puntuación del jugador en el backend.
-                    communicationManager.updateScore(props.playerName, score.value + POINTS_PER_DIFFICULTY[paraula.difficulty], roomStore.roomId);
+                    try {
+                        const newScore = score.value + POINTS_PER_DIFFICULTY[paraula.difficulty];
+                        await communicationManager.updateScore(playerName.value, newScore, roomStore.roomId);
+                    } catch (e) {
+                        console.warn('Error updating score on word completion:', e);
+                    }
                     // Registra las estadísticas de la palabra completada.
                     estatDelJoc.value.stats.push({
                         paraula: paraula.text,
@@ -292,9 +307,27 @@ import { communicationManager } from '../../communicationManager';
             estatDelJoc.value.indexParaulaActiva++;
             estatDelJoc.value.textEntrat = '';
 
-            // Si no hay más palabras, termina el juego.
+            // Si llegamos al final de la lista de palabras, simplemente remezclamos
+            // y continuamos para no imponer un límite por número de palabras.
             if (estatDelJoc.value.indexParaulaActiva >= estatDelJoc.value.paraules.length) {
-                finishGame();
+                // Re-shuffle the current words set and restart index at 0 so the player
+                // can continue typing new words until the timer runs out.
+                const wordsDataLocal = props.words;
+                if (wordsDataLocal) {
+                    let allWords = [];
+                    if (wordsDataLocal.facil) allWords = allWords.concat(wordsDataLocal.facil.map(word => ({ text: word, difficulty: 'facil' })));
+                    if (wordsDataLocal.normal) allWords = allWords.concat(wordsDataLocal.normal.map(word => ({ text: word, difficulty: 'normal' })));
+                    if (wordsDataLocal.dificil) allWords = allWords.concat(wordsDataLocal.dificil.map(word => ({ text: word, difficulty: 'dificil' })));
+                    for (let i = allWords.length - 1; i > 0; i--) {
+                        const j = Math.floor(Math.random() * (i + 1));
+                        [allWords[i], allWords[j]] = [allWords[j], allWords[i]];
+                    }
+                    estatDelJoc.value.paraules = allWords.map(p => ({ ...p, errors: 0, estat: 'pendent' }));
+                    estatDelJoc.value.indexParaulaActiva = 0;
+                } else {
+                    // Si no hay datos de palabras, finalizamos por seguridad.
+                    finishGame();
+                }
             }
         };
     };
@@ -316,12 +349,12 @@ import { communicationManager } from '../../communicationManager';
 <template>
     <div class="main-background">
         <div class="game-container">
-        <h2>Ànims, {{ props.playerName }}!</h2>
+    <h2>Compte enrere, {{ playerName }}!</h2>
 
         <div v-if="!gameEnded">
             <div class="game-info">
-                <p>Tiempo restante: {{ timeLeft }}s</p>
-                <p>Puntuación: {{ score }}</p>
+                <p>Temps restant: {{ timeLeft }}s</p>
+                <p>Puntuació: {{ score }}</p>
             </div>
             <main class="joc" v-if="estatDelJoc.paraules.length > 0">
                 <div class="game-content-wrapper">
@@ -335,7 +368,7 @@ import { communicationManager } from '../../communicationManager';
                     </div>
 
                     <div class="puntuacions">
-                        <h2>Classificació</h2>
+                                <h2>Classificació</h2>
                         <ul id="llista-jugadors">
                             <li v-for="jugador in jugadores" :key="jugador.name">
                                 <strong>{{ jugador.name }}</strong> - {{ jugador.score }} punts
