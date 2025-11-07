@@ -39,7 +39,7 @@ const loginAsGuest = async () => {
 </script>
 
 <template>
-  <div class="main-background">
+  <div class="login-background">
     <div class="themed-container">
       <h2>Entrar como Invitado</h2>
       <input
@@ -56,4 +56,4 @@ const loginAsGuest = async () => {
   </div>
 </template>
 
-<style src="../styles/styleLogin.css"></style>
+<style src="../styles/styleAuth.css"></style>

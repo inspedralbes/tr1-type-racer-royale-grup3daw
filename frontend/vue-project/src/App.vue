@@ -1,6 +1,8 @@
 <template>
   <NotificationCenter />
-  <router-view />
+  <transition name="hologram-slide" mode="out-in">
+    <router-view />
+  </transition>
 </template>
 
 <script setup>

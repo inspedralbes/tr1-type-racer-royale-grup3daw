@@ -1,8 +1,8 @@
 
 <template>
-  <div class="register-background">
+  <div class="login-background">
     <div class="centra-console-panel">
-      <div class="register-container hologram">
+      <div class="login-container hologram">
         <h2>Registre</h2>
         <input
           v-model="username"
@@ -64,4 +64,4 @@ const goToGuestLogin = () => {
 }
 </script>
 
-<style src="../styles/styleRegister.css"></style>
+<style src="../styles/styleAuth.css"></style>
