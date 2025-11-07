@@ -1,30 +1,40 @@
-div.room-settings-container {
-  max-width: 700px; /* Allow more width for form */
+body {
+  font-family: 'PressStart2P', sans-serif;
+  background-repeat: no-repeat;
+  background-size: cover;
+  background-position: center;
+  margin: 0;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  position: relative; 
 }
 
-.form-group {
-  margin: 1.5em 0;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+div.room-settings-container{
+  position: absolute;
+  top: 0;
+  left: 0;
+  background-image: url(../img/estacion.jpg);
+  width: 100vw;
+  height: 100vh;
+  background-repeat: no-repeat;
+  background-size: cover;
+  background-position: center;
 }
 
-.form-group label {
-  flex-basis: 40%; /* Adjust label width */
-  text-align: left;
-  margin-right: 1em;
+div.settings{
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: rgba(255, 255, 255, 0.7);
+    border-radius: 10px;
+    text-align: center;
+    padding: 20px;
 }
 
-div.form-group {
-    display: grid;
-    grid-template-columns: 1fr 1fr; 
-    align-items: center; 
-    gap: 15px; 
-    margin: 15px 0; 
-}
-
-div.form-group label {
-    text-align: right; 
+div.form-group{
+    margin: 15px 0;
 }
 
 input.room-id{
@@ -37,26 +47,40 @@ input.room-id{
     margin: 0 10px;
 }
 
-input.room-id,
-input.room-name,
-input.room-time,
-select {
+input.room-name{
     font-family: 'PressStart2P', sans-serif;
     padding: 8px;
     border: 2px solid black;
     border-radius: 5px;
     font-size: 0.8em;
-    width: 100%;
-    margin: 0;
-    box-sizing: border-box; 
+    width: 40%;
+    margin: 0 10px;
+}
+
+input.room-time{
+    font-family: 'PressStart2P', sans-serif;
+    padding: 8px;
+    border: 2px solid black;
+    border-radius: 5px;
+    font-size: 0.8em;
+    width: 12%;
+    margin: 0 10px;
+}
+
+select{
+    font-family: 'PressStart2P', sans-serif;
+    padding: 8px;
+    border: 2px solid black;
+    border-radius: 5px;
+    font-size: 0.8em;
+    width: 20%;
+    margin: 0 10px;
 }
 
 button.back-button {
   position: absolute;
-  top: 35px;
-  left: 0; 
-  transform: translateY(-60%);
-  font-size: 1.5em; 
+  top: 2px;
+  left: 20px;
   background-color: transparent;
   border: none;
   cursor: pointer;
@@ -69,10 +93,4 @@ button.submit{
   border-radius: 5px;
   font-size: 0.8em;
   cursor: pointer;
-}
-
-div.settings h2 {
-  margin-top: 0;
-  line-height: 1.5;
-  margin-bottom: 15px; 
 }

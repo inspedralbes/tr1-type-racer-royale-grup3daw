@@ -65,7 +65,7 @@ const goToGuestLogin = () => {
 </script>
 
 <template>
-  <div class="main-background">
+  <div class="login-background">
     <div class="themed-container">
       <h2>Inici de sessió</h2>
       <input
