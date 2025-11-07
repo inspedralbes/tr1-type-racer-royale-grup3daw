@@ -1,6 +1,6 @@
 <template>
-  <div class="main-background">
-    <div class="themed-container lobby-contenedor">
+  <div class="lobby-background">
+    <div class="lobby-contenedor">
       <button class="back-button" @click="goBack">←</button>
       <h1>Lobby</h1>
       <h2>Benvingut, {{ nombreJugador }}!</h2>
