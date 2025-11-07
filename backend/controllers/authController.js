@@ -10,23 +10,29 @@ const stateManager = require('../state/stateManager');
 exports.register = async (req, res, next) => {
   try {
     const { username, email, password } = req.body;
+    console.log('Registering user:', { username, email });
 
     const existingUser = await User.findOne({ where: { email } });
     if (existingUser) {
+      console.log('User with email already exists:', email);
       return res.status(400).json({ message: 'User with this email already exists.' });
     }
 
+    console.log('Hashing password for user:', username);
     const hashedPassword = await bcrypt.hash(password, 10);
 
+    console.log('Creating user in database:', { username, email });
     const user = await User.create({
       username,
       email,
       password: hashedPassword,
       verified: true,
     });
+    console.log('User created successfully:', user.id);
 
     res.status(201).json({ message: 'User registered successfully.' });
   } catch (error) {
+    console.error('Error during registration:', error);
     next(error);
   }
 };
