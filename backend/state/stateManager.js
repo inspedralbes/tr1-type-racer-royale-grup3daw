@@ -71,12 +71,13 @@ const updateRoom = (roomId, settings) => {
 
 // --- Gestión de Jugadores Registrados ---
 
-const addRegisteredPlayer = (name, socketId, token, currentPage = 'room-selection') => {
+const addRegisteredPlayer = (name, socketId, token, currentPage = 'room-selection', isGuest = false) => {
   const newPlayer = {
     name,
     socketId,
     token,
     currentPage, // Use provided currentPage or default
+    isGuest: !!isGuest,
   };
   registeredPlayers[token] = newPlayer;
   return newPlayer;

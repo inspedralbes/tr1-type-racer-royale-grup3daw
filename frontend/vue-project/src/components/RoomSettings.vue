@@ -1,7 +1,8 @@
 <template>
   <div class="main-background">
     <div class="themed-container room-settings-container">
-      <h2>Configuración de la Sala</h2>
+  <h2>Configuración de la Sala</h2>
+  <button class="btn" v-if="sessionStore.email" @click="goToProfile" style="margin-bottom:8px">Profile</button>
       <form @submit.prevent="saveSettings">
         <div class="form-group" v-if="room.id">
           <label for="roomId">ID de la Sala: </label>
@@ -69,6 +70,10 @@ const roomStore = useRoomStore();
 const gameStore = useGameStore();
 const sessionStore = useSessionStore();
 const router = useRouter();
+
+const goToProfile = () => {
+  router.push('/profile');
+}
 
 // `room` es una referencia reactiva que contiene los datos del formulario.
 // Se inicializa con valores por defecto, usando el nombre del jugador para el nombre de la sala.

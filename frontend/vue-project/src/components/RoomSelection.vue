@@ -25,7 +25,10 @@
         <h3>Crear nueva sala</h3>
         <button class="btn" @click="createRoom">Crear Sala</button>
       </div>
-      <button class="btn logout-button" @click="logoutAndReset">Logout</button>
+      <div style="margin-top:12px">
+        <button class="btn" v-if="sessionStore.email" @click="goToProfile">Profile</button>
+        <button class="btn logout-button" @click="logoutAndReset" style="margin-left:8px">Logout</button>
+      </div>
     </div>
   </div>
 </template>
@@ -133,6 +136,10 @@ const logoutAndReset = () => {
 
   router.push('/login');
 };
+
+const goToProfile = () => {
+  router.push('/profile');
+}
 </script>
 
 <style src="../styles/styleRoomSelection.css">

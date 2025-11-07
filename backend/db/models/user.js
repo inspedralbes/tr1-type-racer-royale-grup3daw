@@ -18,6 +18,16 @@ module.exports = (sequelize) => {
       allowNull: false,
       unique: true,
     },
+    avatar: {
+      type: DataTypes.STRING,
+      allowNull: true,
+      defaultValue: 'nave',
+    },
+    color: {
+      type: DataTypes.STRING,
+      allowNull: true,
+      defaultValue: 'Azul',
+    },
     password: {
       type: DataTypes.STRING,
       allowNull: false,

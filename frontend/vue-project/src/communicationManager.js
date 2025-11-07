@@ -108,6 +108,9 @@ export function setupSocketListeners(router) {
       isReady: !!p.isReady,
       token: p.token,
       disconnected: !!p.disconnected,
+      avatar: p.avatar,
+      color: p.color,
+      isGuest: !!p.isGuest,
     }));
     roomStore.setJugadores(normalized);
   });
@@ -200,6 +203,19 @@ export const communicationManager = {
 
   async login(email, password) {
     return apiClient.post('/auth/login', { email, password });
+  },
+
+  // --- User profile ---
+  async getCurrentUser() {
+    return apiClient.get('/user/me');
+  },
+
+  async updateCurrentUser(payload) {
+    return apiClient.put('/user/me', payload);
+  },
+
+  async deleteAccount() {
+    return apiClient.delete('/user/me');
   },
 
 

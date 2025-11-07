@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router';
 import Login from '../components/login.vue';
 import Register from '../components/Register.vue';
 import GuestLogin from '../components/GuestLogin.vue';
+import EditProfile from '../components/EditProfile.vue';
 import GameEngine from '../components/GameEngine.vue';
 import RoomSelection from '../components/RoomSelection.vue';
 import RoomSettings from '../components/RoomSettings.vue';
@@ -14,6 +15,7 @@ const routes = [
   { path: '/login', component: Login },
   { path: '/guest-login', component: GuestLogin },
   { path: '/register', component: Register },
+  { path: '/profile', component: EditProfile },
   // GameEngine will be the entry point for the game flow, managing etapa state
   { 
     path: '/game', 
