@@ -25,22 +25,15 @@ const loginAsGuest = async () => {
 
   try {
     const response = await communicationManager.loginAsGuest(nom.value);
-    if (response && response.data) {
-      const { token, username, email } = response.data;
-      session.setSession(token, username, email);
-      gameStore.setNombreJugador(username);
-      communicationManager.connect(); // Conecta el socket después del login
-      await communicationManager.waitUntilConnected(); // Ensure socket is connected
-      router.push('/game/select-room');
-    } else {
-      const error = await response.json();
-      const notificationStore = useNotificationStore();
-      notificationStore.pushNotification({ type: 'error', message: error.message });
-    }
+    const { token, username, email } = response.data;
+    session.setSession(token, username, email);
+    gameStore.setNombreJugador(username);
+    communicationManager.connect(); // Conecta el socket después del login
+    await communicationManager.waitUntilConnected(); // Ensure socket is connected
+    router.push('/game/select-room');
   } catch (error) {
-    console.error('Error al iniciar sessió:', error)
-    const notificationStore = useNotificationStore();
-    notificationStore.pushNotification({ type: 'error', message: 'Hi ha hagut un problema al servidor' });
+    console.error('Error al iniciar sessió:', error);
+    // La notificació d'error ja és gestionada per l'interceptor de communicationManager
   }
 }
 </script>

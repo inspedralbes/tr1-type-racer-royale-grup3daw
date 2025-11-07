@@ -194,6 +194,16 @@ export const communicationManager = {
     return apiClient.post('/auth/login-as-guest', { username });
   },
 
+  async register(username, email, password) {
+    return apiClient.post('/auth/register', { username, email, password });
+  },
+
+  async login(email, password) {
+    return apiClient.post('/auth/login', { email, password });
+  },
+
+
+
   // Obtiene el token de la sesión actual.
   getToken() {
     const sessionStore = useSessionStore();

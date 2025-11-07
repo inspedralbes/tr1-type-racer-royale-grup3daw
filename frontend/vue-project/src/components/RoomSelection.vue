@@ -88,6 +88,7 @@ const fetchPublicRooms = async () => {
 const joinRoom = () => {
   if (!joinRoomId.value) return;
   joinRoomById(joinRoomId.value);
+  router.push(`/game/lobby/${joinRoomId.value}`);
 };
 
 /**
@@ -100,6 +101,7 @@ const joinRoomById = (roomId) => {
   communicationManager.joinRoom(roomId);
   sessionStore.setRoomId(roomId);
   sessionStore.setEtapa('lobby');
+  router.push(`/game/lobby/${roomId}`);
 };
 
 /**

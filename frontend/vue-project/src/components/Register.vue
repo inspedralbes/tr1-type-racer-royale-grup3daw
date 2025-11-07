@@ -49,31 +49,13 @@ const register = async () => {
   }
 
   try {
-    const response = await fetch('http://localhost:3000/api/auth/register', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        username: username.value,
-        email: email.value,
-        password: password.value,
-      }),
-    });
-
-    if (response.ok) {
-      const notificationStore = useNotificationStore();
-      notificationStore.pushNotification({ type: 'success', message: 'Registre exitós. Si us plau, revisa el teu correu per a verificar el teu compte.' });
-      router.push('/login');
-    } else {
-      const error = await response.json();
-      const notificationStore = useNotificationStore();
-      notificationStore.pushNotification({ type: 'error', message: error.message });
-    }
-  } catch (error) {
-    console.error('Error en el registre:', error);
+    await communicationManager.register(username.value, email.value, password.value);
     const notificationStore = useNotificationStore();
-    notificationStore.pushNotification({ type: 'error', message: 'Hi ha hagut un problema al servidor.' });
+    notificationStore.pushNotification({ type: 'success', message: 'Registre exitós. Si us plau, revisa el teu correu per a verificar el teu compte.' });
+    router.push('/login');
+  } catch (error) {
+    // L'interceptor d'errors de communicationManager ja hauria mostrat una notificació
+    console.error('Error en el registre:', error);
   }
 };
 

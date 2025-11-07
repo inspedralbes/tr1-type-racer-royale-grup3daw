@@ -31,31 +31,17 @@ const login = async () => {
   }
 
   try {
-    const response = await fetch('http://localhost:3000/api/auth/login', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ email: email.value, password: password.value }),
-    });
-
-    if (response.ok) {
-      const { token, username, email } = await response.json();
-      console.log('Login successful:', { token, username, email });
-      session.setSession(token, username, email);
-      gameStore.setNombreJugador(username);
-      communicationManager.connect(); // Conecta el socket después del login
-      await communicationManager.waitUntilConnected(); // Ensure socket is connected
-      router.push('/game/select-room');
-    } else {
-      const error = await response.json();
-      const notificationStore = useNotificationStore();
-      notificationStore.pushNotification({ type: 'error', message: error.message });
-    }
+    const response = await communicationManager.login(email.value, password.value);
+    const { token, username, email: userEmail } = response.data;
+    console.log('Login successful:', { token, username, email: userEmail });
+    session.setSession(token, username, userEmail);
+    gameStore.setNombreJugador(username);
+    communicationManager.connect(); // Conecta el socket después del login
+    await communicationManager.waitUntilConnected(); // Ensure socket is connected
+    router.push('/game/select-room');
   } catch (error) {
-    console.error('Error al iniciar sessió:', error)
-    const notificationStore = useNotificationStore();
-    notificationStore.pushNotification({ type: 'error', message: 'Hi ha hagut un problema al servidor' });
+    console.error('Error al iniciar sessió:', error);
+    // La notificació d'error ja és gestionada per l'interceptor de communicationManager
   }
 }
 
