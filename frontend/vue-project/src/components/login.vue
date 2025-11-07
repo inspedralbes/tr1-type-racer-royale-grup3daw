@@ -49,29 +49,32 @@ const goToGuestLogin = () => {
   router.push('/guest-login');
 }
 </script>
-
 <template>
-  <div class="main-background">
-    <div class="themed-container">
-      <h2>Inici de sessió</h2>
-      <input
-        v-model="email"
-        type="email"
-        placeholder="Email"
-        @keyup.enter="login"
-        autocomplete="no-autofill"
-      />
-      <input
-        v-model="password"
-        type="password"
-        placeholder="Contrasenya"
-        @keyup.enter="login"
-        autocomplete="new-password"
-      />
-      <button class="btn" @click="login()">Entrar</button>
-      <p>O</p>
-      <button class="btn" @click="goToGuestLogin()">Entrar com a convidat</button>
-      <p>No tens un compte? <router-link to="/register">Registra't</router-link></p>
+  <div class="login-background">
+    <div class="centra-console-panel">
+      <div class="login-container hologram">
+        <h2>Inici de sessió</h2>
+        <input
+          v-model="email"
+          type="email"
+          placeholder="Email"
+          @keyup.enter="login"
+          autocomplete="no-autofill"
+        />
+        <input
+          v-model="password"
+          type="password"
+          placeholder="Contrasenya"
+          @keyup.enter="login"
+          autocomplete="new-password"
+        />
+        
+        <div class="hologram-button-group">
+          <button class="btn" @click="login()">Entrar</button>
+          <button class="btn" @click="goToGuestLogin()">Entrar com a convidat</button>
+        </div>
+        <p>No tens un compte? <router-link to="/register">Registra't</router-link></p>
+      </div>
     </div>
   </div>
 </template>

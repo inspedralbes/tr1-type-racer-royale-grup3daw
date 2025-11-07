@@ -1,2 +1,177 @@
-/* The styles for the login page are now handled globally by main.css. */
-/* This file is kept for structure, but can be removed if no specific styles are needed. */
+/* ==========================================================
+   1. FONDO PRINCIPAL
+   ========================================================== */
+html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+}
+
+div.login-background { 
+    background-image: url('../img/estacion.png'); 
+    background-size: cover;
+    background-position: center;
+    height: 100vh;
+    width: 100vw; 
+    overflow: hidden;
+    position: relative; 
+}
+
+/* ==========================================================
+   2. EL "PANEL CENTRAL" (PUNTO DE ORIGEN DEL HOLOGRAMA)
+   ========================================================== */
+.centra-console-panel { 
+    position: absolute;
+    /* --- AJUSTES PARA ALINEAR CON LA CONSOLA --- */
+    left: 50%;
+    top: 70%;
+    transform: translateX(-50%); 
+    
+    /* Posiciona el origen sobre la consola. Ajusta este valor (ej. 5vh-10vh) */
+    bottom: 5vh; 
+    
+    width: 60%; 
+    height: 10%; /* Altura estrecha para simular la base de proyección */
+    
+    perspective: 1000px; 
+    /* CLAVE: El origen de la perspectiva está en la base/centro de la consola */
+    perspective-origin: center top; 
+}
+
+
+/* ==========================================================
+   3. EL CONTENEDOR DE LOGIN (EL HOLOGRAMA)
+   ========================================================== */
+div.login-container.hologram { 
+  /* Estilos de caja */
+  background-color: transparent; 
+  color: #00FF41; 
+  
+  
+  /* === TAMAÑO Y AJUSTE DE CONTENIDO === */
+  /* El holograma tendrá el 100% del ancho de su padre (60% de la ventana) */
+  width: 100%; 
+  max-width: none;
+  
+  /* Altura fija para que no se estire. AJUSTA ESTE VALOR (ej. 50vh, 400px) */
+  height: 50vh; 
+  max-height: 500px; 
+  overflow-y: auto; /* Permite scroll si el contenido es demasiado grande */
+  box-sizing: border-box; /* Asegura que el padding no distorsione la altura */
+  
+  padding: 20px; 
+  text-align: center;
+  border: none; 
+  box-shadow: none; 
+  border-radius: 0;
+
+  /* === EFECTO HOLOGRAMA Y PROYECCIÓN === */
+  position: absolute; 
+  
+  /* === POSICIÓN === */
+  /* Ancla la base (bottom) del holograma a la parte SUPERIOR (100%) de su padre (el panel) */
+  bottom: 100%; 
+  left: 50%;
+  
+  /* CLAVE: Rotación y Origen de la Transformación */
+  /* Gira e inclina el holograma hacia el espectador */
+  transform: translateX(-50%) rotateX(-25deg); 
+  /* Asegura que el holograma pivote desde su propia base inferior */
+  transform-origin: center bottom; 
+  
+  /* Borde de luz y brillo */
+  outline: 1px solid rgba(0, 255, 65, 0.6); 
+  outline-offset: 5px; 
+  filter: drop-shadow(0 0 15px rgba(0, 255, 65, 0.8)) 
+          drop-shadow(0 0 30px rgba(0, 255, 65, 0.4)); 
+  opacity: 0.9; 
+  
+  /* Rayas de holograma */
+  background-image: linear-gradient(
+    rgba(0, 255, 65, 0.05) 1px, 
+    transparent 1px
+  ), linear-gradient(
+    90deg, rgba(0, 255, 65, 0.05) 1px, 
+    transparent 1px
+  );
+  background-size: 5px 5px; 
+}
+
+/* Nuevo contenedor para agrupar los botones y usar Flexbox */
+.hologram-button-group {
+    display: flex; /* Habilita el modo flex */
+    justify-content: space-around; /* Distribuye el espacio entre los elementos */
+    align-items: center;
+    margin-top: 10px; /* Espacio superior */
+    margin-bottom: 5px; /* Espacio inferior antes del enlace de registro */
+}
+
+
+/* ==========================================================
+   4. INPUTS, BOTONES, TEXTOS DENTRO DEL HOLOGRAMA 
+   ========================================================== */
+
+/* Estilos de títulos y párrafos */
+.hologram p,
+.hologram h2 {
+    color: #00FF41;
+    text-shadow: 0 0 5px #00FF41;
+    margin-bottom: 15px; /* Ajuste para un look más compacto */
+    font-size: 1.1em; 
+}
+
+/* Estilos de inputs */
+.hologram input[type="email"],
+.hologram input[type="password"] {
+  width: 90%;
+  background-color: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(0, 255, 65, 0.8);
+  color: #00FF41; 
+  padding: 8px; /* Ajuste para un look más compacto */
+  margin-bottom: 10px; /* Ajuste para un look más compacto */
+  font-size: 1em;
+  border-radius: 0;
+  text-shadow: 0 0 5px #00FF41; 
+}
+
+.hologram input::placeholder {
+    color: rgba(0, 255, 65, 0.5); 
+    text-shadow: none;
+}
+
+/* Estilos de botones */
+.hologram .btn {
+  background-color: rgba(0, 0, 0, 0.3);
+  color: #00FF41;               
+  border: 2px solid #00FF41;    
+  /* Reducimos el padding horizontal para que quepan en línea */
+  padding: 8px 10px; 
+  border-radius: 0;
+  transition: all 0.1s;
+  font-size: 0.9em; 
+  /* Eliminamos el margin-bottom del botón para que no cree espacio extra */
+  margin-bottom: 0; 
+  /* Importante: Establecer un ancho para que sean iguales */
+  width: 45%; 
+}
+
+.hologram .btn:hover {
+  background-color: #00FF41; 
+  color: #000000;
+  box-shadow: 0 0 15px #00FF41; 
+}
+
+/* Estilos de enlaces */
+.hologram a {
+    color: #4DFF66; 
+    text-decoration: none;
+    border-bottom: 1px dashed #4DFF66;
+    padding-bottom: 2px;
+    font-size: 0.9em; 
+}
+.hologram a:hover {
+    color: #00FF41;
+    border-bottom: 1px solid #00FF41;
+}
