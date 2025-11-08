@@ -114,6 +114,7 @@ services:
       - ME_CONFIG_MONGODB_ADMINPASSWORD=${MONGO_ROOT_PASSWORD}
       - ME_CONFIG_MONGODB_ENABLE_ADMIN=true
       - ME_CONFIG_MONGODB_AUTH_DATABASE=admin
+      - ME_CONFIG_SITE_BASEURL=/mongo-express/
     depends_on:
       - mongo
     networks:
