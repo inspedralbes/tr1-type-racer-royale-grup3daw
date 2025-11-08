@@ -22,6 +22,24 @@ const sessionStore = useSessionStore();
 
 onMounted(async () => {
   await communicationManager.updatePlayerPage('final');
+
+  // Guardar las estadísticas del jugador si no es un invitado
+  const currentPlayerName = sessionStore.playerName;
+  const playerResult = gameStore.finalResults.find(r => r.nombre === currentPlayerName);
+
+  // Solo guardar si el jugador se encuentra en los resultados y es un usuario registrado (tiene email)
+  if (playerResult && sessionStore.email) {
+    try {
+      await communicationManager.sendGameStats({
+        playerName: playerResult.nombre,
+        score: playerResult.puntuacion,
+        wpm: playerResult.wpm,
+      });
+      console.log('Estadísticas del juego guardadas para', playerResult.nombre);
+    } catch (error) {
+      console.error('Error al guardar las estadísticas del juego:', error);
+    }
+  }
 });
 
 // `ranking` es una propiedad computada que ordena los resultados recibidos.

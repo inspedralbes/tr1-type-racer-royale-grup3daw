@@ -11,10 +11,10 @@
         <div id="chart"></div>
       </div>
 
-      <!-- Gráfico de Evolución Personal (Bollinger Bands) -->
+      <!-- Gráfico de Evolución Personal -->
       <div class="chart-container">
         <h3>Evolución de WPM de {{ sessionStore.playerName }}</h3>
-        <div id="bollinger-chart"></div>
+        <div id="wpm-chart"></div>
         <p v-if="scoreHistory.length < 2">No hay suficientes datos para mostrar la evolución.</p>
       </div>
 
@@ -57,81 +57,145 @@ const drawChart = () => {
   d3.select("#chart").selectAll("*").remove();
   if (playerStats.value.length === 0) return;
 
-  // Simplified chart for debugging
-  const svg = d3.select("#chart").append("svg")
-    .attr("width", 500)
-    .attr("height", 100)
-    .style("background-color", "lightgray");
+  const topPlayers = playerStats.value.slice(0, 5);
 
-  svg.append("rect")
-    .attr("x", 10)
-    .attr("y", 10)
-    .attr("width", 80)
-    .attr("height", 80)
-    .attr("fill", "red");
-    
-  svg.append("text")
-    .attr("x", 100)
-    .attr("y", 50)
-    .text("Test Chart - If you see this, SVG is working.")
-    .attr("fill", "black");
+  const width = 500;
+  const height = 300;
+  const margin = { top: 20, right: 30, bottom: 40, left: 40 };
+
+  const svg = d3.select("#chart").append("svg")
+    .attr("width", "100%")
+    .attr("height", "100%")
+    .attr("viewBox", [0, 0, width, height])
+    .attr("style", "max-width: 100%; height: auto;");
+
+  const x = d3.scaleBand()
+    .domain(topPlayers.map(d => d._id))
+    .range([margin.left, width - margin.right])
+    .padding(0.1);
+
+  const y = d3.scaleLinear()
+    .domain([0, d3.max(topPlayers, d => d.avgScore) || 100])
+    .nice()
+    .range([height - margin.bottom, margin.top]);
+
+  const xAxis = g => g
+    .attr("transform", `translate(0,${height - margin.bottom})`)
+    .call(d3.axisBottom(x).tickSizeOuter(0));
+
+  const yAxis = g => g
+    .attr("transform", `translate(${margin.left},0)`)
+    .call(d3.axisLeft(y));
+
+  svg.append("g")
+    .selectAll("rect")
+    .data(topPlayers)
+    .join("rect")
+      .attr("x", d => x(d._id))
+      .attr("y", d => y(d.avgScore))
+      .attr("height", d => y(0) - y(d.avgScore))
+      .attr("width", x.bandwidth())
+      .attr("fill", "steelblue");
+
+  svg.append("g")
+      .call(xAxis)
+      .selectAll("text")
+      .style("fill", "#ffffff");
+
+  svg.append("g")
+      .call(yAxis)
+      .selectAll("text")
+      .style("fill", "#ffffff");
 };
 
-const drawBollingerBandsChart = (data) => {
-  d3.select("#bollinger-chart").selectAll("*").remove();
-  if (data.length < 2) return;
-
-  const margin = { top: 40, right: 30, bottom: 70, left: 60 };
-  const width = 960 - margin.left - margin.right;
-  const height = 500 - margin.top - margin.bottom;
-
-  const svg = d3.select("#bollinger-chart").append("svg")
-    .attr("width", "100%")
-    .attr("height", height + margin.top + margin.bottom)
-    .attr("viewBox", `0 0 ${width + margin.left + margin.right} ${height + margin.top + margin.bottom}`)
-    .attr("preserveAspectRatio", "xMidYMid meet")
-    .append("g")
-    .attr("transform", `translate(${margin.left},${margin.top})`);
-
-  const parsedData = data.map(d => ({
-    date: new Date(d.createdAt),
-    wpm: +d.wpm
-  }));
-
-  const n = 20; // Period for moving average and stdev
-  const k = 2; // Standard deviation multiplier
-
-  const bollingerData = [];
-  for (let i = 0; i < parsedData.length; i++) {
-    const slice = parsedData.slice(Math.max(0, i - n + 1), i + 1);
-    const mean = d3.mean(slice, d => d.wpm);
-    const stdDev = d3.deviation(slice, d => d.wpm);
-    bollingerData.push({
-      date: parsedData[i].date,
-      wpm: parsedData[i].wpm,
-      mean: mean,
-      upper: mean + k * stdDev,
-      lower: mean - k * stdDev
-    });
-  }
-
-  const x = d3.scaleTime().range([0, width]).domain(d3.extent(bollingerData, d => d.date));
-  const y = d3.scaleLinear().range([height, 0]).domain([0, d3.max(bollingerData, d => Math.max(d.wpm, d.upper)) * 1.1 || 100]);
-
-  svg.append("g").attr("transform", `translate(0,${height})`).call(d3.axisBottom(x).ticks(5))
-    .selectAll("text").style("fill", "#ffffff");
-
-  svg.append("g").call(d3.axisLeft(y)).selectAll("text").style("fill", "#ffffff");
+const drawWpmEvolutionChart = (data) => {
+  console.log("--- Drawing WPM Evolution Chart ---");
+  d3.select("#wpm-chart").selectAll("*").remove();
   
-  svg.append("text").attr("transform", "rotate(-90)").attr("y", 0 - margin.left).attr("x", 0 - (height / 2))
-    .attr("dy", "1em").style("text-anchor", "middle").style("fill", "#ffffff").text("WPM");
+  if (!data || data.length < 2) {
+    console.log("Not enough data to draw chart. Data:", data);
+    return;
+  }
+  console.log("Step 1: Raw data has enough points.", data);
 
-  const line = (yValue) => d3.line().x(d => x(d.date)).y(d => y(d[yValue]));
 
-  svg.append("path").datum(bollingerData).attr("class", "line wpm-line").attr("d", line('wpm'));
-  svg.append("path").datum(bollingerData.slice(n - 1)).attr("class", "line mean-line").attr("d", line('mean'));
-  svg.append("path").datum(bollingerData.slice(n - 1)).attr("class", "line upper-band").attr("d", line('upper'));
-  svg.append("path").datum(bollingerData.slice(n - 1)).attr("class", "line lower-band").attr("d", line('lower'));
+  const width = 928;
+  const height = 500;
+  const marginTop = 30;
+  const marginRight = 50;
+  const marginBottom = 50; // Increased for X-axis label
+  const marginLeft = 60; // Increased for Y-axis label
+
+  const parsedData = data.map((d, i) => ({
+    game: i + 1,
+    value: +d.wpm
+  }));
+  console.log("Step 2: Parsed data for chart:", parsedData);
+
+
+  const x = d3.scaleLinear()
+      .domain([1, parsedData.length])
+      .range([marginLeft, width - marginRight]);
+
+  const y = d3.scaleLinear()
+      .domain([0, d3.max(parsedData, d => d.value) * 1.1 || 100])
+      .range([height - marginBottom, marginTop]);
+  
+  console.log("Step 3: Scales created.");
+  console.log("X-axis domain:", x.domain(), "range:", x.range());
+  console.log("Y-axis domain:", y.domain(), "range:", y.range());
+
+
+  const svg = d3.select("#wpm-chart").append("svg")
+      .attr("width", "100%")
+      .attr("height", "100%")
+      .attr("viewBox", [0, 0, width, height])
+      .attr("style", "max-width: 100%; height: auto; font: 12px sans-serif;");
+  console.log("Step 4: SVG container created.");
+
+  svg.append("g")
+      .attr("transform", `translate(0,${height - marginBottom})`)
+      .call(d3.axisBottom(x).ticks(Math.min(parsedData.length, 10)).tickFormat(d3.format('d')))
+      .selectAll("text").style("fill", "#ffffff");
+
+  svg.append("g")
+      .attr("transform", `translate(${marginLeft},0)`)
+      .call(d3.axisLeft(y))
+      .selectAll("text").style("fill", "#ffffff");
+
+  // Add X-axis label
+  svg.append("text")
+    .attr("text-anchor", "middle")
+    .attr("x", width / 2)
+    .attr("y", height - 10)
+    .style("fill", "#ffffff")
+    .text("Número de Partida");
+
+  // Add Y-axis label
+  svg.append("text")
+    .attr("text-anchor", "middle")
+    .attr("transform", "rotate(-90)")
+    .attr("y", 20)
+    .attr("x", -height / 2)
+    .style("fill", "#ffffff")
+    .text("WPM (Palabras por Minuto)");
+  console.log("Step 5: Axes and labels drawn.");
+
+  const line = d3.line()
+      .x(d => x(d.game))
+      .y(d => y(d.value))
+      .curve(d3.curveMonotoneX); // Makes the line smoother
+
+  const pathData = line(parsedData);
+  console.log("Step 6: Line path data generated:", pathData);
+
+  svg.append("path")
+      .datum(parsedData)
+      .attr("fill", "none")
+      .attr("stroke", "#61dafb")
+      .attr("stroke-width", 2)
+      .attr("d", pathData);
+  console.log("Step 7: Chart drawing complete.");
 };
 
 
@@ -149,8 +213,9 @@ onMounted(async () => {
     const playerName = sessionStore.playerName;
     if (playerName) {
       const historyResponse = await communicationManager.getPlayerScoreHistory(playerName);
+      console.log("Received score history from backend:", historyResponse.data);
       scoreHistory.value = historyResponse.data;
-      drawBollingerBandsChart(scoreHistory.value);
+      drawWpmEvolutionChart(scoreHistory.value);
     }
   } catch (err) {
     error.value = err.message;
@@ -182,14 +247,6 @@ onUnmounted(() => {
 }
 .wpm-line {
   stroke: #61dafb; /* Azul */
-}
-.mean-line {
-  stroke: #ffab00; /* Naranja */
-  stroke-dasharray: 5,5;
-}
-.upper-band, .lower-band {
-  stroke: #e91e63; /* Rosa */
-  stroke-dasharray: 2,2;
 }
 </style>
 
