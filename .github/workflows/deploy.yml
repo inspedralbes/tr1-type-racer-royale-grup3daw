@@ -75,5 +75,5 @@ jobs:
             # los contenedores correspondientes. Los datos de las bases de datos se conservan.
             docker compose --env-file ./.env -f docker-compose.prod.yml up --build -d --remove-orphans
 
-            # Limpia cualquier otra imagen de Docker que no se esté utilizando.
+            # Limpia cualquier otra imagen de Docker que no se esté utilizando
             docker image prune -f
