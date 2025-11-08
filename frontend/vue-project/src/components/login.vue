@@ -1,62 +1,89 @@
-<script setup>
-/**
- * Fichero: login.vue
- * Descripción: Este componente representa la pantalla de inicio de sesión.
- * Permite al usuario introducir un nombre y, al hacer clic en "Entrar", inicia el proceso
- * de conexión y registro con el servidor.
- *
- * Funcionalidades:
- * - Captura el nombre de usuario introducido.
- * - Valida que el nombre no esté vacío.
- * - Utiliza `communicationManager` para conectar el socket y registrar al jugador en el backend.
- * - Emite un evento `login` al componente padre (`GameEngine.vue`) con los datos del jugador
- *   recibidos del servidor, para que el padre pueda continuar con el flujo del juego.
- */
-import { ref } from 'vue'
-import { communicationManager } from '@/communicationManager'
 
-// `nom` es una referencia reactiva para almacenar el valor del campo de entrada.
-const nom = ref('')
-// `emit` se usa para enviar eventos al componente padre.
-const emit = defineEmits(['login'])
+<script setup>
+import { ref, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
+import { communicationManager } from '@/communicationManager'
+import { useSessionStore } from '@/stores/session';
+import { useGameStore } from '@/stores/game';
+import { useNotificationStore } from '../stores/notification';
+
+const email = ref('')
+const password = ref('')
+const session = useSessionStore()
+const gameStore = useGameStore()
+const router = useRouter()
+
+// Limpia los campos cuando el componente se monta. Se usa un setTimeout
+// para asegurar que se ejecute después de cualquier autocompletado del navegador.
+onMounted(async () => {
+  // When visiting the login page we should clear any existing session/socket
+  // so that the app treats the user as a new user.
+  try {
+    communicationManager.logout();
+  } catch (e) {}
+  try {
+    communicationManager.disconnect();
+  } catch (e) {}
+  await communicationManager.updatePlayerPage('login');
+  setTimeout(() => {
+    email.value = '';
+    password.value = '';
+  }, 10);
+});
 
 const login = async () => {
-  // Validación simple para asegurar que el usuario ha introducido un nombre.
-  if (nom.value.trim() === '') {
-    alert('Por favor, introduce un nombre para continuar.')
+  if (email.value.trim() === '' || password.value.trim() === '') {
+    const notificationStore = useNotificationStore();
+    notificationStore.pushNotification({ type: 'error', message: 'Por favor, introduce tu email y contraseña.' });
     return
   }
 
   try {
-    // 1. Conecta el socket y se registra en el backend.
-    // `connectAndRegister` se encarga de la conexión del socket y de llamar al endpoint `/login`.
-    // El backend gestionará si es un nuevo login o una reconexión.
-    const player = await communicationManager.connectAndRegister(nom.value);
-    console.log('Jugador recibido del servidor:', player);
-
-    // 2. Emite el evento 'login' al componente padre (`GameEngine`).
-    // Esto le indica al padre que el login fue exitoso y le pasa los datos del jugador.
-    emit('login', player)
+    const response = await communicationManager.login(email.value, password.value);
+    const { token, username, email: userEmail } = response.data;
+    console.log('Login successful:', { token, username, email: userEmail });
+    session.setSession(token, username, userEmail);
+    gameStore.setNombreJugador(username);
+    communicationManager.connect(); // Conecta el socket después del login
+    await communicationManager.waitUntilConnected(); // Ensure socket is connected
+    router.push('/game/select-room');
   } catch (error) {
-    console.error('Error al iniciar sessió:', error)
-    alert('Hi ha hagut un problema al servidor')
+    console.error('Error al iniciar sessió:', error);
+    // La notificació d'error ja és gestionada per l'interceptor de communicationManager
   }
 }
-</script>
 
+const goToGuestLogin = () => {
+  router.push('/guest-login');
+}
+</script>
 <template>
   <div class="login-background">
-    <div class="login-contenedor">
-    <h2>Inici de sessió</h2>
-    <input
-      maxlength="12"
-      v-model="nom"
-      type="text"
-      placeholder="Escriu el teu nom"
-      @keyup.enter="login"
-    />
-    <button class="login-button" @click="login()">Entrar</button>
-  </div>
+    <div class="centra-console-panel">
+      <div class="login-container hologram">
+        <h2>Inici de sessió</h2>
+        <input
+          v-model="email"
+          type="email"
+          placeholder="Email"
+          @keyup.enter="login"
+          autocomplete="no-autofill"
+        />
+        <input
+          v-model="password"
+          type="password"
+          placeholder="Contrasenya"
+          @keyup.enter="login"
+          autocomplete="new-password"
+        />
+        
+        <div class="hologram-button-group">
+          <button class="btn" @click="login()">Entrar</button>
+          <button class="btn" @click="goToGuestLogin()">Entrar com a convidat</button>
+        </div>
+        <p>No tens un compte? <router-link to="/register">Registra't</router-link></p>
+      </div>
+    </div>
   </div>
 </template>
 

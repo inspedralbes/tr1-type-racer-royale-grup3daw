@@ -12,7 +12,7 @@ const http = require('http');
 const { Server } = require('socket.io');
 
 // Importadores de rutas y sockets
-const loginRoutes = require('./routes/loginRoutes');
+const authRoutes = require('./routes/authRoutes');
 const roomsRoutes = require('./routes/roomsRoutes');
 const scoresRoutes = require('./routes/scoresRoutes');
 const wordsRoutes = require('./routes/wordsRoutes');
@@ -68,7 +68,7 @@ app.set('io', io);
 initializeSockets(app);
 
 // Carga de las rutas de la API
-app.use('/api/login', loginRoutes);
+app.use('/api/auth', authRoutes);
 app.use('/api/rooms', roomsRoutes);
 app.use('/api/scores', scoresRoutes);
 app.use('/api/words', wordsRoutes);
@@ -85,4 +85,10 @@ app.use('/api/player', (req, res, next) => {
 // Inicia el servidor para que escuche en el puerto configurado.
 server.listen(port, () => {
   console.log(`Backend listening at http://localhost:${port}`);
+});
+
+// Global error handler
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).send('Something broke!');
 });

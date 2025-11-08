@@ -71,12 +71,13 @@ const updateRoom = (roomId, settings) => {
 
 // --- Gestión de Jugadores Registrados ---
 
-const addRegisteredPlayer = (name, socketId, token, currentPage = 'room-selection') => {
+const addRegisteredPlayer = (name, socketId, token, currentPage = 'room-selection', isGuest = false) => {
   const newPlayer = {
     name,
     socketId,
     token,
     currentPage, // Use provided currentPage or default
+    isGuest: !!isGuest,
   };
   registeredPlayers[token] = newPlayer;
   return newPlayer;
@@ -161,7 +162,7 @@ const areAllPlayersReady = (roomId) => {
   if (!room) {
     return false;
   }
-  return room.players.every(p => p.isReady);
+  return room.players.every(p => p.isReady && !p.disconnected);
 };
 
 const startGame = (roomId) => {
@@ -265,7 +266,19 @@ const makeHostInRoom = (roomId, currentHostSocketId, targetPlayerSocketId) => {
 };
 
 const deleteRoom = (roomId) => {
-  if (rooms[roomId]) {
+  const room = rooms[roomId];
+  if (room) {
+    // Clear any registeredPlayers' roomId references for players that were in this room
+    room.players.forEach(p => {
+      if (p && p.token && registeredPlayers[p.token]) {
+        try {
+          delete registeredPlayers[p.token].roomId;
+        } catch (e) {
+          // ignore
+        }
+      }
+    });
+
     delete rooms[roomId];
     return { success: true };
   }

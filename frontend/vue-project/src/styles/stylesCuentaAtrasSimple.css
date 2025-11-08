@@ -1,0 +1,12 @@
+.countdown-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 3rem;
+  color: var(--color-text-light);
+  height: 100%;
+}
+
+.countdown-number {
+  animation: pulse 1s infinite;
+}

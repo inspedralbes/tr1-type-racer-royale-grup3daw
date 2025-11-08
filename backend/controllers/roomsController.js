@@ -45,6 +45,10 @@ exports.createRoom = (req, res) => {
   broadcastPublicRoomList();
 
   res.status(201).json(newRoom);
+
+  // Explicitly broadcast player list after room creation to ensure frontend updates immediately
+  const broadcastPlayerList = req.app.get('broadcastPlayerList');
+  broadcastPlayerList(newRoom.id);
 };
 
 /**
@@ -174,9 +178,10 @@ exports.removePlayer = (req, res) => {
   }
 
   // Notifica al jugador específico que ha sido expulsado de la sala.
-  io.to(socketId).emit('player-removed');
+  io.to(socketId).emit('player-removed', { socketId });
 
   // Elimina al jugador del registro global de jugadores.
+
   stateManager.removeRegisteredPlayerBySocketId(socketId);
 
   res.status(200).json({ message: `Jugador con socketId ${socketId} eliminado.` });

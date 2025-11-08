@@ -13,16 +13,45 @@
  *   y dándoles un tiempo de gracia para volver a conectarse antes de eliminarlos.
  */
 const stateManager = require('../state/stateManager');
+const { User } = require('../db/models');
 
 const initializeSockets = (app) => {
   const io = app.get('io');
 
   // Función para emitir la lista de jugadores actualizada a todos los clientes de una sala.
-  const broadcastPlayerList = (roomId) => {
+  const broadcastPlayerList = async (roomId) => {
     const room = stateManager.getRoom(roomId);
     if (room) {
-      console.log('Broadcasting player list:', room.players);
-      io.to(roomId).emit('updatePlayerList', room.players);
+      console.log('Broadcasting player list (enriched):', room.players);
+      // Enrich players with avatar/color from DB when available
+      const enriched = await Promise.all((room.players || []).map(async (p) => {
+        try {
+          // If the registeredPlayers record marks this token as guest, skip DB lookup
+          const reg = stateManager.registeredPlayers[p.token];
+          if (reg && reg.isGuest) {
+            return {
+              ...p,
+              avatar: 'noImage',
+              color: undefined,
+              isGuest: true,
+            };
+          }
+          const dbUser = await User.findOne({ where: { username: p.name } });
+          return {
+            ...p,
+            // If user isn't in DB, set avatar to 'noImage' so frontend can show placeholder
+            avatar: dbUser ? dbUser.avatar : 'noImage',
+            color: dbUser ? dbUser.color : undefined,
+            isGuest: !dbUser,
+          };
+        } catch (e) {
+          return {
+            ...p,
+            isGuest: true,
+          };
+        }
+      }));
+      io.to(roomId).emit('updatePlayerList', enriched);
     }
   };
 
@@ -55,7 +84,16 @@ const initializeSockets = (app) => {
     // Listener para cuando un nuevo cliente se conecta.
     console.log(`Nuevo player conectado: ${socket.id}`);
 
-    socket.on('join-room', (data) => {
+    const token = socket.handshake.auth.token;
+    if (token) {
+      const player = stateManager.findRegisteredPlayerByToken(token);
+      if (player) {
+        console.log(`Jugador ${player.name} (re)conectado con socket ID: ${socket.id}`);
+        stateManager.updateRegisteredPlayerSocketId(token, socket.id);
+      }
+    }
+
+  socket.on('join-room', async (data) => {
       const { roomId, player } = data;
       if (!roomId || !player) {
         socket.emit('join-room-error', { message: 'Faltan datos para unirse a la sala.' });
@@ -74,12 +112,12 @@ const initializeSockets = (app) => {
       // Emit success event to the joining client
       socket.emit('join-room-success', result.room);
 
-      // Notificar a todos en la sala sobre el nuevo jugador
-      broadcastPlayerList(roomId);
+      // Notificar a todos en la sala sobre el nuevo jugador (await enrichment)
+      await broadcastPlayerList(roomId);
     });
 
     // Listener para cuando un cliente abandona una sala.
-    socket.on('leave-room', (roomId) => {
+    socket.on('leave-room', async (roomId) => {
       socket.leave(roomId);
       console.log(`Socket ${socket.id} abandonó la sala ${roomId}`);
       delete socket.data.roomId;
@@ -89,20 +127,20 @@ const initializeSockets = (app) => {
       if (result.roomDeleted) {
         broadcastPublicRoomList();
       } else if (result.room) {
-        broadcastPlayerList(roomId);
+        await broadcastPlayerList(roomId);
       }
     });
 
     // Listener para cuando un jugador cambia su estado de "listo".
-    socket.on('set-ready', (data) => {
+    socket.on('set-ready', async (data) => {
       const { roomId, isReady } = data;
       stateManager.setPlayerReadyStatusInRoom(roomId, socket.id, isReady);
-      broadcastPlayerList(roomId);
+      await broadcastPlayerList(roomId);
       broadcastRoomState(roomId); // Notificar también el cambio de estado de la sala
     });
 
     // Listener para cuando un cliente se desconecta.
-    socket.on('disconnect', () => {
+  socket.on('disconnect', async () => {
       console.log(`Cliente desconectado: ${socket.id}`);
       // Busca al jugador registrado asociado a este socket.id.
       const token = Object.keys(stateManager.registeredPlayers).find(
@@ -117,17 +155,23 @@ const initializeSockets = (app) => {
             // Lo marcamos como desconectado y le damos tiempo para reconectarse.
             console.log(`Jugador con token ${token} desconectado de la sala ${player.roomId}. Iniciando temporizador de reconexión.`);
             stateManager.setPlayerDisconnected(player.roomId, token, true);
-            broadcastPlayerList(player.roomId);
+            await broadcastPlayerList(player.roomId);
+
+            const room = stateManager.getRoom(player.roomId);
+            if (room && room.players.every(p => p.disconnected)) {
+              stateManager.deleteRoom(player.roomId);
+              broadcastPublicRoomList();
+            }
   
             // Inicia un temporizador. Si el jugador no se ha reconectado cuando el temporizador
             // termine, será eliminado permanentemente de la sala y del registro.
-            setTimeout(() => {
+            setTimeout(async () => {
               const roomAfterTimeout = stateManager.getRoom(player.roomId);
               if (roomAfterTimeout) {
                 const playerAfterTimeout = roomAfterTimeout.players.find(p => p.token === token);
   
                 // Si el jugador todavía existe y sigue desconectado, eliminarlo.
-                if (playerAfterTimeout && playerAfterTimeout.disconnected) {
+                  if (playerAfterTimeout && playerAfterTimeout.disconnected) {
                   console.log(`Tiempo de reconexión agotado para el jugador con token ${token}. Eliminando...`);
                   const result = stateManager.removePlayerFromRoomByToken(player.roomId, token);
                   stateManager.removeRegisteredPlayer(token); // Eliminar del registro global
@@ -135,7 +179,7 @@ const initializeSockets = (app) => {
                   if (result.roomDeleted) {
                     broadcastPublicRoomList();
                   } else if (result.room) {
-                    broadcastPlayerList(player.roomId);
+                    await broadcastPlayerList(player.roomId);
                   }
                 }
               }
@@ -150,10 +194,19 @@ const initializeSockets = (app) => {
       }
     });
 
+
     // Listener para un logout explícito (ej. el usuario cierra sesión).
-    socket.on('explicit-logout', (token) => {
-      // Elimina al jugador del registro global inmediatamente.
+    socket.on('explicit-logout', async (token) => {
       console.log(`Jugador con token ${token} ha solicitado logout explícito.`);
+      const player = stateManager.findRegisteredPlayerByToken(token);
+      if (player && player.roomId) {
+        const result = stateManager.removePlayerFromRoomByToken(player.roomId, token);
+        if (result.roomDeleted) {
+          broadcastPublicRoomList();
+        } else if (result.room) {
+          await broadcastPlayerList(player.roomId);
+        }
+      }
       stateManager.removeRegisteredPlayer(token);
     });
   });

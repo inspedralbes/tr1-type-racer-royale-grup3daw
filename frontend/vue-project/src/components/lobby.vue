@@ -1,33 +1,32 @@
 <template>
-  <!-- Contenedor principal del lobby con un fondo específico. -->
   <div class="lobby-background">
-    <!-- Contenedor central del lobby. -->
     <div class="lobby-contenedor">
-      <!-- Botón para regresar a la selección de sala. -->
-      <button class="back-button" @click="goBack">←</button>
+  <button class="back-button" @click="goBack">←</button>
+  <button class="btn" v-if="sessionStore.email" @click="goToProfile" style="margin-left:8px">Profile</button>
       <h1>Lobby</h1>
-      <!-- Muestra el nombre del jugador actual. -->
       <h2>Benvingut, {{ nombreJugador }}!</h2>
-      <!-- Lista de jugadores en la sala. -->
       <ul class="lista-jugadores">
-        <li v-for="(jugador) in jugadores" :key="jugador.name">
-          {{ jugador.name }} <span v-if="jugador.role === 'admin'">⭐</span>
-          <span v-if="jugador.role !== 'admin'">
+        <li v-for="(jugador) in jugadores" :key="jugador.name" style="display:flex;align-items:center;gap:8px">
+          <img :src="getAvatarSrc(jugador)" alt="avatar" style="width:40px;height:40px;object-fit:contain;border-radius:4px" />
+          <span>{{ jugador.name }} <span v-if="jugador.role === 'admin'">⭐</span></span>
+          <span v-if="jugador.disconnected"> (Desconectado)</span>
+          <span v-else-if="jugador.role !== 'admin'"> 
             <span v-if="jugador.isReady"> (Listo)</span><span v-else> (No listo)</span>
           </span>
-          <!-- Botones de acción para el administrador: eliminar jugador y hacer host. -->
-          <button class="lobby-button" v-if="isAdmin && jugador.socketId !== socket.id" @click="removePlayer(jugador.socketId)">Eliminar</button>
-          <button class="lobby-button" v-if="isAdmin && jugador.socketId !== socket.id" @click="makeHost(jugador.socketId)">Hacer Host</button>
+          <div class="lobby-button-group" v-if="isAdmin && jugador.name !== nombreJugador">
+            <button class="btn btn-small" @click="removePlayer(jugador.socketId)">Eliminar</button>
+            <button class="btn btn-small" @click="makeHost(jugador.socketId)">Hacer Host</button>
+          </div>
         </li>
       </ul>
 
-      <!-- Botón para cambiar el estado de 'listo' del jugador (no visible para el administrador). -->
-      <button class="lobby-button" v-if="!isAdmin" @click="toggleReady">{{ isPlayerReady ? 'No listo' : 'Listo' }}</button>
-
-      <!-- Botones de acción para el administrador: editar sala e iniciar juego. -->
-      <button class="lobby-button" v-if="isAdmin" @click="goToRoomSettings">Editar Sala</button>
-      <button class="lobby-button" v-if="isAdmin" @click="iniciarJuego" :disabled="!isAdmin || !areAllPlayersReady">Començar Joc</button>
+      <div class="lobby-button-group">
+        <button class="btn" v-if="!isAdmin" @click="toggleReady">{{ isPlayerReady ? 'No listo' : 'Listo' }}</button>
+        <button class="btn" v-if="isAdmin" @click="goToRoomSettings">Editar Sala</button>
+        <button class="btn" v-if="isAdmin" @click="iniciarJuego" :disabled="!isAdmin || !areAllPlayersReady">Començar Joc</button>
+      </div>
     </div>
+    <img class="naves" :src="naveActual" @click="cambiarNave" />
   </div>
 </template>
 
@@ -36,20 +35,31 @@
 
 <script setup>
 // Importaciones de Vue y Pinia para la gestión del estado y la reactividad.
-import { computed, onMounted } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { storeToRefs } from 'pinia'
+import { useRouter } from 'vue-router';
 // Importaciones de módulos de comunicación y stores personalizados.
 import { communicationManager, socket } from '../communicationManager'
+import { useNotificationStore } from '../stores/notification'
 import { useGameStore } from '../stores/game';
 import { useRoomStore } from '../stores/room';
 import { useSessionStore } from '../stores/session';
 import { usePublicRoomsStore } from '../stores/publicRooms';
+
+// removed decorative ship images (no longer shown in lobby)
 
 // Inicialización de los stores.
 const gameStore = useGameStore();
 const roomStore = useRoomStore();
 const sessionStore = useSessionStore();
 const publicRoomsStore = usePublicRoomsStore();
+const router = useRouter();
+
+const goToProfile = () => {
+  router.push('/profile');
+}
+
+// decorative ship removed from lobby
 
 // Hook `onMounted` que se ejecuta cuando el componente ha sido montado.
 onMounted(async () => {
@@ -84,8 +94,41 @@ const isPlayerReady = computed(() => {
  * @returns {boolean} - Verdadero si todos los jugadores están listos, falso en caso contrario.
  */
 const areAllPlayersReady = computed(() => {
-  return jugadores.value.every(p => p.role === 'admin' || p.isReady);
+  return jugadores.value.length > 0 && jugadores.value.every(p => p.isReady && !p.disconnected);
 });
+
+/**
+ * Devuelve la URL del avatar para un jugador. Si no tiene avatar/color definidos,
+ * devuelve una imagen por defecto (`noImage.png`).
+ */
+const getAvatarSrc = (player) => {
+  try {
+    // If the backend marked this player as guest (not logged-in), show no-image placeholder
+    if (player && player.isGuest) {
+      return new URL('../img/noImage.png', import.meta.url).href; // using noImage.png as placeholder
+    }
+
+    // Prefer player.avatar/player.color if present, fall back to defaults
+    const avatar = (player && player.avatar) ? player.avatar : 'nave';
+    const color = (player && player.color) ? player.color : 'Azul';
+
+  // If avatar explicitly set to 'noImage' use noImage.png as placeholder
+    if (avatar === 'noImage') {
+      return new URL('../img/noImage.png', import.meta.url).href;
+    }
+
+    // Build filename like naveAzul.png
+    const filename = `${avatar}${color}.png`;
+    return new URL(`../img/${filename}`, import.meta.url).href;
+  } catch (e) {
+    // Fallback image
+    return new URL('../img/noImage.png', import.meta.url).href;
+  }
+}
+
+function goToRoomSettings() {
+  sessionStore.setEtapa('room-settings');
+}
 
 /**
  * @description Función para regresar a la pantalla de selección de sala.
@@ -93,8 +136,9 @@ const areAllPlayersReady = computed(() => {
  */
 const goBack = () => {
   socket.emit('leave-room', roomStore.roomId);
-  roomStore.resetState();
-  gameStore.setEtapa('room-selection');
+    roomStore.resetState();
+  sessionStore.setRoomId(null); // Clear roomId from sessionStore
+  sessionStore.setEtapa('room-selection');
 };
 
 /**
@@ -108,7 +152,8 @@ const removePlayer = async (playerSocketId) => {
       console.log(`Jugador con socketId ${playerSocketId} eliminado.`);
     } catch (error) {
       console.error('Error al eliminar jugador:', error);
-      alert(error.response?.data?.message || 'Error al eliminar jugador.');
+      const notificationStore = useNotificationStore();
+      notificationStore.pushNotification({ type: 'error', message: error.response?.data?.message || 'Error al eliminar jugador.' });
     }
   } else {
     console.warn('Solo el administrador puede eliminar jugadores.');
@@ -126,7 +171,8 @@ const makeHost = async (targetPlayerSocketId) => {
       console.log(`Jugador con socketId ${targetPlayerSocketId} es ahora el host.`);
     } catch (error) {
       console.error('Error al hacer host al jugador:', error);
-      alert(error.response?.data?.message || 'Error al hacer host al jugador.');
+      const notificationStore = useNotificationStore();
+      notificationStore.pushNotification({ type: 'error', message: error.response?.data?.message || 'Error al hacer host al jugador.' });
     }
   } else {
     console.warn('Solo el administrador puede hacer host a otros jugadores.');
@@ -151,21 +197,18 @@ function iniciarJuego() {
   if (isAdmin.value) {
     communicationManager.startGame(roomStore.roomId)
       .then(response => {
-        console.log(response.data.message)
+        console.log('Game started:', response.data);
+        sessionStore.setEtapa('game');
       })
       .catch(error => {
-        console.error('Error al iniciar el juego:', error)
-        alert(error.response?.data?.message || 'Error al iniciar el juego.');
-      })
+        console.error('Error al iniciar el juego:', error);
+        const notificationStore = useNotificationStore();
+        notificationStore.pushNotification({ type: 'error', message: error.response?.data?.message || 'Error al iniciar el juego.' });
+      });
   } else {
-    console.warn('Solo el administrador puede iniciar el juego.')
+    console.warn('Solo el administrador puede iniciar el juego.');
   }
 }
 
-/**
- * @description Función para navegar a la pantalla de configuración de la sala. Solo accesible para el administrador.
- */
-function goToRoomSettings() {
-  gameStore.setEtapa('room-settings');
-}
+
 </script>
