@@ -14,7 +14,11 @@ let sequelize;
 if (config.use_env_variable) {
   sequelize = new Sequelize(process.env[config.use_env_variable], config);
 } else {
-  sequelize = new Sequelize(config.database, config.username, config.password, config);
+  // CORRECCIÓN: En producción, las credenciales vienen directamente de process.env,
+  // no del objeto 'config' que solo contiene los nombres de las variables.
+  const username = env === 'production' ? process.env.MYSQL_USER : config.username;
+  const password = env === 'production' ? process.env.MYSQL_PASSWORD : config.password;
+  sequelize = new Sequelize(config.database, username, password, config);
 }
 
 fs
