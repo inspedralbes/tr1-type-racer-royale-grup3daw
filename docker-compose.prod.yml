@@ -5,9 +5,9 @@ services:
     build:
       context: .
       dockerfile: nginx.Dockerfile
-      args:
-        ADMINER_USER: ${ADMINER_USER}
-        ADMINER_PASSWORD: ${ADMINER_PASSWORD}
+    environment:
+      ADMINER_USER: ${ADMINER_USER}
+      ADMINER_PASSWORD: ${ADMINER_PASSWORD}
     ports:
       - "80:80"
     # Nginx solo necesita que el backend esté iniciado para hacer proxy.
