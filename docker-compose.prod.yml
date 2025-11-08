@@ -24,16 +24,16 @@ services:
     # Use the start:prod script so migrations run before launching the server
     command: npm run start:prod
     environment:
-      - NODE_ENV=${NODE_ENV}
-      - PORT=${PORT}
-      - FRONTEND_URL=${FRONTEND_URL}
-      - JWT_SECRET=${JWT_SECRET}
-      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
-      - MYSQL_PASSWORD=${MYSQL_PASSWORD}
-      - MYSQL_DATABASE=${MYSQL_DATABASE}
-      - MYSQL_USER=${MYSQL_USER}
-      - MONGO_URI=${MONGO_URI}
-      - DB_HOST=mysql
+      NODE_ENV: ${NODE_ENV}
+      PORT: ${PORT}
+      FRONTEND_URL: ${FRONTEND_URL}
+      JWT_SECRET: ${JWT_SECRET}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MONGO_URI: ${MONGO_URI}
+      DB_HOST: mysql
     # MEJORA: El backend esperará a que las bases de datos estén listas.
     depends_on:
       mongo:
@@ -78,6 +78,8 @@ services:
       MYSQL_DATABASE: ${MYSQL_DATABASE}
       MYSQL_USER: ${MYSQL_USER}
       MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    # Forzamos el uso del plugin de autenticación nativo para compatibilidad con Adminer
+    command: --default-authentication-plugin=mysql_native_password
     volumes:
       - mysql-data:/var/lib/mysql
     healthcheck:
@@ -96,6 +98,8 @@ services:
     environment:
       ADMINER_DEFAULT_SERVER: mysql
       ADMINER_DESIGN: dracula # Tema oscuro más profesional
+      # Deshabilita la Content-Security-Policy (CSP) de Adminer para evitar errores 403 detrás de un proxy.
+      ADMINER_CSP: "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'"
     depends_on:
       - mysql
       - mongo
