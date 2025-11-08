@@ -60,10 +60,9 @@ services:
 
   mongo:
     image: mongo:6.0 # BUENA PRÁCTICA: Fija la versión de la imagen.
-    # SEGURIDAD: Añade autenticación a MongoDB.
     environment:
-      MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USER}
-      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD}
+      MONGO_INITDB_ROOT_USERNAME: mongo_admin
+      MONGO_INITDB_ROOT_PASSWORD: mongo_password
     volumes:
       - mongo-data:/data/db
     networks:
@@ -112,6 +111,8 @@ services:
       - ME_CONFIG_MONGODB_SERVER=mongo
       - ME_CONFIG_MONGODB_ENABLE_ADMIN=true
       - ME_CONFIG_SITE_BASEURL=/mongo-express/
+      - ME_CONFIG_MONGODB_ADMINUSERNAME=mongo_admin
+      - ME_CONFIG_MONGODB_ADMINPASSWORD=mongo_password
     depends_on:
       - mongo
     networks:
