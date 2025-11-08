@@ -25,7 +25,6 @@ services:
     command: npm run start:prod
     environment:
       NODE_ENV: ${NODE_ENV}
-      PORT: ${PORT}
       FRONTEND_URL: ${FRONTEND_URL}
       JWT_SECRET: ${JWT_SECRET}
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}

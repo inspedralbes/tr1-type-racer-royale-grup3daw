@@ -43,7 +43,6 @@ jobs:
             # Create .env file from GitHub Secrets
             echo "Creating .env file..."
             echo "NODE_ENV=${{ secrets.NODE_ENV }}" > .env
-            echo "PORT=${{ secrets.PORT }}" >> .env
             echo "FRONTEND_URL=${{ secrets.FRONTEND_URL }}" >> .env
             echo "MYSQL_ROOT_PASSWORD=${{ secrets.MYSQL_ROOT_PASSWORD }}" >> .env
             echo "MYSQL_PASSWORD=${{ secrets.MYSQL_PASSWORD }}" >> .env

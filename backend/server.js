@@ -25,21 +25,19 @@ const app = express();
 const server = http.createServer(app);
 
 const nodeEnv = process.env.NODE_ENV;
-let port;
+const port = 3000; // El backend siempre escuchará en el puerto 3000 internamente.
 
 // Define la configuración de CORS (Cross-Origin Resource Sharing) basada en el entorno.
 const corsOptions = {
   methods: ["GET", "POST","PUT", "DELETE"],
 };
 
+// En producción, solo permite peticiones desde la URL del frontend definida en .env
 if (nodeEnv === 'production') {
   console.log('Running in production mode');
-  port = process.env.PORT || 8000;
-  // En producción, solo permite peticiones desde la URL del frontend definida en .env
   corsOptions.origin = process.env.FRONTEND_URL;
 } else {
   console.log('Running in development mode');
-  port = 3000;
   // En desarrollo, permite cualquier origen
   corsOptions.origin = "*";
 }
@@ -83,7 +81,6 @@ server.listen(port, () => {
 
 // Global error handler
 app.use((err, req, res, next) => {
-  console.error('Global error handler caught an error:', err);
   console.error(err.stack);
   res.status(500).send('Something broke!');
 });
