@@ -63,10 +63,7 @@ jobs:
             echo "JWT_SECRET=${{ secrets.JWT_SECRET }}" >> .env
 
             # Run docker-compose
-            echo "Stopping any running compose stack (down) and starting docker-compose..."
-            # Tear down any existing stack first to ensure a clean deployment.
-            docker compose -f docker-compose.prod.yml down --remove-orphans || true
-            
+            echo "Starting docker-compose..."
             # Actualiza los servicios: reconstruye las imágenes que han cambiado y reinicia
             # los contenedores correspondientes. Los datos de las bases de datos se conservan.
             docker compose --env-file ./.env -f docker-compose.prod.yml up --build -d --remove-orphans
