@@ -16,11 +16,5 @@ COPY --from=build-stage /app/dist /usr/share/nginx/html
 RUN rm /etc/nginx/conf.d/default.conf
 # Copy the nginx configuration
 COPY nginx.conf /etc/nginx/conf.d/default.conf
-# Copy the entrypoint script
-COPY nginx-entrypoint.sh /docker-entrypoint.sh
-# Make the entrypoint script executable
-RUN chmod +x /docker-entrypoint.sh
-# Set the entrypoint
-ENTRYPOINT ["/docker-entrypoint.sh"]
 EXPOSE 80
 CMD ["nginx", "-g", "daemon off;"]
