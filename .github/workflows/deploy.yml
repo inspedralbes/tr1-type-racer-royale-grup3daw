@@ -53,6 +53,9 @@ jobs:
             echo "MONGO_ROOT_USER=${{ secrets.MONGO_ROOT_USER }}" >> .env
             echo "MONGO_ROOT_PASSWORD=${{ secrets.MONGO_ROOT_PASSWORD }}" >> .env
             echo "MONGO_URI=${{ secrets.MONGO_URI }}" >> .env
+            # Credenciales para Adminer (autenticación básica en Nginx)
+            echo "ADMINER_USER=${{ secrets.ADMINER_USER }}" >> .env
+            echo "ADMINER_PASSWORD=${{ secrets.ADMINER_PASSWORD }}" >> .env
             # Las variables VITE_* son cruciales para el build del frontend
             echo "VITE_NODE_ENV=${{ secrets.NODE_ENV }}" >> .env
             echo "VITE_API_URL=${{ secrets.FRONTEND_URL }}" >> .env
