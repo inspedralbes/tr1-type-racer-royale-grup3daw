@@ -69,6 +69,9 @@ const navigateByEtapa = (currentEtapa) => {
     case 'done':
       router.push('/game/final');
       break;
+    case 'player-stats':
+      router.push('/profile');
+      break;
     default:
       router.push('/login');
       break;

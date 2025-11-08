@@ -35,11 +35,13 @@
 
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue';
+import { useRouter } from 'vue-router';
 import { useGameStore } from '../stores/game';
 import { useSessionStore } from '../stores/session';
 import { communicationManager } from '../communicationManager';
 import * as d3 from 'd3';
 
+const router = useRouter();
 const gameStore = useGameStore();
 const sessionStore = useSessionStore();
 const playerStats = ref([]);
@@ -48,7 +50,7 @@ const loading = ref(true);
 const error = ref(null);
 
 const goBack = () => {
-  gameStore.setEtapa('room-selection');
+  router.back();
 };
 
 const drawChart = () => {
