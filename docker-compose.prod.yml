@@ -100,6 +100,19 @@ services:
     networks:
       - app-network
     restart: unless-stopped
+
+  mongo-express:
+    image: mongo-express:latest
+    environment:
+      - ME_CONFIG_MONGODB_SERVER=mongo
+      - ME_CONFIG_MONGODB_ADMINUSERNAME=${MONGO_ROOT_USER}
+      - ME_CONFIG_MONGODB_ADMINPASSWORD=${MONGO_ROOT_PASSWORD}
+      - ME_CONFIG_MONGODB_ENABLE_ADMIN=true
+    depends_on:
+      - mongo
+    networks:
+      - app-network
+    restart: unless-stopped
     
 
 networks:

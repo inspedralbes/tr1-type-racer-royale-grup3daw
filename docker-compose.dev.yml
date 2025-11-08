@@ -89,6 +89,20 @@ services:
     networks:
       - app-network
 
+  # Servicio Mongo Express para gestión de la base de datos MongoDB
+  mongo-express:
+    image: mongo-express:latest
+    ports:
+      - "8081:8081"
+    environment:
+      - ME_CONFIG_MONGODB_SERVER=mongo
+      - ME_CONFIG_MONGODB_PORT=27017
+      - ME_CONFIG_MONGODB_ENABLE_ADMIN=true
+    depends_on:
+      - mongo
+    networks:
+      - app-network
+
 # Definición de la red que usarán los servicios para comunicarse entre sí.
 networks:
   app-network:
