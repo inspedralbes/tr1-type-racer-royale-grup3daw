@@ -282,6 +282,10 @@ export const communicationManager = {
     return apiClient.get(`/scores/history/${playerName}`);
   },
 
+  async sendGameStats(stats) {
+    return apiClient.post('/stats/game', stats);
+  },
+
   // --- Métodos de Salas (REST) ---
 
   // Obtiene la lista de salas públicas.

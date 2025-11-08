@@ -192,37 +192,6 @@ watch(etapa, async (newEtapa) => {
  * Recibe los resultados, los procesa para la pantalla final y cambia la etapa a 'done'.
  * También resetea el estado de las palabras y el estado de "listo" de los jugadores en el backend.
  */
-const onGameOver = async (resultados) => {
-  console.log('onGameOver called. resultados:', resultados);
-
-  const finalScores = jugadores.value.map(p => ({
-    nombre: p.name,
-    puntuacion: p.score,
-    wpm: p.name === resultados.jugador ? resultados.wpm : 0, // Assuming WPM is only for the current player
-  }));
-  
-  gameStore.setFinalResults(finalScores);
-
-  sessionStore.setEtapa('done');
-  
-  gameStore.setWordsLoaded(false);
-
-  try {
-    // Guarda la puntuación final en el backend
-    await communicationManager.saveGameResult(resultados.jugador, resultados.puntuacion, resultados.wpm);
-    console.log('Puntuación final guardada en MongoDB.');
-
-    // Pide al backend que resetee el estado de "listo" de todos los jugadores en la sala.
-    await communicationManager.resetReadyStatus(roomStore.roomId);
-  } catch (error) {
-    console.error('Error resetting ready status after game over:', error)
-    try {
-      const notificationStore = useNotificationStore();
-      notificationStore.pushNotification({ type: 'error', message: 'Error al resetear el estado de listo tras finalizar la partida.' });
-    } catch (e) {}
-  }
-};
-
 const onReiniciar = () => {
   sessionStore.setEtapa('lobby');
   gameStore.setFinalResults([]);

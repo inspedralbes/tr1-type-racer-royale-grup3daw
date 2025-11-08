@@ -23,10 +23,10 @@
         <li v-for="stat in playerStats" :key="stat._id">
           <h3>{{ stat._id }}</h3>
           <p>Partidas Jugadas: {{ stat.totalGames }}</p>
-          <p>Puntuación Media: {{ stat.avgScore.toFixed(2) }}</p>
-          <p>WPM Media: {{ stat.avgWpm.toFixed(2) }}</p>
-          <p>Mejor Puntuación: {{ stat.maxScore }}</p>
-          <p>Mejor WPM: {{ stat.maxWpm }}</p>
+          <p>Puntuación Media: {{ stat.avgScore ? stat.avgScore.toFixed(2) : 0 }}</p>
+          <p>WPM Media: {{ stat.avgWpm ? stat.avgWpm.toFixed(2) : 0 }}</p>
+          <p>Mejor Puntuación: {{ stat.maxScore ?? 0 }}</p>
+          <p>Mejor WPM: {{ stat.maxWpm ?? 0 }}</p>
         </li>
       </ul>
     </div>

@@ -13,10 +13,12 @@
 import { computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router';
 import { useGameStore } from '../stores/game';
+import { useSessionStore } from '../stores/session';
 import { communicationManager } from '../communicationManager';
 
 const router = useRouter();
 const gameStore = useGameStore();
+const sessionStore = useSessionStore();
 
 onMounted(async () => {
   await communicationManager.updatePlayerPage('final');
@@ -58,7 +60,7 @@ function volverAJugar() {
         
         <span>{{ jugador.nombre }}&nbsp;</span>
         <span >{{ jugador.puntuacion }} Puntos</span>
-        <span v-if="jugador.wpm"> ({{ jugador.wpm }} WPM)</span>
+        <span v-if="jugador.wpm"> ({{ jugador.wpm.toFixed(2) }} WPM)</span>
       </li>
     </ol>
 

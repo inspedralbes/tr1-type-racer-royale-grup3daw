@@ -191,18 +191,44 @@ import { communicationManager } from '../../communicationManager';
     /**
      * @description Finaliza el juego, detiene el temporizador y emite los resultados.
      */
-    function finishGame(){
+    async function finishGame(){
         if(gameInterval){
             clearInterval(gameInterval);
             gameInterval = null;
         }
         gameEnded.value = true;
 
+        const totalTypedChars = estatDelJoc.value.stats.reduce((acc, word) => acc + word.paraula.length, 0);
+        const gameDurationInMinutes = props.roomState.time / 60;
+        const wpm = gameDurationInMinutes > 0 ? (totalTypedChars / 5) / gameDurationInMinutes : 0;
+
+        // Prepara y envía las estadísticas detalladas del juego.
+        const gameStats = {
+            playerName: playerName.value,
+            words: estatDelJoc.value.stats,
+            score: score.value,
+            gameMode: currentGameMode.value,
+            errors: estatDelJoc.value.errorTotal,
+            wpm: wpm,
+        };
+
+        try {
+            await communicationManager.sendGameStats(gameStats);
+        } catch (error) {
+            console.error("Error sending game stats:", error);
+            const notificationStore = useNotificationStore();
+            notificationStore.pushNotification({
+                type: 'error',
+                message: 'No se pudieron guardar las estadísticas de la partida.',
+            });
+        }
+
         switch (currentGameMode.value) {
             case 'cuentaAtrasSimple':
-                const finalScores = jugadores.value.map(p => ({
+                const finalScores = jugadoresStore.value.map(p => ({
                     nombre: p.name,
-                    puntuacion: p.score
+                    puntuacion: p.score,
+                    wpm: p.wpm,
                 }));
                 gameStore.setFinalResults(finalScores);
                 sessionStore.setEtapa('done');
@@ -219,9 +245,10 @@ import { communicationManager } from '../../communicationManager';
                 break;
             default:
                 console.warn('Modo de juego desconocido al finalizar:', currentGameMode.value);
-                const defaultFinalScores = jugadores.value.map(p => ({
+                const defaultFinalScores = jugadoresStore.value.map(p => ({
                     nombre: p.name,
-                    puntuacion: p.score
+                    puntuacion: p.score,
+                    wpm: p.wpm
                 }));
                 gameStore.setFinalResults(defaultFinalScores);
                 sessionStore.setEtapa('done');
@@ -370,7 +397,7 @@ import { communicationManager } from '../../communicationManager';
                     <div class="puntuacions">
                                 <h2>Classificació</h2>
                         <ul id="llista-jugadors">
-                            <li v-for="jugador in jugadores" :key="jugador.name">
+                            <li v-for="jugador in jugadoresStore" :key="jugador.name">
                                 <strong>{{ jugador.name }}</strong> - {{ jugador.score }} punts
                             </li>
                         </ul>
@@ -384,10 +411,10 @@ import { communicationManager } from '../../communicationManager';
             <p>Tu puntuación final: {{ score }}</p>
             <h3>Clasificación Final</h3>
             <ul id="llista-jugadors-final">
-                <li v-for="jugador in jugadores" :key="jugador.name">
-                                <strong>{{ jugador.name }}</strong> - {{ jugador.score }} punts
-                            </li>
-                        </ul>
+                <li v-for="jugador in jugadoresStore" :key="jugador.name">
+                    <strong>{{ jugador.name }}</strong> - {{ jugador.score }} punts - {{ jugador.wpm ? jugador.wpm.toFixed(2) : 0 }} WPM
+                </li>
+            </ul>
             <button class="btn" @click="backToLobby">Volver al Lobby</button>
         </div>
     </div>
