@@ -267,6 +267,21 @@ export const communicationManager = {
     return apiClient.post('/scores', { name, score, roomId });
   },
 
+  // Guarda el resultado final de la partida en el backend.
+  async saveGameResult(playerName, score, wpm) {
+    return apiClient.post('/scores/save', { playerName, score, wpm });
+  },
+
+  // Obtiene estadísticas agregadas de los jugadores.
+  async getPlayerStats() {
+    return apiClient.get('/stats/player');
+  },
+
+  // Obtiene el historial de WPM de un jugador.
+  async getPlayerScoreHistory(playerName) {
+    return apiClient.get(`/scores/history/${playerName}`);
+  },
+
   // --- Métodos de Salas (REST) ---
 
   // Obtiene la lista de salas públicas.

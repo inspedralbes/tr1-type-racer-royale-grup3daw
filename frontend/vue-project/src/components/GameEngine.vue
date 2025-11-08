@@ -69,6 +69,9 @@ const navigateByEtapa = (currentEtapa) => {
     case 'done':
       router.push('/game/final');
       break;
+    case 'player-stats':
+      router.push('/profile');
+      break;
     default:
       router.push('/login');
       break;
@@ -194,7 +197,8 @@ const onGameOver = async (resultados) => {
 
   const finalScores = jugadores.value.map(p => ({
     nombre: p.name,
-    puntuacion: p.score
+    puntuacion: p.score,
+    wpm: p.name === resultados.jugador ? resultados.wpm : 0, // Assuming WPM is only for the current player
   }));
   
   gameStore.setFinalResults(finalScores);
@@ -204,6 +208,11 @@ const onGameOver = async (resultados) => {
   gameStore.setWordsLoaded(false);
 
   try {
+    // Guarda la puntuación final en el backend
+    await communicationManager.saveGameResult(resultados.jugador, resultados.puntuacion, resultados.wpm);
+    console.log('Puntuación final guardada en MongoDB.');
+
+    // Pide al backend que resetee el estado de "listo" de todos los jugadores en la sala.
     await communicationManager.resetReadyStatus(roomStore.roomId);
   } catch (error) {
     console.error('Error resetting ready status after game over:', error)

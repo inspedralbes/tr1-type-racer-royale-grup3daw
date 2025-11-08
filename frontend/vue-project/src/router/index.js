@@ -9,6 +9,7 @@ import RoomSettings from '../components/RoomSettings.vue';
 import Lobby from '../components/lobby.vue';
 import Joc from '../components/joc.vue'; // The game mode orchestrator
 import Final from '../components/paginaFinal.vue';
+import PlayerStats from '../components/PlayerStats.vue';
 
 const routes = [
   { path: '/', redirect: '/login' },
@@ -16,6 +17,7 @@ const routes = [
   { path: '/guest-login', component: GuestLogin },
   { path: '/register', component: Register },
   { path: '/profile', component: EditProfile },
+  { path: '/stats', component: PlayerStats },
   // GameEngine will be the entry point for the game flow, managing etapa state
   { 
     path: '/game', 

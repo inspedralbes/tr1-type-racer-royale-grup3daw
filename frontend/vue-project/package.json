@@ -16,6 +16,7 @@
     "socket.io-client": "^4.7.5",
     "axios": "^1.13.1",
     "pinia": "^2.1.7",
+    "d3": "7.9.0",
     "vue-router": "^4.3.0"
   },
   "devDependencies": {

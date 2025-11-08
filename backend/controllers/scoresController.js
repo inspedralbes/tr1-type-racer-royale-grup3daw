@@ -5,6 +5,8 @@
  * jugador durante una partida.
  */
 const stateManager = require('../state/stateManager');
+const Score = require('../db/models/score'); // Mongoose Score model
+const db = require('../db/models'); // Sequelize models (for User)
 
 /**
  * POST /api/scores
@@ -32,4 +34,60 @@ exports.updateScore = (req, res) => {
   broadcastPlayerList(roomId);
 
   res.status(200).json({ message: 'Puntuación actualizada correctamente.' });
+};
+
+/**
+ * POST /api/scores/save
+ * Guarda la puntuación final de un jugador en la base de datos MongoDB.
+ * El cuerpo de la solicitud debe contener el nombre del jugador, su puntuación y las WPM.
+ */
+exports.saveScore = async (req, res) => {
+  const { playerName, score, wpm } = req.body;
+
+  if (!playerName || score === undefined || wpm === undefined) {
+    return res.status(400).json({ error: 'Se requieren los campos "playerName", "score" y "wpm".' });
+  }
+
+  try {
+    // No longer fetching email from MySQL, playerEmail will be null or an empty string
+    const playerEmail = null; // Or an empty string if preferred
+
+    // Crear y guardar la nueva puntuación en MongoDB
+    const newScore = new Score({
+      playerName,
+      playerEmail,
+      score,
+      wpm,
+    });
+
+    await newScore.save();
+
+    res.status(201).json({ message: 'Puntuación guardada correctamente en MongoDB.', score: newScore });
+  } catch (error) {
+    console.error('Error al guardar la puntuación en MongoDB:', error);
+    res.status(500).json({ error: 'Error interno del servidor al guardar la puntuación.' });
+  }
+};
+
+/**
+ * GET /api/scores/history/:playerName
+ * Recupera el historial de puntuaciones (WPM) de un jugador específico.
+ */
+exports.getScoreHistory = async (req, res) => {
+  const { playerName } = req.params;
+
+  if (!playerName) {
+    return res.status(400).json({ error: 'Se requiere el campo "playerName".' });
+  }
+
+  try {
+    const scores = await Score.find({ playerName })
+      .sort({ createdAt: 1 }) // Ordena por fecha de creación ascendente
+      .select('wpm createdAt'); // Selecciona solo los campos necesarios
+
+    res.status(200).json(scores);
+  } catch (error) {
+    console.error('Error al recuperar el historial de puntuaciones:', error);
+    res.status(500).json({ error: 'Error interno del servidor al recuperar el historial.' });
+  }
 };

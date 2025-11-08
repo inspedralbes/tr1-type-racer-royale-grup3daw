@@ -26,7 +26,8 @@
         <button class="btn" @click="createRoom">Crear Sala</button>
       </div>
       <div style="margin-top:12px">
-        <button class="btn" v-if="sessionStore.email" @click="goToProfile">Profile</button>
+        <button class="btn" v-if="sessionStore.email" @click="goToPlayerStats">Ver Estadísticas</button>
+        <button class="btn" v-if="sessionStore.email" @click="goToProfile" style="margin-left:8px">Profile</button>
         <button class="btn logout-button" @click="logoutAndReset" style="margin-left:8px">Logout</button>
       </div>
     </div>
@@ -46,7 +47,7 @@
  * - Gestiona el cierre de sesión (logout), limpiando todo el estado local (stores de Pinia, sessionStorage)
  *   y notificando al backend para que también limpie el estado del jugador.
  */
-import { ref, onMounted, computed, watch } from 'vue';
+import { ref, onMounted } from 'vue';
 import { storeToRefs } from 'pinia';
 import { useGameStore } from '../stores/game';
 import { useRoomStore } from '../stores/room';
@@ -80,7 +81,7 @@ onMounted(async () => {
 const fetchPublicRooms = async () => {
   try {
     const response = await communicationManager.getPublicRoomsList();
-    publicRooms.value = response.data;
+    publicRoomsStore.setRooms(response.data);
   } catch (error) {
     console.error('Error al obtener salas públicas:', error);
     const notificationStore = useNotificationStore();
@@ -110,27 +111,27 @@ const joinRoomById = (roomId) => {
  */
 const createRoom = () => {
   sessionStore.setEtapa('room-settings');
+  router.push('/game/room-settings');
 };
 
-/**
- * Gestiona el proceso completo de cierre de sesión.
- * 1. Emite un evento 'explicit-logout' al backend con el token del jugador para que el servidor
- *    pueda limpiar el estado del jugador inmediatamente.
- * 2. Desconecta el socket.
- * 3. Resetea el estado de todos los stores de Pinia a sus valores iniciales.
- * 4. Cambia la etapa del juego de vuelta a 'login'.
- */
+const goToPlayerStats = () => {
+  router.push('/stats');
+};
+
 const logoutAndReset = () => {
   // Llama al método centralizado de logout que notifica al backend y limpia la sesión.
   communicationManager.logout();
 
   // Disconnect the socket after emitting the logout event
-  socket.disconnect();
+  if (socket) {
+    socket.disconnect();
+  }
   
   // Resetea los stores de estado del juego y de las salas.
   gameStore.resetState();
   roomStore.resetState();
   publicRoomsStore.resetState();
+  sessionStore.clearSession();
 
   router.push('/login');
 };
