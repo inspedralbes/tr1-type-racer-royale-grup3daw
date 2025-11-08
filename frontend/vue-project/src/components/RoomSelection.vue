@@ -26,7 +26,7 @@
         <button class="btn" @click="createRoom">Crear Sala</button>
       </div>
       <div style="margin-top:12px">
-        <button class="btn" @click="goToPlayerStats">Ver Estadísticas</button>
+        <button class="btn" v-if="sessionStore.email" @click="goToPlayerStats">Ver Estadísticas</button>
         <button class="btn" v-if="sessionStore.email" @click="goToProfile" style="margin-left:8px">Profile</button>
         <button class="btn logout-button" @click="logoutAndReset" style="margin-left:8px">Logout</button>
       </div>
