@@ -5,6 +5,9 @@ services:
     build:
       context: .
       dockerfile: nginx.Dockerfile
+      args:
+        ADMINER_USER: ${ADMINER_USER}
+        ADMINER_PASSWORD: ${ADMINER_PASSWORD}
     ports:
       - "80:80"
     # Nginx solo necesita que el backend esté iniciado para hacer proxy.
@@ -84,6 +87,20 @@ services:
     networks:
       - app-network
     restart: unless-stopped # CRÍTICO: Reinicia MySQL si falla
+
+  # Adminer para gestión de bases de datos en producción
+  adminer:
+    image: adminer:latest
+    environment:
+      ADMINER_DEFAULT_SERVER: mysql
+      ADMINER_DESIGN: dracula # Tema oscuro más profesional
+    depends_on:
+      - mysql
+      - mongo
+    networks:
+      - app-network
+    restart: unless-stopped
+    # No exponemos el puerto directamente, Nginx se encargará del proxy
 
 networks:
   app-network:

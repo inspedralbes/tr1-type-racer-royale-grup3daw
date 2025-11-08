@@ -76,6 +76,18 @@ services:
     networks:
       - app-network
 
+  # Servicio Adminer para gestión de bases de datos
+  adminer:
+    image: adminer:latest
+    ports:
+      - "8080:8080"
+    environment:
+      ADMINER_DEFAULT_SERVER: mysql
+    depends_on:
+      - mysql
+    networks:
+      - app-network
+
 # Definición de la red que usarán los servicios para comunicarse entre sí.
 networks:
   app-network:
