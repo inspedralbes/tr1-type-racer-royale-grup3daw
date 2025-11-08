@@ -98,7 +98,7 @@ services:
       ADMINER_DEFAULT_SERVER: mysql
       ADMINER_DESIGN: dracula # Tema oscuro más profesional
       # Deshabilita la Content-Security-Policy (CSP) de Adminer para evitar errores 403 detrás de un proxy.
-      ADMINER_CSP: "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'"
+      ADMINER_CSP: "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'"
     depends_on:
       - mysql
       - mongo
