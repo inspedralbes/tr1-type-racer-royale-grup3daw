@@ -35,7 +35,8 @@ services:
       DB_HOST: mysql
     ports:
       - "3000:3000"
-    volumes: # Monta el código fuente para hot-reloading con nodemon.
+    volumes:
+      # Monta el código fuente para hot-reloading con nodemon.
       - ./backend:/usr/src/app
       - /usr/src/app/node_modules # Evita sobreescribir node_modules del contenedor.
     command: sh -c "npm run start:dev" # Inicia el servidor en modo desarrollo.

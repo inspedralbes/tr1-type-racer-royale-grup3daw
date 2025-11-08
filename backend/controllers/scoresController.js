@@ -68,3 +68,26 @@ exports.saveScore = async (req, res) => {
     res.status(500).json({ error: 'Error interno del servidor al guardar la puntuación.' });
   }
 };
+
+/**
+ * GET /api/scores/history/:playerName
+ * Recupera el historial de puntuaciones (WPM) de un jugador específico.
+ */
+exports.getScoreHistory = async (req, res) => {
+  const { playerName } = req.params;
+
+  if (!playerName) {
+    return res.status(400).json({ error: 'Se requiere el campo "playerName".' });
+  }
+
+  try {
+    const scores = await Score.find({ playerName })
+      .sort({ createdAt: 1 }) // Ordena por fecha de creación ascendente
+      .select('wpm createdAt'); // Selecciona solo los campos necesarios
+
+    res.status(200).json(scores);
+  } catch (error) {
+    console.error('Error al recuperar el historial de puntuaciones:', error);
+    res.status(500).json({ error: 'Error interno del servidor al recuperar el historial.' });
+  }
+};

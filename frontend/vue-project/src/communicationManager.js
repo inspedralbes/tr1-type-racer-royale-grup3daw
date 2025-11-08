@@ -195,6 +195,11 @@ export const communicationManager = {
     return apiClient.get('/stats/player');
   },
 
+  // Obtiene el historial de WPM de un jugador.
+  async getPlayerScoreHistory(playerName) {
+    return apiClient.get(`/scores/history/${playerName}`);
+  },
+
   // --- Métodos de Salas (REST) ---
 
   // Obtiene la lista de salas públicas.
