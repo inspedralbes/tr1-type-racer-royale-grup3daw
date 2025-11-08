@@ -3,7 +3,7 @@ name: Deploy to Production
 on:
   push:
     branches:
-      - main # Cambiado de 'main' para las pruebas
+      - main 
 
 jobs:
   deploy:
