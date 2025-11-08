@@ -93,7 +93,7 @@ services:
 
   # Adminer para gestión de bases de datos en producción
   adminer:
-    image: adminer:latest
+    image: adminer:4.8.1
     environment:
       ADMINER_DEFAULT_SERVER: mysql
       ADMINER_DESIGN: dracula # Tema oscuro más profesional
