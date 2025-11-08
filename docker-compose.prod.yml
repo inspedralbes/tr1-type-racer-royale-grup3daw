@@ -106,27 +106,21 @@ services:
       - app-network
     restart: unless-stopped
 
-    mongo-express:
+  # --- ESTA ES LA VERSIÓN CORREGIDA ---
+  mongo-express:
     image: mongo-express:latest
     environment:
-      # --- CAMBIO: Usamos la URI completa ---
+      # Usamos la URI completa que ya tenemos
       - ME_CONFIG_MONGODB_URL=${MONGO_URI}
-
-      # --- Dejamos estas ---
+      # Requerido por mongo-express
       - ME_CONFIG_MONGODB_ENABLE_ADMIN=true
+      # Para que funcione bajo /mongo-express/
       - ME_CONFIG_SITE_BASEURL=/mongo-express/
-
-      # --- CAMBIO: Comentamos o borramos estas (ya no son necesarias) ---
-      # - ME_CONFIG_MONGODB_SERVER=mongo
-      # - ME_CONFIG_MONGODB_ADMINUSERNAME=${MONGO_ROOT_USER}
-      # - ME_CONFIG_MONGODB_ADMINPASSWORD=${MONGO_ROOT_PASSWORD}
-      # - ME_CONFIG_MONGODB_AUTH_DATABASE=admin
     depends_on:
       - mongo
     networks:
       - app-network
     restart: unless-stopped
-    
 
 networks:
   app-network:
