@@ -93,12 +93,10 @@ services:
 
   # Adminer para gestión de bases de datos en producción
   adminer:
-    image: adminer:4.8.1
+    image: dockette/adminer
     environment:
       ADMINER_DEFAULT_SERVER: mysql
       ADMINER_DESIGN: dracula # Tema oscuro más profesional
-      # Deshabilita la Content-Security-Policy (CSP) de Adminer para evitar errores 403 detrás de un proxy.
-      ADMINER_CSP: ""
     depends_on:
       - mysql
       - mongo
