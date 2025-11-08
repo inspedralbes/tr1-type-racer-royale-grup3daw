@@ -66,6 +66,11 @@ jobs:
             echo "Stopping any running compose stack (down) and starting docker-compose..."
             # Tear down any existing stack first to ensure a clean deployment.
             docker compose -f docker-compose.prod.yml down --remove-orphans || true
+
+            # Force remove the mongo data volume to ensure re-initialization with correct credentials
+            echo "Removing mongo data volume..."
+            docker volume rm tr1-type-racer-royale-grup3daw_mongo-data -f || true
+            
             # Actualiza los servicios: reconstruye las imágenes que han cambiado y reinicia
             # los contenedores correspondientes. Los datos de las bases de datos se conservan.
             docker compose --env-file ./.env -f docker-compose.prod.yml up --build -d --remove-orphans
