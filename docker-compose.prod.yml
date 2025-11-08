@@ -100,7 +100,7 @@ services:
     networks:
       - app-network
     restart: unless-stopped
-    # No exponemos el puerto directamente, Nginx se encargará del proxy
+    
 
 networks:
   app-network:
