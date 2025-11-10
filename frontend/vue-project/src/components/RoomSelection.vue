@@ -1,34 +1,36 @@
 <template>
   <div class="selection-background">
-    <div class="themed-container room-selection-container">
-      <h2>Seleccionar Sala</h2>
+    <div class="centra-console-panel">
+      <div class="selection hologram">
+        <h2>Seleccionar Sala</h2>
 
-      <div class="section">
-        <h3>Unirse a una sala existente</h3>
-        <input type="text" v-model="joinRoomId" placeholder="ID de la sala" />
-        <button class="btn btn-small" @click="joinRoom">Unirse</button>
-      </div>
+        <div class="section">
+          <h3>Unirse a una sala existente</h3>
+          <input type="text" v-model="joinRoomId" placeholder="ID de la sala" />
+          <button class="btn btn-small" @click="joinRoom">Unirse</button>
+        </div>
 
-      <div class="section">
-        <h3>Salas Públicas</h3>
-        <ul class="roomList" v-if="publicRooms.length">
-          <li class="room" v-for="room in publicRooms" :key="room.id">
-            {{ room.name }} (ID: {{ room.id }}) - {{ room.players.length }} jugadores
-            <button class="btn btn-small" @click="joinRoomById(room.id)">Unirse</button>
-          </li>
-        </ul>
-        <p v-else>No hay salas públicas disponibles.</p>
-        <button class="btn btn-small" @click="fetchPublicRooms">Actualizar Salas</button>
-      </div>
+        <div class="section">
+          <h3>Salas Públicas</h3>
+          <ul class="roomList" v-if="publicRooms.length">
+            <li class="room" v-for="room in publicRooms" :key="room.id">
+              {{ room.name }} (ID: {{ room.id }}) - {{ room.players.length }} jugadores
+              <button class="btn btn-small" @click="joinRoomById(room.id)">Unirse</button>
+            </li>
+          </ul>
+          <p v-else>No hay salas públicas disponibles.</p>
+          <button class="btn btn-small" @click="fetchPublicRooms">Actualizar Salas</button>
+        </div>
 
-      <div class="section">
-        <h3>Crear nueva sala</h3>
-        <button class="btn" @click="createRoom">Crear Sala</button>
-      </div>
-      <div style="margin-top:12px">
-        <button class="btn" v-if="sessionStore.email" @click="goToPlayerStats">Ver Estadísticas</button>
-        <button class="btn" v-if="sessionStore.email" @click="goToProfile" style="margin-left:8px">Profile</button>
-        <button class="btn logout-button" @click="logoutAndReset" style="margin-left:8px">Logout</button>
+        <div class="section">
+          <h3>Crear nueva sala</h3>
+          <button class="btn" @click="createRoom">Crear Sala</button>
+        </div>
+        <div style="margin-top:12px">
+          <button class="btn" v-if="sessionStore.email" @click="goToPlayerStats">Ver Estadísticas</button>
+          <button class="btn" v-if="sessionStore.email" @click="goToProfile" style="margin-left:8px">Profile</button>
+          <button class="btn logout-button" @click="logoutAndReset" style="margin-left:8px">Logout</button>
+        </div>
       </div>
     </div>
   </div>
