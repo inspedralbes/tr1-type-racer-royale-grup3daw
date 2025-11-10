@@ -3,7 +3,7 @@
     <div class="centra-console-panel">
       <div class="profile-container hologram">
         <h2>Editar perfil</h2>
-
+        <button class="back-button" @click="goBack">←</button>
         <div v-if="loading">Cargando...</div>
 
         <div v-else>
@@ -57,6 +57,10 @@ const notificationStore = useNotificationStore()
 const loading = ref(true)
 
 const colors = ['Azul', 'Roja', 'Verde', 'Amarilla']
+
+const goBack = () => {
+  router.back() 
+}
 
 const form = ref({
   id: null,

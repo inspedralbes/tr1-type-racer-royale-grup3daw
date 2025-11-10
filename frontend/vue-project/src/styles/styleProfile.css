@@ -131,3 +131,15 @@ div.profile-container.hologram {
   box-shadow: 0 0 15px #00FF41;
   cursor: pointer; 
 }
+
+button.back-button {
+    position: absolute;
+    top: 15px;
+    left: 15px;
+    background: none;
+    border: none;
+    color: #00FF41;
+    font-size: 1.5em;
+    cursor: pointer;
+    width: 10%;
+}
