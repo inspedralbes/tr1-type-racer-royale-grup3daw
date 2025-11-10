@@ -41,6 +41,15 @@
   white-space: nowrap; /* evita saltos de línea en palabras largas */
   overflow: hidden;
   text-overflow: ellipsis;
+  display: inline-block; /* para que el fondo se ajuste al texto */
+  padding: 100px 18px;
+  border-radius: 10px;
+  color: #ffffff; /* texto claro sobre la imagen */
+  text-shadow: 0 2px 10px rgba(0,0,0,0.6);
+  background-image: url('../img/meteorito.png');
+  background-size: contain;
+  background-position: center;
+  background-repeat: no-repeat;
 }
 
 .paraula-actual input {
