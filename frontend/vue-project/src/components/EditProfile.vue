@@ -1,5 +1,5 @@
 <template>
-  <div class="edit-profile">
+  <div class="profile-background">
     <h2>Editar perfil</h2>
 
     <div v-if="loading">Cargando...</div>
@@ -37,13 +37,13 @@
       <div>
         <label>Preview</label>
         <div>
-          <img :src="avatarSrc" alt="preview" style="width:96px;height:96px" />
+          <img :src="avatarSrc" alt="preview"/>
         </div>
       </div>
 
-      <div style="margin-top:12px">
+      <div>
         <button @click="saveProfile">Guardar</button>
-        <button @click="confirmDelete" style="margin-left:8px;color:red">Borrar cuenta</button>
+        <button @click="confirmDelete">Borrar cuenta</button>
       </div>
     </div>
   </div>
