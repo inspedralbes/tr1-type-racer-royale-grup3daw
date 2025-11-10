@@ -1,17 +1,19 @@
 <template>
-  <div class="main-background">
-    <div class="game-container">
-      <component
-        :is="currentGameModeComponent"
-        :words="words"
-        :wordsLoaded="wordsLoaded"
-        :playerName="nombreJugador"
-        :jugadores="jugadores"
-        :roomState="roomState"
-        :gameMode="props.gameMode"
-        :roomId="props.roomId"
-        @done="onGameOver"
-      />
+  <div class="game-background">
+    <div class="centra-console-panel">
+      <div class="game-container hologram">
+        <component
+          :is="currentGameModeComponent"
+          :words="words"
+          :wordsLoaded="wordsLoaded"
+          :playerName="nombreJugador"
+          :jugadores="jugadores"
+          :roomState="roomState"
+          :gameMode="props.gameMode"
+          :roomId="props.roomId"
+          @done="onGameOver"
+        />
+      </div>
     </div>
   </div>
 </template>
@@ -55,4 +57,4 @@ const onGameOver = (results) => {
 };
 </script>
 
-<style src="../styles/stylesJoc.css"></style>
+<style src="../styles/styleJoc.css"></style>

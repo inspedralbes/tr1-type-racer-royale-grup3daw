@@ -1,0 +1,30 @@
+html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+}
+
+div.game-background { 
+    background-image: url('../img/espacio.png'); 
+    background-size: cover;
+    background-position: center;
+    height: 100vh;
+    width: 100vw; 
+    overflow: hidden;
+    position: relative; 
+}
+
+.centra-console-panel { 
+    overflow: visible;
+    position: absolute;
+    left: 50%;
+    top: 70%;
+    transform: translateX(-50%); 
+    bottom: 5vh; 
+    width: 60%; 
+    height: 10%;
+    perspective: 1000px; 
+    perspective-origin: center top; 
+}
