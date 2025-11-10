@@ -57,17 +57,22 @@
 
 /* Panel de clasificación a la derecha */
 .puntuacions {
-  width: 300px;
-  max-width: 35%;
-  background: transparent; /* quitar colores para que solo se vea el fondo */
-  padding: 12px 6px;
-  border-radius: 8px;
-  align-self: stretch; /* hace que el panel ocupe la altura del contenedor */
+  /* Fijamos la clasificación en la esquina superior derecha usando porcentajes */
+  position: fixed;
+  top: 8%;
+  right: 4%;
+  width: 22%; /* ancho relativo a la ventana */
+  max-width: 360px;
+  min-width: 160px;
+  background: transparent; /* sin fondo para mostrar la imagen */
+  padding: 10px 8px;
+  border-radius: 6px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  box-shadow: none; /* quitar sombra para ver solo el fondo */
+  gap: 6px;
+  box-shadow: none;
   overflow: auto; /* si hay muchos jugadores, el panel se hace scrollable */
+  z-index: 3; /* por encima del contenido del juego */
 }
 
 .puntuacions h2 {
@@ -109,10 +114,13 @@
   }
 
   .puntuacions {
-    width: 100%;
-    max-width: none;
-    align-self: center;
-    order: 2;
+    /* mantener la posición fija en móviles también */
+    position: fixed;
+    top: 6%;
+    right: 4%;
+    width: 28%;
+    max-width: 420px;
+    min-width: 140px;
   }
 
   .paraula-actual input {
