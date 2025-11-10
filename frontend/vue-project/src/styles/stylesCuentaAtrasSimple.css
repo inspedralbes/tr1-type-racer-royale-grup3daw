@@ -46,10 +46,33 @@
   border-radius: 10px;
   color: #ffffff; /* texto claro sobre la imagen */
   text-shadow: 0 2px 10px rgba(0,0,0,0.6);
-  background-image: url('../img/meteorito.png');
-  background-size: contain;
-  background-position: center;
-  background-repeat: no-repeat;
+}
+
+.paraula-actual h1::before {
+content: '';
+position: absolute;
+
+/* Hacemos que ocupe todo el espacio del h1 */
+top: -15%;
+left: 25%;
+width: 50%;
+height: 100%;
+ 
+ /* Ponemos el meteorito aquí */
+ background-image: url('../img/meteorito.png');
+ background-size: contain;
+ background-position: center;
+ background-repeat: no-repeat;
+ 
+ /* La animación de giro */
+ /* Gira en 10s, de forma lineal (constante) y sin parar (infinite) */
+ animation: spin 10s linear infinite;
+ 
+ /* Lo ponemos detrás del texto */
+ z-index: -1; 
+ 
+ /* Mantenemos las esquinas redondeadas */
+ border-radius: 10px; 
 }
 
 .paraula-actual input {
@@ -285,4 +308,13 @@
 .main-background,
 .main-background * {
   color: var(--color-text-light, #f3f6f9);
+}
+
+@keyframes spin {
+from {
+ transform: rotate(0deg);
+}
+to {
+transform: rotate(360deg);
+}
 }
