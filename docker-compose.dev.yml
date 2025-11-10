@@ -33,7 +33,8 @@ services:
       DB_HOST: mysql
     ports:
       - "3000:3000"
-    volumes: # Monta el código fuente para hot-reloading con nodemon.
+    volumes:
+      # Monta el código fuente para hot-reloading con nodemon.
       - ./backend:/usr/src/app
       - /usr/src/app/node_modules # Evita sobreescribir node_modules del contenedor.
     command: sh -c "npm run start:dev" # Inicia el servidor en modo desarrollo.
@@ -69,10 +70,36 @@ services:
     volumes:
       - mysql-data:/var/lib/mysql # Persiste los datos de MySQL en un volumen.
     healthcheck:
-      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost" ]
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p$$MYSQL_ROOT_PASSWORD"]
       interval: 10s
       timeout: 5s
       retries: 5
+    networks:
+      - app-network
+
+  # Servicio Adminer para gestión de bases de datos
+  adminer:
+    image: adminer:latest
+    ports:
+      - "8080:8080"
+    environment:
+      ADMINER_DEFAULT_SERVER: mysql
+    depends_on:
+      - mysql
+    networks:
+      - app-network
+
+  # Servicio Mongo Express para gestión de la base de datos MongoDB
+  mongo-express:
+    image: mongo-express:latest
+    ports:
+      - "8081:8081"
+    environment:
+      - ME_CONFIG_MONGODB_SERVER=mongo
+      - ME_CONFIG_MONGODB_PORT=27017
+      - ME_CONFIG_MONGODB_ENABLE_ADMIN=true
+    depends_on:
+      - mongo
     networks:
       - app-network
 

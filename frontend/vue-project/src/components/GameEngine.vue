@@ -69,6 +69,9 @@ const navigateByEtapa = (currentEtapa) => {
     case 'done':
       router.push('/game/final');
       break;
+    case 'player-stats':
+      router.push('/profile');
+      break;
     default:
       router.push('/login');
       break;
@@ -189,31 +192,6 @@ watch(etapa, async (newEtapa) => {
  * Recibe los resultados, los procesa para la pantalla final y cambia la etapa a 'done'.
  * También resetea el estado de las palabras y el estado de "listo" de los jugadores en el backend.
  */
-const onGameOver = async (resultados) => {
-  console.log('onGameOver called. resultados:', resultados);
-
-  const finalScores = jugadores.value.map(p => ({
-    nombre: p.name,
-    puntuacion: p.score
-  }));
-  
-  gameStore.setFinalResults(finalScores);
-
-  sessionStore.setEtapa('done');
-  
-  gameStore.setWordsLoaded(false);
-
-  try {
-    await communicationManager.resetReadyStatus(roomStore.roomId);
-  } catch (error) {
-    console.error('Error resetting ready status after game over:', error)
-    try {
-      const notificationStore = useNotificationStore();
-      notificationStore.pushNotification({ type: 'error', message: 'Error al resetear el estado de listo tras finalizar la partida.' });
-    } catch (e) {}
-  }
-};
-
 const onReiniciar = () => {
   sessionStore.setEtapa('lobby');
   gameStore.setFinalResults([]);

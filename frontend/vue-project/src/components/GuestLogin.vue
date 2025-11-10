@@ -13,6 +13,13 @@ const gameStore = useGameStore()
 const router = useRouter()
 
 onMounted(async () => {
+  // Ensure any previous session/socket is cleared when reaching guest login
+  try {
+    communicationManager.logout();
+  } catch (e) {}
+  try {
+    communicationManager.disconnect();
+  } catch (e) {}
   await communicationManager.updatePlayerPage('guest-login');
 });
 

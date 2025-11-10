@@ -16,6 +16,14 @@ const router = useRouter()
 // Limpia los campos cuando el componente se monta. Se usa un setTimeout
 // para asegurar que se ejecute después de cualquier autocompletado del navegador.
 onMounted(async () => {
+  // When visiting the login page we should clear any existing session/socket
+  // so that the app treats the user as a new user.
+  try {
+    communicationManager.logout();
+  } catch (e) {}
+  try {
+    communicationManager.disconnect();
+  } catch (e) {}
   await communicationManager.updatePlayerPage('login');
   setTimeout(() => {
     email.value = '';

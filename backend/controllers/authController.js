@@ -64,7 +64,8 @@ exports.loginAsGuest = async (req, res, next) => {
     const { username } = req.body;
     const token = jwt.sign({ username }, 'your-secret-key', { expiresIn: '1h' });
 
-    stateManager.addRegisteredPlayer(username, null, token);
+    // Mark this registered player as a guest so other server logic can skip DB lookups
+    stateManager.addRegisteredPlayer(username, null, token, 'room-selection', true);
 
     res.status(200).json({ token, username, email: null });
   } catch (error) {

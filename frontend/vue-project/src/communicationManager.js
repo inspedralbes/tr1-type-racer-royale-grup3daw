@@ -108,6 +108,9 @@ export function setupSocketListeners(router) {
       isReady: !!p.isReady,
       token: p.token,
       disconnected: !!p.disconnected,
+      avatar: p.avatar,
+      color: p.color,
+      isGuest: !!p.isGuest,
     }));
     roomStore.setJugadores(normalized);
   });
@@ -202,6 +205,19 @@ export const communicationManager = {
     return apiClient.post('/auth/login', { email, password });
   },
 
+  // --- User profile ---
+  async getCurrentUser() {
+    return apiClient.get('/user/me');
+  },
+
+  async updateCurrentUser(payload) {
+    return apiClient.put('/user/me', payload);
+  },
+
+  async deleteAccount() {
+    return apiClient.delete('/user/me');
+  },
+
 
 
   // Obtiene el token de la sesión actual.
@@ -226,6 +242,19 @@ export const communicationManager = {
     sessionStore.clearSession();
   },
 
+  // Desconecta el socket y elimina cualquier auth pendiente (no notifica al servidor).
+  disconnect() {
+    try {
+      if (socket && socket.connected) {
+        socket.disconnect();
+      }
+      // Clear any auth attached so future connects don't reuse an old token
+      if (socket) socket.auth = {};
+    } catch (e) {
+      console.warn('Error while disconnecting socket:', e);
+    }
+  },
+
   // --- Métodos de Juego (REST) ---
 
   // Obtiene la lista de palabras para la partida.
@@ -236,6 +265,25 @@ export const communicationManager = {
   // Actualiza la puntuación de un jugador durante la partida.
   async updateScore(name, score, roomId) {
     return apiClient.post('/scores', { name, score, roomId });
+  },
+
+  // Guarda el resultado final de la partida en el backend.
+  async saveGameResult(playerName, score, wpm) {
+    return apiClient.post('/scores/save', { playerName, score, wpm });
+  },
+
+  // Obtiene estadísticas agregadas de los jugadores.
+  async getPlayerStats() {
+    return apiClient.get('/stats/player');
+  },
+
+  // Obtiene el historial de WPM de un jugador.
+  async getPlayerScoreHistory(playerName) {
+    return apiClient.get(`/scores/history/${playerName}`);
+  },
+
+  async sendGameStats(stats) {
+    return apiClient.post('/stats/game', stats);
   },
 
   // --- Métodos de Salas (REST) ---

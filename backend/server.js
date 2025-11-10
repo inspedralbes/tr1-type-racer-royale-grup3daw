@@ -18,11 +18,16 @@ const scoresRoutes = require('./routes/scoresRoutes');
 const wordsRoutes = require('./routes/wordsRoutes');
 const playerRoutes = require('./routes/playerRoutes');
 const userRoutes = require('./routes/userRoutes');
+const statsRoutes = require('./routes/statsRoutes');
 const { initializeSockets } = require('./controllers/socketManager');
+const connectDB = require('./db/mongo');
 
 // Creación de la aplicación Express y el servidor HTTP.
 const app = express();
 const server = http.createServer(app);
+
+// Conectar a la base de datos MongoDB
+connectDB();
 
 const nodeEnv = process.env.NODE_ENV;
 let port;
@@ -69,6 +74,7 @@ app.use('/api/scores', scoresRoutes);
 app.use('/api/words', wordsRoutes);
 app.use('/api/player', playerRoutes);
 app.use('/api/user', userRoutes);
+app.use('/api/stats', statsRoutes);
 
 // Middleware de depuración temporal para las rutas de jugador.
 app.use('/api/player', (req, res, next) => {

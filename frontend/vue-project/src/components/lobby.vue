@@ -1,11 +1,13 @@
 <template>
   <div class="lobby-background">
     <div class="lobby-contenedor">
-      <button class="back-button" @click="goBack">←</button>
+  <button class="back-button" @click="goBack">←</button>
+  <button class="btn" v-if="sessionStore.email" @click="goToProfile" style="margin-left:8px">Profile</button>
       <h1>Lobby</h1>
       <h2>Benvingut, {{ nombreJugador }}!</h2>
       <ul class="lista-jugadores">
-        <li v-for="(jugador) in jugadores" :key="jugador.name">
+        <li v-for="(jugador) in jugadores" :key="jugador.name" style="display:flex;align-items:center;gap:8px">
+          <img :src="getAvatarSrc(jugador)" alt="avatar" style="width:40px;height:40px;object-fit:contain;border-radius:4px" />
           <span>{{ jugador.name }} <span v-if="jugador.role === 'admin'">⭐</span></span>
           <span v-if="jugador.disconnected"> (Desconectado)</span>
           <span v-else-if="jugador.role !== 'admin'"> 
@@ -44,10 +46,7 @@ import { useRoomStore } from '../stores/room';
 import { useSessionStore } from '../stores/session';
 import { usePublicRoomsStore } from '../stores/publicRooms';
 
-import imgNaveRoja from '../img/naveRoja.png'
-import imgNaveAzul from '../img/naveAzul.png'
-import imgNaveVerde from '../img/naveVerde.png'
-import imgNaveAmarilla from '../img/naveAmarilla.png'
+// removed decorative ship images (no longer shown in lobby)
 
 // Inicialización de los stores.
 const gameStore = useGameStore();
@@ -56,24 +55,11 @@ const sessionStore = useSessionStore();
 const publicRoomsStore = usePublicRoomsStore();
 const router = useRouter();
 
-//Carrusel de imagenes
-const naveRoja = ref(imgNaveRoja);
-const naveAzul = ref(imgNaveAzul);
-const naveVerde = ref(imgNaveVerde);
-const naveAmarilla = ref(imgNaveAmarilla);
-const naveActual = ref(naveRoja.value);
-
-function cambiarNave() {
-  if (naveActual.value === naveRoja.value) {
-    naveActual.value = naveAzul.value;
-  } else if (naveActual.value === naveAzul.value) {
-    naveActual.value = naveVerde.value;
-  } else if (naveActual.value === naveVerde.value) {
-    naveActual.value = naveAmarilla.value;
-  } else {
-    naveActual.value = naveRoja.value;
-  }
+const goToProfile = () => {
+  router.push('/profile');
 }
+
+// decorative ship removed from lobby
 
 // Hook `onMounted` que se ejecuta cuando el componente ha sido montado.
 onMounted(async () => {
@@ -110,6 +96,35 @@ const isPlayerReady = computed(() => {
 const areAllPlayersReady = computed(() => {
   return jugadores.value.length > 0 && jugadores.value.every(p => p.isReady && !p.disconnected);
 });
+
+/**
+ * Devuelve la URL del avatar para un jugador. Si no tiene avatar/color definidos,
+ * devuelve una imagen por defecto (`noImage.png`).
+ */
+const getAvatarSrc = (player) => {
+  try {
+    // If the backend marked this player as guest (not logged-in), show no-image placeholder
+    if (player && player.isGuest) {
+      return new URL('../img/noImage.png', import.meta.url).href; // using noImage.png as placeholder
+    }
+
+    // Prefer player.avatar/player.color if present, fall back to defaults
+    const avatar = (player && player.avatar) ? player.avatar : 'nave';
+    const color = (player && player.color) ? player.color : 'Azul';
+
+  // If avatar explicitly set to 'noImage' use noImage.png as placeholder
+    if (avatar === 'noImage') {
+      return new URL('../img/noImage.png', import.meta.url).href;
+    }
+
+    // Build filename like naveAzul.png
+    const filename = `${avatar}${color}.png`;
+    return new URL(`../img/${filename}`, import.meta.url).href;
+  } catch (e) {
+    // Fallback image
+    return new URL('../img/noImage.png', import.meta.url).href;
+  }
+}
 
 function goToRoomSettings() {
   sessionStore.setEtapa('room-settings');

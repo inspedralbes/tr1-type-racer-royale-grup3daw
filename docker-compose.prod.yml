@@ -5,6 +5,9 @@ services:
     build:
       context: .
       dockerfile: nginx.Dockerfile
+      args:
+        ADMINER_USER: ${ADMINER_USER}
+        ADMINER_PASSWORD: ${ADMINER_PASSWORD}
     ports:
       - "80:80"
     # Nginx solo necesita que el backend esté iniciado para hacer proxy.
@@ -84,6 +87,33 @@ services:
     networks:
       - app-network
     restart: unless-stopped # CRÍTICO: Reinicia MySQL si falla
+
+  # Adminer para gestión de bases de datos en producción
+  adminer:
+    image: adminer:latest
+    environment:
+      ADMINER_DEFAULT_SERVER: mysql
+      ADMINER_DESIGN: dracula # Tema oscuro más profesional
+    depends_on:
+      - mysql
+      - mongo
+    networks:
+      - app-network
+    restart: unless-stopped
+
+  mongo-express:
+    image: mongo-express:latest
+    environment:
+      - ME_CONFIG_MONGODB_SERVER=mongo
+      - ME_CONFIG_MONGODB_ADMINUSERNAME=${MONGO_ROOT_USER}
+      - ME_CONFIG_MONGODB_ADMINPASSWORD=${MONGO_ROOT_PASSWORD}
+      - ME_CONFIG_MONGODB_ENABLE_ADMIN=true
+    depends_on:
+      - mongo
+    networks:
+      - app-network
+    restart: unless-stopped
+    
 
 networks:
   app-network:
