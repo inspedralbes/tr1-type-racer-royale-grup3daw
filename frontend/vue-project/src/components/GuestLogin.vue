@@ -47,18 +47,20 @@ const loginAsGuest = async () => {
 
 <template>
   <div class="login-background">
-    <div class="themed-container">
-      <h2>Entrar como Invitado</h2>
-      <input
-        maxlength="12"
-        v-model="nom"
-        type="text"
-        placeholder="Escriu el teu nom"
-        @keyup.enter="loginAsGuest"
-      />
-      <button class="btn" @click="loginAsGuest()">Entrar</button>
-      <p>O</p>
-      <p><router-link to="/login">Inicia sessió</router-link> o <router-link to="/register">Registra't</router-link></p>
+    <div class="centra-console-panel">
+      <div class="login-container hologram">
+        <h2>Entrar como Invitado</h2>
+        <input
+          maxlength="12"
+          v-model="nom"
+          type="text"
+          placeholder="Escriu el teu nom"
+          @keyup.enter="loginAsGuest"
+        />
+        <button class="btn" @click="loginAsGuest()">Entrar</button>
+        <p>O</p>
+        <p><router-link to="/login">Inicia sessió</router-link> o <router-link to="/register">Registra't</router-link></p>
+      </div>
     </div>
   </div>
 </template>
