@@ -1,51 +1,45 @@
 <template>
   <div class="profile-background">
-    <h2>Editar perfil</h2>
+    <div class="centra-console-panel">
+      <div class="profile-container hologram">
+        <h2>Editar perfil</h2>
 
-    <div v-if="loading">Cargando...</div>
+        <div v-if="loading">Cargando...</div>
 
-    <div v-else>
-      <div>
-        <label>Email (no modificable)</label>
-        <div>{{ form.email || '—' }}</div>
-      </div>
+        <div v-else>
+          <div>
+            <label>Email (no modificable)</label>
+            <div>{{ form.email || '—' }}</div>
+          </div>
 
-      <div>
-        <label>Nombre</label>
-        <input v-model="form.username" type="text" maxlength="24" />
-      </div>
+          <div>
+            <label>Nombre: </label>
+            <input v-model="form.username" type="text" maxlength="24" />
+          </div>
 
-      <div>
-        <label>Nueva contraseña (opcional)</label>
-        <input v-model="form.password" type="password" />
-      </div>
+          <div>
+            <label>Nueva contraseña (opcional)</label>
+            <input v-model="form.password" type="password" />
+          </div>
 
-      <div>
-        <label>Avatar base</label>
-        <select v-model="form.avatar">
-          <option value="nave">Nave</option>
-        </select>
-      </div>
+          <div>
+            <label>Color de avatar: </label>
+            <select v-model="form.color">
+              <option v-for="c in colors" :key="c" :value="c">{{ c }}</option>
+            </select>
+          </div>
 
-      <div>
-        <label>Color de avatar</label>
-        <select v-model="form.color">
-          <option v-for="c in colors" :key="c" :value="c">{{ c }}</option>
-        </select>
-      </div>
 
-      <div>
-        <label>Preview</label>
-        <div>
-          <img :src="avatarSrc" alt="preview"/>
+          <div>
+            <button @click="saveProfile">Guardar</button>
+            <button @click="confirmDelete">Borrar cuenta</button>
+          </div>
         </div>
       </div>
-
-      <div>
-        <button @click="saveProfile">Guardar</button>
-        <button @click="confirmDelete">Borrar cuenta</button>
-      </div>
     </div>
+          <div class="nave-view">
+            <img :src="avatarSrc" alt="preview"/>
+      </div>
   </div>
 </template>
 
@@ -153,3 +147,5 @@ const confirmDelete = async () => {
   }
 }
 </script>
+
+<style src="../styles/styleProfile.css"></style>
