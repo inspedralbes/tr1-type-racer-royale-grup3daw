@@ -1,60 +1,173 @@
-
-
-body {
-  font-family: 'PressStart2P', sans-serif;
-  background-repeat: no-repeat;
-  background-size: cover;
-  background-position: center;
-  margin: 0;
-  width: 100vw;
-  height: 100vh;
-  overflow: hidden;
-  position: relative; 
+html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+    font-family: 'PressStart2P', sans-serif;
 }
 
-div.final-background {
-  background-image: url(../img/estacion.jpg);
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-size: cover;
-  background-position: center;
+div.final-background { 
+    background-image: url('../img/estacion.png'); 
+    background-size: cover;
+    background-position: center;
+    height: 100vh;
+    width: 100vw; 
+    overflow: hidden;
+    position: relative; 
+    perspective: 1000px; 
+    perspective-origin: center 70%; 
 }
 
-div.pantalla-final{
-background-color: rgba(255, 255, 255, 0.7);
-  color: black;
-  width: 50%;
-  max-width: 600px;
-  padding: 2vw;
-  text-align: center;
-  border-radius: 10px;
+div.pantalla-final {
   position: absolute;
-  top: 50%;
   left: 50%;
-  transform: translate(-50%, -50%);
+  bottom: 30vh; 
+  width: 60%; 
+  max-width: 800px;
+  height: 50vh; 
+  max-height: 500px; 
+  transform-origin: center bottom; 
+  transform: translateX(-50%) rotateX(-25deg); 
+
+  background-color: transparent; 
+  color: #00FF41; 
+  border: none; 
+  border-radius: 0;
+  box-sizing: border-box;
+  text-align: center;
+  overflow: hidden; 
+  outline: 1px solid rgba(0, 255, 65, 0.6); 
+  outline-offset: 5px; 
+  filter: drop-shadow(0 0 15px rgba(0, 255, 65, 0.8)) 
+          drop-shadow(0 0 30px rgba(0, 255, 65, 0.4)); 
+  opacity: 0.9; 
+  
+  background-image: linear-gradient(
+    rgba(0, 255, 65, 0.05) 1px, 
+    transparent 1px
+  ), linear-gradient(
+    90deg, rgba(0, 255, 65, 0.05) 1px, 
+    transparent 1px
+  );
+  background-size: 5px 5px; 
+  display: flex;
+  flex-direction: column;
+  padding: 45px 20px 20px 20px; 
 }
 
-button.final-button{
-  font-family: 'PressStart2P', sans-serif;
-  background-color: rgba(255, 255, 255, 0.8);
-  color: black;
-  border: 2px solid black;
-  padding: 8px 15px;
-  border-radius: 5px;
-  cursor: pointer;
-  font-size: 0.8em;
-  margin: 5px;
-  transition: background-color 0.2s, color 0.2s;
+div.pantalla-final h1 {
+    color: #00FF41;
+    text-shadow: 0 0 5px #00FF41;
+    margin-top: 0;
+    margin-bottom: 15px; 
+    font-size: 1.1em; 
+    flex-shrink: 0; 
 }
 
-li.ranking{
-  margin: 10px;
+div.pantalla-final ol {
+  list-style: none;
+  padding: 8px; 
+  margin: 0 auto 10px auto; 
+  width: 90%; 
+  max-width: 600px; 
+  border: 1px dashed rgba(0, 255, 65, 0.3);
+  background: rgba(0, 20, 0, 0.3);
   text-align: left;
+  flex: 1; 
+  min-height: 0; 
+  overflow-y: auto;
+  scrollbar-width: auto; 
+  scrollbar-color: #00FF41 rgba(0, 20, 0, 0.3); 
 }
 
-li.ranking:first-child::after{
-  content: " 👑 " ;
+div.pantalla-final ol::-webkit-scrollbar {
+  width: 12px;
+}
+div.pantalla-final ol::-webkit-scrollbar-track {
+  background: rgba(0, 20, 0, 0.3);
+  border-radius: 6px;
+  box-shadow: inset 0 0 4px rgba(0, 255, 65, 0.1);
+}
+div.pantalla-final ol::-webkit-scrollbar-thumb {
+  background-color: #00FF41;
+  border-radius: 6px;
+  border: 1px solid rgba(0, 255, 65, 0.5);
+  filter: drop-shadow(0 0 3px #00FF41);
+}
+div.pantalla-final ol::-webkit-scrollbar-thumb:hover {
+  background-color: #5fff87;
+}
+
+li.ranking {
+  margin: 0;
+  padding: 6px; 
+  border-bottom: 1px solid rgba(0, 255, 65, 0.1);
+  color: #00FF41;
+  text-shadow: 0 0 2px #00FF41;
+  font-size: 0.9em; 
+  display: flex;
+  align-items: center;
+}
+
+li.ranking:first-child::after {
+  content: none;
+}
+
+li.ranking > span:nth-child(1) {
+  width: 35px;
+  flex-shrink: 0;
+  text-align: center;
+  font-size: 1.2em;
+  font-weight: bold;
+}
+
+li.ranking:nth-child(1) > span:nth-child(1)::before {
+    content: '🥇';
+    text-shadow: 0 0 3px #FFF;
+}
+li.ranking:nth-child(2) > span:nth-child(1)::before {
+    content: '🥈';
+    text-shadow: 0 0 3px #FFF;
+}
+li.ranking:nth-child(3) > span:nth-child(1)::before {
+    content: '🥉';
+    text-shadow: 0 0 3px #FFF;
+}
+
+li.ranking > span:nth-child(2) {
+  font-weight: bold;
+  margin-left: 5px;
+}
+
+li.ranking > span:nth-child(3) {
+  margin-left: auto;
+  color: #aaf0b9; 
+  padding-right: 10px;
+}
+
+li.ranking > span:nth-child(4) {
+  font-size: 0.9em;
+  opacity: 0.7;
+}
+
+button.final-button {
+  font-family: 'PressStart2P', sans-serif;
+  background-color: rgba(0, 0, 0, 0.3);
+  color: #00FF41;               
+  border: 2px solid #00FF41;    
+  padding: 8px 10px; 
+  border-radius: 0;
+  transition: all 0.1s;
+  font-size: 0.9em; 
+  cursor: pointer;
+  text-transform: uppercase;
+  margin-top: 10px; 
+  flex-shrink: 0; 
+}
+
+button.final-button:hover {
+  background-color: #00FF41; 
+  color: #000000;
+  box-shadow: 0 0 15px #00FF41; 
 }
