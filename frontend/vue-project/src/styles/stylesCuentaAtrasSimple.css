@@ -10,3 +10,157 @@
 .countdown-number {
   animation: pulse 1s infinite;
 }
+
+/* Layout principal: palabra centrada + clasificación a la derecha */
+.game-content-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center; /* centra el bloque de palabra horizontalmente dentro del espacio disponible */
+  gap: 24px;
+  width: 100%;
+  padding: 12px;
+  box-sizing: border-box;
+}
+
+/* Área donde se muestra la palabra actual y el input */
+.paraula-actual {
+  flex: 1 1 auto; /* ocupa todo el espacio restante */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  min-width: 0; /* para que el texto pueda truncarse en contenedores flex */
+}
+
+.paraula-actual h1 {
+  font-size: 4rem;
+  margin: 0 0 12px 0;
+  letter-spacing: 0.02em;
+  line-height: 1;
+  white-space: nowrap; /* evita saltos de línea en palabras largas */
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.paraula-actual input {
+  width: 60%;
+  max-width: 700px;
+  min-width: 220px;
+  padding: 10px 14px;
+  font-size: 1.15rem;
+  border-radius: 6px;
+  border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(0,0,0,0.4);
+  color: inherit;
+}
+
+/* Panel de clasificación a la derecha */
+.puntuacions {
+  width: 300px;
+  max-width: 35%;
+  background: rgba(255,255,255,0.02);
+  padding: 12px;
+  border-radius: 8px;
+  align-self: stretch; /* hace que el panel ocupe la altura del contenedor */
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.25);
+  overflow: auto; /* si hay muchos jugadores, el panel se hace scrollable */
+}
+
+.puntuacions h2 {
+  margin: 0;
+  font-size: 1.1rem;
+  text-align: center;
+}
+
+#llista-jugadors, #llista-jugadors-final {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+#llista-jugadors li, #llista-jugadors-final li {
+  padding: 8px 6px;
+  border-bottom: 1px solid rgba(255,255,255,0.03);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.95rem;
+}
+
+/* Indicadores de letra correcta/incorrecta */
+.lletra-correcta {
+  color: var(--color-correct, #4caf50);
+}
+
+.lletra-incorrecta {
+  color: var(--color-error, #f44336);
+}
+
+/* Responsive: en pantallas pequeñas apilamos en columna */
+@media (max-width: 900px) {
+  .game-content-wrapper {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .puntuacions {
+    width: 100%;
+    max-width: none;
+    align-self: center;
+    order: 2;
+  }
+
+  .paraula-actual input {
+    width: 92%;
+  }
+
+  .paraula-actual h1 {
+    font-size: 2.4rem;
+    white-space: normal;
+  }
+}
+
+/* Animación simple usada por el contador si hace falta */
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.08); }
+  100% { transform: scale(1); }
+}
+
+/* Fondo espacial para la pantalla de juego */
+.main-background {
+  position: relative; /* para el overlay */
+  min-height: 100vh; /* que cubra toda la pantalla */
+  background-image: url('../img/espacio.png');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Capa oscura encima de la imagen para asegurar legibilidad del texto */
+.main-background::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,0.35);
+  pointer-events: none;
+}
+
+/* Asegurar que el contenedor del juego esté por encima del overlay */
+.game-container {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 18px;
+  box-sizing: border-box;
+}
