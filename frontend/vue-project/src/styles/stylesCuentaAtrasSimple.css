@@ -99,11 +99,29 @@
 
 /* Indicadores de letra correcta/incorrecta */
 .lletra-correcta {
-  color: var(--color-correct, #4caf50);
+  /* Forzar color verde para letra correcta (sobrescribe regla global) */
+  color: var(--color-correct, #4caf50) !important;
+  font-weight: 700;
+  padding: 0 2px;
+  border-radius: 3px;
+  text-shadow: 0 1px 0 rgba(0,0,0,0.45);
+  transition: color 120ms ease, transform 120ms ease;
+  transform-origin: center;
 }
 
 .lletra-incorrecta {
-  color: var(--color-error, #f44336);
+  /* Forzar color rojo para letra incorrecta (sobrescribe regla global) */
+  color: var(--color-error, #f44336) !important;
+  font-weight: 700;
+  padding: 0 2px;
+  border-radius: 3px;
+  text-shadow: 0 1px 0 rgba(0,0,0,0.45);
+  transition: color 120ms ease, transform 120ms ease;
+  transform-origin: center;
+}
+
+.lletra-correcta:hover, .lletra-incorrecta:hover {
+  transform: scale(1.04);
 }
 
 /* Responsive: en pantallas pequeñas apilamos en columna */
