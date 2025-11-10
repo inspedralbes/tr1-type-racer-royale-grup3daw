@@ -2,8 +2,6 @@
   <div class="selection-background">
     <div class="centra-console-panel">
       <div class="selection hologram">
-        <h2>Seleccionar Sala</h2>
-
         <div class="section-joinID">
           <h3>Unirse a una sala existente</h3>
           <input type="text" v-model="joinRoomId" placeholder="ID de la sala" />
