@@ -1,5 +1,5 @@
 <template>
-  <div class="main-background">
+  <div class="selection-background">
     <div class="themed-container room-selection-container">
       <h2>Seleccionar Sala</h2>
 
