@@ -139,6 +139,19 @@ const initializeSockets = (app) => {
       broadcastRoomState(roomId); // Notificar también el cambio de estado de la sala
     });
 
+    socket.on('powerUp', (data) => {
+      const { roomId, powerUpType } = data;
+      const senderSocketId = socket.id;
+
+      if (roomId && powerUpType) {
+        console.log(`Power-up activated in room ${roomId} by ${senderSocketId}: ${powerUpType}`);
+        socket.to(roomId).except(senderSocketId).emit('receivePowerUp', {
+          powerUpType: powerUpType,
+          senderId: senderSocketId
+        });
+      }
+    });
+
     // Listener para cuando un cliente se desconecta.
   socket.on('disconnect', async () => {
       console.log(`Cliente desconectado: ${socket.id}`);

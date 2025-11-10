@@ -374,6 +374,20 @@ export const communicationManager = {
     socket.emit('set-ready', { roomId: roomStore.roomId, isReady });
   },
 
+  // --- Power-Up Methods (Socket.IO) ---
+
+  sendPowerUp(powerUpData) {
+    socket.emit('powerUp', powerUpData);
+  },
+
+  onReceivePowerUp(callback) {
+    socket.on('receivePowerUp', callback);
+  },
+
+  offReceivePowerUp(callback) {
+    socket.off('receivePowerUp', callback);
+  },
+
   // --- Métodos de Socket.IO ---
 
   // Emite el evento para unirse a una sala.

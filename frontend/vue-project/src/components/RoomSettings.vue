@@ -24,6 +24,7 @@
           <select id="gameMode" v-model="room.gameMode" required>
             <option value="" disabled>-- Elige un modo de juego --</option>
             <option value="cuentaAtrasSimple">Cuenta Atrás Simple</option>
+            <option value="powerUps">Power-Ups</option>
             <option value="modoJuego2">Modo de Juego 2</option>
             <option value="modoJuego3">Modo de Juego 3</option>
           </select>

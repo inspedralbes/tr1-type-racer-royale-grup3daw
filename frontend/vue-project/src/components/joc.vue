@@ -39,8 +39,8 @@ const currentGameModeComponent = computed(() => {
   switch (props.gameMode) {
     case 'cuentaAtrasSimple':
       return defineAsyncComponent(() => import('./game-modes/CuentaAtrasSimple.vue'));
-    case 'modoJuego2':
-      return defineAsyncComponent(() => import('./game-modes/ModoJuego2.vue'));
+    case 'powerUps':
+      return defineAsyncComponent(() => import('./game-modes/PowerUps.vue'));
     case 'modoJuego3':
       return defineAsyncComponent(() => import('./game-modes/ModoJuego3.vue'));
     default:
