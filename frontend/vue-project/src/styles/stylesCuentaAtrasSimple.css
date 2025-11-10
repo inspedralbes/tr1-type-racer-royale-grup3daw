@@ -64,21 +64,31 @@
   width: 22%; /* ancho relativo a la ventana */
   max-width: 360px;
   min-width: 160px;
-  background: transparent; /* sin fondo para mostrar la imagen */
-  padding: 10px 8px;
-  border-radius: 6px;
+  /* HUD look: slight translucent panel with cyan highlights */
+  background: rgba(0, 10, 14, 0.18); /* tenue para dejar ver la galaxia pero dar contraste */
+  padding: 12px 10px;
+  border-radius: 8px;
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  box-shadow: none;
-  overflow: auto; /* si hay muchos jugadores, el panel se hace scrollable */
-  z-index: 3; /* por encima del contenido del juego */
+  gap: 8px;
+  box-shadow: 0 6px 30px rgba(0,200,220,0.06), 0 0 24px rgba(0,200,220,0.06) inset;
+  overflow: visible; /* lista estática: no scroll interno, se mostrará completa */
+  z-index: 30; /* por encima del contenido del juego */
+  border: 1px solid rgba(0,220,200,0.12);
+  backdrop-filter: blur(4px) saturate(120%);
 }
 
+/* No scrollbars: la lista será totalmente estática (no scroll interno) */
+
 .puntuacions h2 {
-  margin: 0;
-  font-size: 1.1rem;
+  margin: 0 0 6px 0;
+  font-size: 1rem;
   text-align: center;
+  letter-spacing: 1px;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  color: #bffcff;
+  text-shadow: 0 2px 8px rgba(0,220,200,0.18);
+  position: relative;
 }
 
 #llista-jugadors, #llista-jugadors-final {
@@ -89,12 +99,63 @@
 
 #llista-jugadors li, #llista-jugadors-final li {
   padding: 8px 6px;
-  border-bottom: 1px solid transparent; /* sin líneas visibles */
+  border-bottom: 1px solid rgba(0,220,200,0.12); /* línea separadora entre jugadores */
   display: flex;
   justify-content: space-between;
   align-items: center;
   gap: 8px;
   font-size: 0.95rem;
+}
+
+/* quitar la línea del último elemento para estética */
+.puntuacions #llista-jugadors li:last-child,
+.puntuacions #llista-jugadors-final li:last-child {
+  border-bottom: none;
+}
+
+/* HUD decorations: small cyan accent line and index bullet */
+#llista-jugadors li::before, #llista-jugadors-final li::before {
+  content: '';
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  margin-right: 8px;
+  border-radius: 2px;
+  background: linear-gradient(180deg, #9ff8ff, #00d6c0);
+  box-shadow: 0 0 10px rgba(0,200,220,0.6);
+}
+
+#llista-jugadors li {
+  color: #e7ffff;
+}
+
+#llista-jugadors li strong, #llista-jugadors-final li strong {
+  font-family: monospace;
+  color: #dffcff;
+  text-shadow: 0 1px 6px rgba(0,200,220,0.12);
+}
+
+/* Top-right HUD frame accents */
+.puntuacions::before {
+  content: '';
+  position: absolute;
+  left: -8px;
+  top: -8px;
+  width: calc(100% + 16px);
+  height: calc(100% + 16px);
+  border-radius: 10px;
+  pointer-events: none;
+  box-shadow: 0 0 40px rgba(0,200,220,0.06) inset, 0 0 24px rgba(0,200,220,0.06);
+}
+
+/* subtle grid lines */
+.puntuacions ul {
+  display: block;
+}
+
+/* make scores column slightly dimmer to emphasize names */
+#llista-jugadors li span {
+  color: rgba(191,255,255,0.9);
 }
 
 /* Indicadores de letra correcta/incorrecta */
