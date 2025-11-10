@@ -203,6 +203,11 @@
 
         const paraula = paraulaActiva.value;
 
+        // Guard clause to prevent errors if the word isn't loaded yet
+        if (!paraula) {
+            return;
+        }
+
         for (let i = 0; i < entrada.length; i++){
             paraula._errors = paraula._errors || [];
 
@@ -221,8 +226,23 @@
         };
         
         if (entrada === paraula.text){
+            estatDelJoc.value.completedWords++; // Increment before calculating score
+            
+            let pointsForWord = POINTS_PER_DIFFICULTY[paraula.difficulty];
+            const isPowerUpTurn = estatDelJoc.value.completedWords > 0 && estatDelJoc.value.completedWords % 5 === 0;
+            const noErrorsInWord = paraula.errors === 0;
+
+            if (isPowerUpTurn && noErrorsInWord) {
+                pointsForWord *= 2; // Double the points
+                activatePowerUp(); // Activate the penalty for others
+                notificationStore.pushNotification({
+                    type: 'success',
+                    message: `¡Power-up por palabra perfecta! Puntuación x2.`
+                });
+            }
+
             try {
-                const newScore = score.value + POINTS_PER_DIFFICULTY[paraula.difficulty];
+                const newScore = score.value + pointsForWord;
                 await communicationManager.updateScore(playerName.value, newScore, roomStore.roomId);
             } catch (e) {
                 console.warn('Error updating score on word completion:', e);
@@ -235,11 +255,6 @@
             paraula.estat = 'completada';
             estatDelJoc.value.indexParaulaActiva++;
             estatDelJoc.value.textEntrat = '';
-            estatDelJoc.value.completedWords++;
-
-            if (estatDelJoc.value.completedWords > 0 && estatDelJoc.value.completedWords % 5 === 0) {
-                activatePowerUp();
-            }
 
             if (estatDelJoc.value.indexParaulaActiva >= estatDelJoc.value.paraules.length) {
                 initializeWords(props.words);
