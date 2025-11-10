@@ -204,10 +204,26 @@ div.section-create .btn {
 }
 
 .btn-profile-top {
-  position: absolute; 
-  top: 15px;      
-  right: 20px;        
-  width: auto;        
-  margin: 0;   
-  background-color: transparent;       
+ position: absolute !important; 
+  top: 15px !important;
+  right: 15px !important;
+  left: auto !important; 
+  margin: 0 !important; 
+  
+  font-family: 'PressStart2P', sans-serif;
+  font-size: 0.55em !important; 
+  padding: 5px 7px !important; 
+  background-color: rgba(0, 20, 0, 0.6) !important; 
+  border: 1px solid rgba(0, 255, 65, 0.5) !important; 
+  color: #00FF41 !important;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  z-index: 20;
+  cursor: pointer;
+}
+
+.btn-profile-top:hover {
+  background-color: #00FF41 !important; 
+  color: #000000 !important;
+  box-shadow: 0 0 15px #00FF41 !important; 
 }
