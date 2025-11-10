@@ -154,55 +154,51 @@ div.section-create .btn {
 }
 
 .roomList {
-  list-style: none; /* Quita los puntos (bullets) de la lista */
-  padding: 5px; /* Un poco de padding interno */
-  margin: 0 0 15px 0; /* Espacio antes del botón "Actualizar" */
-  
-  max-height: 150px; /* ¡LA ALTURA MÁXIMA! Ajústala a tu gusto */
-  overflow-y: auto;  /* AÑADE EL SCROLL vertical si se supera */
-  
-  width: 95%; /* Ocupa casi toda la columna (ajústalo) */
+  list-style: none; 
+  padding: 5px; 
+  margin: 0 0 10px 0; 
+  max-height: 110px; 
+  overflow-y: auto;  
+  width: 95%; 
   box-sizing: border-box;
-  
-  /* Estilos visuales del holograma */
   border: 1px solid rgba(0, 255, 65, 0.2);
   background: rgba(0, 0, 0, 0.1);
-  text-align: left; /* Sobrescribe el text-align:center del padre */
+  text-align: left; 
 }
 
-/* 2. Estilos para cada item (LI) de la lista (recomendado) */
 .roomList .room {
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding: 8px 10px;
-  font-size: 0.8em; /* Texto un poco más pequeño */
+  font-size: 0.8em; 
   border-bottom: 1px solid rgba(0, 255, 65, 0.2);
 }
 .roomList .room:last-child {
   border-bottom: none;
 }
 
-/* 3. Ajusta el botón DENTRO de la lista */
 .roomList .room .btn {
-  width: auto; /* El botón es tan grande como su texto "Unirse" */
-  padding: 4px 8px; /* Botón más pequeño */
+  width: auto;
+  padding: 4px 8px; 
   font-size: 0.8em;
-  margin-left: 10px; /* Separa el botón del texto */
-  flex-shrink: 0; /* Evita que el botón se encoja si el texto es largo */
+  margin-left: 10px; 
+  flex-shrink: 0; 
 }
 
-/* 4. Estilos para el scrollbar (para que encaje con el holograma) */
 .roomList::-webkit-scrollbar {
   width: 8px;
 }
+
 .roomList::-webkit-scrollbar-track {
   background: rgba(0, 0, 0, 0.3);
 }
+
 .roomList::-webkit-scrollbar-thumb {
   background-color: #00FF41;
   border: 1px solid rgba(0, 255, 65, 0.8);
 }
+
 .roomList::-webkit-scrollbar-thumb:hover {
   background-color: #5eff8b;
 }
