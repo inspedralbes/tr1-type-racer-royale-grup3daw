@@ -55,4 +55,4 @@ const onGameOver = (results) => {
 };
 </script>
 
-<style src="../styles/styleJoc.css"></style>
+<style src="../styles/stylesCuentaAtrasSimple.css"></style>

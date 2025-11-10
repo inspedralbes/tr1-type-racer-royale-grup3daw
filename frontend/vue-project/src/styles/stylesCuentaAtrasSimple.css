@@ -50,8 +50,8 @@
   padding: 10px 14px;
   font-size: 1.15rem;
   border-radius: 6px;
-  border: 1px solid rgba(255,255,255,0.08);
-  background: rgba(0,0,0,0.4);
+  border: 1px solid rgba(255,255,255,0.12); /* sutil borde claro para foco */
+  background: transparent; /* quitar color de fondo para que se vea la imagen */
   color: inherit;
 }
 
@@ -59,14 +59,14 @@
 .puntuacions {
   width: 300px;
   max-width: 35%;
-  background: rgba(255,255,255,0.02);
-  padding: 12px;
+  background: transparent; /* quitar colores para que solo se vea el fondo */
+  padding: 12px 6px;
   border-radius: 8px;
   align-self: stretch; /* hace que el panel ocupe la altura del contenedor */
   display: flex;
   flex-direction: column;
   gap: 8px;
-  box-shadow: 0 6px 18px rgba(0,0,0,0.25);
+  box-shadow: none; /* quitar sombra para ver solo el fondo */
   overflow: auto; /* si hay muchos jugadores, el panel se hace scrollable */
 }
 
@@ -84,7 +84,7 @@
 
 #llista-jugadors li, #llista-jugadors-final li {
   padding: 8px 6px;
-  border-bottom: 1px solid rgba(255,255,255,0.03);
+  border-bottom: 1px solid transparent; /* sin líneas visibles */
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -154,6 +154,15 @@
   pointer-events: none;
 }
 
+/* Evitar que elementos .main-background anidados vuelvan a pintar la imagen */
+.main-background .main-background {
+  background-image: none !important;
+  background-color: transparent !important;
+}
+.main-background .main-background::before {
+  background: transparent !important;
+}
+
 /* Asegurar que el contenedor del juego esté por encima del overlay */
 .game-container {
   position: relative;
@@ -163,4 +172,10 @@
   margin: 0 auto;
   padding: 18px;
   box-sizing: border-box;
+}
+
+/* Texto claro por defecto sobre el fondo espacial */
+.main-background,
+.main-background * {
+  color: var(--color-text-light, #f3f6f9);
 }
