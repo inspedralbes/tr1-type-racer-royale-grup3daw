@@ -55,6 +55,17 @@
   color: inherit;
 }
 
+/* Estilo para la nave del jugador que aparece debajo del input */
+.player-ship {
+  width: 35%;
+  max-width: 28vw;
+  display: block;
+  margin: 14px auto 0 auto;
+  filter: drop-shadow(0 6px 18px rgba(0,200,220,0.18));
+  transition: transform 180ms ease, opacity 180ms ease;
+}
+
+
 /* Panel de clasificación a la derecha */
 .puntuacions {
   /* Fijamos la clasificación en la esquina superior derecha usando porcentajes */
