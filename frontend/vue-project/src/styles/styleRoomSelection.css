@@ -202,3 +202,12 @@ div.section-create .btn {
 .roomList::-webkit-scrollbar-thumb:hover {
   background-color: #5eff8b;
 }
+
+.btn-profile-top {
+  position: absolute; 
+  top: 15px;      
+  right: 20px;        
+  width: auto;        
+  margin: 0;   
+  background-color: transparent;       
+}
