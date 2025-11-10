@@ -4,13 +4,13 @@
       <div class="selection hologram">
         <h2>Seleccionar Sala</h2>
 
-        <div class="section">
+        <div class="section-joinID">
           <h3>Unirse a una sala existente</h3>
           <input type="text" v-model="joinRoomId" placeholder="ID de la sala" />
           <button class="btn btn-small" @click="joinRoom">Unirse</button>
         </div>
 
-        <div class="section">
+        <div class="section-joinPublic">
           <h3>Salas Públicas</h3>
           <ul class="roomList" v-if="publicRooms.length">
             <li class="room" v-for="room in publicRooms" :key="room.id">
@@ -22,7 +22,7 @@
           <button class="btn btn-small" @click="fetchPublicRooms">Actualizar Salas</button>
         </div>
 
-        <div class="section">
+        <div class="section-create">
           <h3>Crear nueva sala</h3>
           <button class="btn" @click="createRoom">Crear Sala</button>
         </div>
