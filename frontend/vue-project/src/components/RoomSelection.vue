@@ -2,6 +2,7 @@
   <div class="selection-background">
     <div class="centra-console-panel">
       <div class="selection hologram">
+        <button class="btn-profile-top" v-if="sessionStore.email" @click="goToProfile" style="margin-left:8px">Profile</button>
         <div class="section-joinID">
           <h3>Unirse a una sala existente</h3>
           <input type="text" v-model="joinRoomId" placeholder="ID de la sala" />
@@ -26,7 +27,6 @@
         </div>
         <div style="margin-top:12px">
           <button class="btn" v-if="sessionStore.email" @click="goToPlayerStats">Ver Estadísticas</button>
-          <button class="btn" v-if="sessionStore.email" @click="goToProfile" style="margin-left:8px">Profile</button>
           <button class="btn logout-button" @click="logoutAndReset" style="margin-left:8px">Logout</button>
         </div>
       </div>
