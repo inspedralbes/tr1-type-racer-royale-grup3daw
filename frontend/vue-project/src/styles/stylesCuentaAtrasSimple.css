@@ -617,16 +617,10 @@
 @keyframes fallDown {
   0% {
     /* Empieza muy arriba y un poco más pequeño */
-    transform: translateY(-100vh) scale(0.8); 
-    opacity: 0;
-  }
-  20% {
-    opacity: 1; /* Aparece por completo al inicio de la caída */
+    transform: translateY(-100%);
   }
   100% {
-    /* Llega a su posición normal */
-    transform: translateY(0) scale(1); 
-    opacity: 1;
+    transform: translateY(60%);
   }
 }
 
