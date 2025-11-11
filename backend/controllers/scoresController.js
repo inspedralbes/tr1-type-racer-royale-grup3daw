@@ -82,10 +82,12 @@ exports.getScoreHistory = async (req, res) => {
 
   try {
     const scores = await Score.find({ playerName })
-      .sort({ createdAt: 1 }) // Ordena por fecha de creación ascendente
-      .select('wpm createdAt'); // Selecciona solo los campos necesarios
+      .sort({ date: -1 }) // Ordena por fecha de creación descendente para obtener los últimos
+      .limit(10) // Limita a los 10 más recientes
+      .select('wpm date'); // Selecciona solo los campos necesarios
 
-    res.status(200).json(scores);
+    // Invertir el array para que el gráfico muestre del más antiguo al más nuevo
+    res.status(200).json(scores.reverse());
   } catch (error) {
     console.error('Error al recuperar el historial de puntuaciones:', error);
     res.status(500).json({ error: 'Error interno del servidor al recuperar el historial.' });

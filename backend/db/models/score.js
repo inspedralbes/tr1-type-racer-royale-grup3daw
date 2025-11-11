@@ -1,5 +1,10 @@
 const mongoose = require('mongoose');
 
+const WordStatSchema = new mongoose.Schema({
+  paraula: { type: String, required: true },
+  errors: { type: Number, required: true },
+}, { _id: false });
+
 const ScoreSchema = new mongoose.Schema({
   playerName: {
     type: String,
@@ -15,7 +20,19 @@ const ScoreSchema = new mongoose.Schema({
   },
   wpm: {
     type: Number,
-    required: true,
+    required: false, // WPM might not always be calculated
+  },
+  words: {
+    type: [WordStatSchema],
+    required: false,
+  },
+  gameMode: {
+    type: String,
+    required: false,
+  },
+  totalErrors: {
+    type: Number,
+    required: false,
   },
   date: {
     type: Date,

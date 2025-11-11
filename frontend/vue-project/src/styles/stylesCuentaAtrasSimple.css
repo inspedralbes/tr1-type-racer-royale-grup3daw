@@ -1,3 +1,9 @@
+/*
+===========================================================
+== ESTILOS DE JUEGO (CON RESPONSIVE MEJORADO) ==
+===========================================================
+*/
+
 .countdown-container {
   display: flex;
   justify-content: center;
@@ -9,4 +15,476 @@
 
 .countdown-number {
   animation: pulse 1s infinite;
+}
+
+/* Layout principal: palabra centrada + clasificación a la derecha */
+.game-content-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center; /* centra el bloque de palabra horizontalmente */
+  gap: 24px;
+  width: 100%;
+  padding: 12px;
+  box-sizing: border-box;
+}
+
+/* Área donde se muestra la palabra actual y el input */
+.paraula-actual {
+  flex: 1 1 auto; /* ocupa todo el espacio restante */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  min-width: 0;
+}
+
+/* === MODIFICADO === */
+.paraula-actual h1 {
+  /* Usamos clamp() para un tamaño de fuente fluido */
+  /* Mínimo 1.8rem, ideal 4.5vw, máximo 3rem (más pequeño) */
+  font-size: clamp(1.8rem, 4.5vw, 3rem);
+ 
+  margin: 0 0 12px 0;
+  letter-spacing: 0.02em;
+  line-height: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: inline-block;
+ 
+  /* Usamos 'em' para que el padding escale con la fuente */
+  padding: 1.6em 0.8em; /* menos padding para reducir el tamaño visual */
+
+  border-radius: 10px;
+  color: #ffffff;
+  text-shadow: 0 2px 10px rgba(0,0,0,0.6);
+  position: relative; /* Necesario para el ::before */
+}
+
+/* === MODIFICADO === */
+.paraula-actual h1::before {
+  content: '';
+  position: absolute;
+
+  /* Hacemos que ocupe todo el espacio del h1 (incluyendo padding) */
+  inset: -2%; /* menos offset para que el meteorito sea más pequeño */
+ 
+  background-image: url('../img/meteorito.png');
+  background-size: 95%; /* hacerlo más pequeño para que no domine la palabra */
+  background-position: center;
+  background-repeat: no-repeat;
+ 
+  animation: spin 10s linear infinite;
+  z-index: -1;
+  border-radius: 10px;
+
+  /* Reducimos la opacidad para que no compita con el texto */
+  /* Hacer meteorito menos transparente */
+  opacity: 0.85;
+}
+
+.paraula-actual input {
+  width: 60%;
+  max-width: 700px;
+  min-width: 220px;
+  padding: 8px 12px;
+  font-size: 1.05rem;
+  border-radius: 6px;
+  border: 1px solid rgba(255,255,255,0.12);
+  background: transparent;
+  color: inherit;
+  margin-top: 8px; /* Reducido para acercar el input a la nave/meteorito */
+  order: 3;         /* Aparece en tercer lugar */
+}
+
+/* Estilo para la nave del jugador */
+.player-ship {
+  width: 55%;
+  max-width: 40vw;
+  display: block;
+  margin: 8px auto 0 auto; /* Menor margen superior para acercarla al meteorito */
+  filter: drop-shadow(0 6px 18px rgba(0,200,220,0.18));
+  transition: transform 180ms ease, opacity 180ms ease;
+  order: 2;                         /* Aparece en segundo lugar */
+}
+
+/* Panel de clasificación a la derecha */
+.puntuacions {
+  position: fixed;
+  top: 8%;
+  right: 4%;
+  width: 22%; /* ancho relativo a la ventana */
+  max-width: 360px;
+  min-width: 160px;
+  background: rgba(0, 10, 14, 0.18);
+  padding: 12px 10px;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  box-shadow: 0 6px 30px rgba(0,200,220,0.06), 0 0 24px rgba(0,200,220,0.06) inset;
+  overflow: visible;
+  z-index: 30;
+  border: 1px solid rgba(0,220,200,0.12);
+  backdrop-filter: blur(4px) saturate(120%);
+}
+
+
+.puntuacions h2 {
+  margin: 0 0 6px 0;
+  font-size: 1rem;
+  text-align: center;
+  letter-spacing: 1px;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  color: #bffcff;
+  text-shadow: 0 2px 8px rgba(0,220,200,0.18);
+  position: relative;
+}
+
+#llista-jugadors, #llista-jugadors-final {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+#llista-jugadors li, #llista-jugadors-final li {
+  padding: 8px 6px;
+  border-bottom: 1px solid rgba(0,220,200,0.12);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.95rem;
+}
+
+.puntuacions #llista-jugadors li:last-child,
+.puntuacions #llista-jugadors-final li:last-child {
+  border-bottom: none;
+}
+
+#llista-jugadors li::before, #llista-jugadors-final li::before {
+  content: '';
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  margin-right: 8px;
+  border-radius: 2px;
+  background: linear-gradient(180deg, #9ff8ff, #00d6c0);
+  box-shadow: 0 0 10px rgba(0,200,220,0.6);
+}
+
+#llista-jugadors li {
+  color: #e7ffff;
+}
+
+#llista-jugadors li strong, #llista-jugadors-final li strong {
+  font-family: monospace;
+  color: #dffcff;
+  text-shadow: 0 1px 6px rgba(0,200,220,0.12);
+}
+
+.puntuacions::before {
+  content: '';
+  position: absolute;
+  left: -8px;
+  top: -8px;
+  width: calc(100% + 16px);
+  height: calc(100% + 16px);
+  border-radius: 10px;
+  pointer-events: none;
+  box-shadow: 0 0 40px rgba(0,200,220,0.06) inset, 0 0 24px rgba(0,200,220,0.06);
+}
+
+.puntuacions ul {
+  display: block;
+}
+
+#llista-jugadors li span {
+  color: rgba(191,255,255,0.9);
+}
+
+/* Indicadores de letra correcta/incorrecta */
+.lletra-correcta {
+  color: var(--color-correct, #4caf50) !important;
+  font-weight: 700;
+  padding: 0 2px;
+  border-radius: 3px;
+  text-shadow: 0 1px 0 rgba(0,0,0,0.45);
+  transition: color 120ms ease, transform 120ms ease;
+  transform-origin: center;
+}
+
+.lletra-incorrecta {
+  color: var(--color-error, #f44336) !important;
+  font-weight: 700;
+  padding: 0 2px;
+  border-radius: 3px;
+  text-shadow: 0 1px 0 rgba(0,0,0,0.45);
+  transition: color 120ms ease, transform 120ms ease;
+  transform-origin: center;
+}
+
+.lletra-correcta:hover, .lletra-incorrecta:hover {
+  transform: scale(1.04);
+}
+
+/* Fondo espacial para la pantalla de juego */
+.main-background {
+  position: relative;
+  min-height: 100vh;
+  background-image: url('../img/espacio.png');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Capa oscura encima de la imagen */
+.main-background::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,0.35);
+  pointer-events: none;
+}
+
+.main-background .main-background {
+  background-image: none !important;
+  background-color: transparent !important;
+}
+.main-background .main-background::before {
+  background: transparent !important;
+}
+
+/* === MODIFICADO === */
+/* Contenedor del juego por encima del overlay */
+.game-container {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  margin: 0 auto;
+  box-sizing: border-box;
+
+  /* Añadimos padding para dejar espacio a los paneles fijos */
+  /* 22% (ancho del panel) + 4% (margen) = 26% en cada lado */
+  padding: 18px 26%;
+}
+
+/* Texto claro por defecto */
+.main-background,
+.main-background * {
+  color: var(--color-text-light, #f3f6f9);
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.08); }
+  100% { transform: scale(1); }
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/*
+===========================================================
+== ESTILOS PARA PANEL IZQUIERDO ==
+===========================================================
+*/
+
+.game-container > h2 {
+  position: fixed;
+  top: calc(8% + 12px);
+  left: 4%;
+  width: 22%;
+  max-width: 360px;
+  min-width: 160px;
+  z-index: 31;
+  margin: 0;
+  padding: 0 10px;
+  font-size: 1rem;
+  text-align: center;
+  letter-spacing: 1px;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  color: #bffcff;
+  text-shadow: 0 2px 8px rgba(0,220,200,0.18);
+}
+
+.game-info {
+  position: fixed;
+  top: 8%;
+  left: 4%;
+  width: 22%;
+  max-width: 360px;
+  min-width: 160px;
+  background: rgba(0, 10, 14, 0.18);
+  padding: 12px 10px;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  box-shadow: 0 6px 30px rgba(0,200,220,0.06), 0 0 24px rgba(0,200,220,0.06) inset;
+  overflow: visible;
+  z-index: 30;
+  border: 1px solid rgba(0,220,200,0.12);
+  backdrop-filter: blur(4px) saturate(120%);
+  padding-top: 42px;
+}
+
+.game-info p {
+  padding: 8px 6px;
+  border-bottom: 1px solid rgba(0,220,200,0.12);
+  display: block;
+  font-size: 0.95rem;
+  color: #e7ffff;
+  margin: 0;
+  font-family: monospace;
+  color: #dffcff;
+  text-shadow: 0 1px 6px rgba(0,200,220,0.12);
+}
+
+.game-info p:last-child {
+  border-bottom: none;
+}
+
+.game-info p::before {
+  content: '';
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  margin-right: 8px;
+  border-radius: 2px;
+  background: linear-gradient(180deg, #9ff8ff, #00d6c0);
+  box-shadow: 0 0 10px rgba(0,200,220,0.6);
+  vertical-align: middle;
+}
+
+
+.game-info::before {
+  content: '';
+  position: absolute;
+  left: -8px;
+  top: -8px;
+  width: calc(100% + 16px);
+  height: calc(100% + 16px);
+  border-radius: 10px;
+  pointer-events: none;
+  box-shadow: 0 0 40px rgba(0,200,220,0.06) inset, 0 0 24px rgba(0,200,220,0.06);
+}
+
+/*
+===========================================================
+== BREAKPOINTS RESPONSIVE ==
+===========================================================
+*/
+
+/* === MODIFICADO: Breakpoint TABLET === */
+@media (max-width: 900px) {
+
+  /* Ajustamos el padding para la vista de tablet */
+  .game-container {
+    /* 28% (ancho del panel) + 4% (margen) = 32% en cada lado */
+    padding: 18px 32%;
+  }
+
+  .game-content-wrapper {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  /* Ajustamos el panel derecho */
+  .puntuacions {
+    position: fixed;
+    top: 6%;
+    right: 4%;
+    width: 28%;
+    max-width: 420px;
+    min-width: 140px;
+  }
+
+  .paraula-actual input {
+    width: 92%;
+  }
+
+  /* Ajustamos el h1 de la palabra */
+  .paraula-actual h1 {
+    font-size: 2.4rem;
+    white-space: normal;
+    /* Mantenemos el padding relativo */
+    padding: 2em 0.5em;
+  }
+ 
+  /* Ocultamos el título flotante */
+  .game-container > h2 {
+    display: none;
+  }
+
+  /* Ajustamos el panel izquierdo en móvil */
+  .game-info {
+    top: 6%;
+    left: 4%;
+    width: 28%;
+    max-width: 420px;
+    min-width: 140px;
+    padding-top: 12px; /* Quitamos el padding extra del h2 */
+  }
+
+  /* Reducir texto en móvil */
+  .game-info p {
+    font-size: 0.85rem;
+    padding: 6px 4px;
+  }
+}
+
+
+/* === AÑADIDO: Breakpoint para MÓVILES PEQUEÑOS === */
+@media (max-width: 600px) {
+ 
+  /* 1. Resetear padding del contenedor principal */
+  .game-container {
+    padding: 18px;
+  }
+
+  /* 2. Paneles (izq y der) dejan de ser fijos y se apilan */
+  .game-info,
+  .puntuacions {
+    position: relative; /* Dejan de ser 'fixed' */
+    width: 100%;       /* Ocupan todo el ancho */
+    max-width: none;
+    top: auto;
+    left: auto;
+    right: auto;
+    margin-bottom: 15px; /* Espacio entre ellos */
+    backdrop-filter: blur(2px); /* Reducir blur por rendimiento */
+  }
+ 
+  /* 3. Ocultamos el H2 flotante (ya estaba oculto desde 900px) */
+  .game-container > h2 {
+    display: none;
+  }
+
+  /* 4. Devolvemos el padding-top al panel de info */
+  .game-info {
+    padding-top: 12px;
+  }
+
+  /* 5. Ajustar el texto de la palabra (más pequeño) */
+  .paraula-actual h1 {
+    font-size: clamp(1.8rem, 7vw, 2.2rem);
+    padding: 2em 0.5em;
+  }
+ 
+  /* 6. Ajustar el input y la nave */
+  .paraula-actual input {
+    width: 100%;
+    font-size: 1rem;
+  }
+  .player-ship {
+    width: 60%;
+    max-width: 220px; /* Un máximo fijo para que no crezca demasiado */
+  }
 }

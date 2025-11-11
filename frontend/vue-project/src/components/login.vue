@@ -87,4 +87,4 @@ const goToGuestLogin = () => {
   </div>
 </template>
 
-<style src="../styles/styleLogin.css"></style>
+<style src="../styles/styleAuth.css"></style>

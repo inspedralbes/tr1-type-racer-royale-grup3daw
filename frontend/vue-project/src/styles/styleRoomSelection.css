@@ -14,7 +14,7 @@ div.selection-background{
   position: absolute;
   top: 0;
   left: 0;
-  background-image: url(../img/estacion.jpg);
+  background-image: url(../img/estacion.png);
   width: 100vw;
   height: 100vh;
   background-repeat: no-repeat;
@@ -22,95 +22,208 @@ div.selection-background{
   background-position: center;
 }
 
-div.room-selection-container{
-  position: absolute;
-  top: 50%;
+div.selection.hologram{
+  background-color: transparent; 
+  color: #00FF41; 
+  width: 100%; 
+  max-width: none;
+  height: 50vh; 
+  max-height: 500px; 
+  overflow-y: none; 
+  box-sizing: border-box; 
+  padding: 20px; 
+  border: none; 
+  box-shadow: none; 
+  border-radius: 0;
+  position: absolute; 
+  bottom: 100%; 
   left: 50%;
-  transform: translate(-50%, -50%);
-  background-color: rgba(255, 255, 255, 0.7);
-  border-radius: 10px;
+  transform: translateX(-50%) rotateX(-25deg); 
+  transform-origin: center bottom; 
+  outline: 1px solid rgba(0, 255, 65, 0.6); 
+  outline-offset: 5px; 
+  filter: drop-shadow(0 0 15px rgba(0, 255, 65, 0.8)) 
+          drop-shadow(0 0 30px rgba(0, 255, 65, 0.4)); 
+  opacity: 0.9; 
+  background-image: linear-gradient(
+    rgba(0, 255, 65, 0.05) 1px, 
+    transparent 1px
+  ), linear-gradient(
+    90deg, rgba(0, 255, 65, 0.05) 1px, 
+    transparent 1px
+  );
+  background-size: 5px 5px; 
+
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr; 
+  gap: 1.5rem; 
+  align-items: start; 
+}
+
+.hologram p,
+.hologram h2,
+.hologram h3 {
+    color: #00FF41;
+    text-shadow: 0 0 5px #00FF41;
+    margin-bottom: 15px; 
+    font-size: 1.1em; 
+}
+
+.hologram input[type="text"] {
+  width: 80%;
+  background-color: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(0, 255, 65, 0.8);
+  color: #00FF41; 
+  padding: 8px; 
+  margin-bottom: 10px; 
+  font-size: 1em;
+  border-radius: 0;
+  text-shadow: 0 0 5px #00FF41; 
+}
+
+.hologram input::placeholder {
+    color: rgba(0, 255, 65, 0.5); 
+    text-shadow: none;
+}
+
+.hologram .btn {
+  background-color: rgba(0, 0, 0, 0.3);
+  color: #00FF41;               
+  border: 2px solid #00FF41;    
+  padding: 8px 10px; 
+  border-radius: 0;
+  transition: all 0.1s;
+  font-size: 0.9em; 
+  margin-bottom: 0; 
+  width: 15%;
+  margin-right:10px ; 
+}
+
+.hologram .btn:hover {
+  background-color: #00FF41; 
+  color: #000000;
+  box-shadow: 0 0 15px #00FF41; 
+}
+
+div.section-joinID {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start; 
+  text-align: left;
+}
+
+
+div.section-joinPublic {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   text-align: center;
-  padding: 20px;
 }
 
-button.logout-button{
-  font-family: 'PressStart2P', sans-serif;
-  background-color: rgba(255, 255, 255, 0.8);
-  color: black;
-  border: 2px solid black;
+
+div.section-create {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end; 
+  text-align: right; 
+}
+
+div.section-joinID .btn,
+div.section-joinPublic .btn,
+div.section-create .btn {
+  width: auto; 
+}
+
+.selection.hologram > h2 {
+  grid-column: 1 / -1; 
+  text-align: center;
+}
+
+.selection.hologram > div:last-of-type {
+  grid-column: 1 / -1; 
+  text-align: center;
+
+  display: flex;
+  justify-content: center;
+  gap: 150px; 
+}
+
+.selection.hologram > div:last-of-type .btn {
+  margin-left: 1px;
+  margin-right: 10px;
+}
+
+.roomList {
+  list-style: none; 
+  padding: 5px; 
+  margin: 0 0 10px 0; 
+  max-height: 110px; 
+  overflow-y: auto;  
+  width: 100%; 
+  box-sizing: border-box;
+  border: 1px solid rgba(0, 255, 65, 0.2);
+  background: rgba(0, 0, 0, 0.1);
+  text-align: left; 
+}
+
+.roomList .room {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   padding: 8px 10px;
-  border-radius: 5px;
-  cursor: pointer;
-  font-size: 0.6em;
-  margin: 10px 0 0 5px;
-  transition: background-color 0.2s, color 0.2s;
-  position: absolute;
-  left: 1%;
-  top: 85%;
+  font-size: 0.8em; 
+  border-bottom: 1px solid rgba(0, 255, 65, 0.2);
+}
+.roomList .room:last-child {
+  border-bottom: none;
 }
 
-button.joinId-button{
-  font-family: 'PressStart2P', sans-serif;
-  background-color: rgba(255, 255, 255, 0.8);
-  color: black;
-  border: 2px solid black;
-  border-radius: 5px;
-  padding: 7px 10px;
-  margin: 5px;
-  cursor: pointer;
+.roomList .room .btn-small {
+  width: 1%;
+  padding: 10px 8px; 
   font-size: 0.8em;
-  transition: background-color 0.2s, color 0.2s;
+  margin-left: 20px; 
+  flex-shrink: 0; 
 }
 
-button.joinPublic-button{
+.roomList::-webkit-scrollbar {
+  width: 8px;
+}
+
+.roomList::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.3);
+}
+
+.roomList::-webkit-scrollbar-thumb {
+  background-color: #00FF41;
+  border: 1px solid rgba(0, 255, 65, 0.8);
+}
+
+.roomList::-webkit-scrollbar-thumb:hover {
+  background-color: #5eff8b;
+}
+
+.btn-profile-top {
+ position: absolute !important; 
+  top: 15px !important;
+  right: 15px !important;
+  left: auto !important; 
+  margin: 0 !important; 
+  width: 10% !important;
   font-family: 'PressStart2P', sans-serif;
-  background-color: rgba(255, 255, 255, 0.8);
-  color: black;
-  border: 2px solid black;
-  border-radius: 5px;
-  padding: 5px 7px 5px 10px;
+  font-size: 0.55em !important; 
+  padding: 5px 7px !important; 
+  background-color: rgba(0, 20, 0, 0.6) !important; 
+  border: 1px solid rgba(0, 255, 65, 0.5) !important; 
+  color: #00FF41 !important;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  z-index: 20;
   cursor: pointer;
-  font-size: 0.8em;
-  transition: background-color 0.2s, color 0.2s;
 }
 
-button.actualizar-button{
-  font-family: 'PressStart2P', sans-serif;
-  background-color: rgba(255, 255, 255, 0.8);
-  color: black;
-  border: 2px solid black;
-  border-radius: 5px;
-  padding: 7px 10px;
-  margin: 5px;
-  cursor: pointer;
-  font-size: 0.8em;
-  transition: background-color 0.2s, color 0.2s;
+.btn-profile-top:hover {
+  background-color: #00FF41 !important; 
+  color: #000000 !important;
+  box-shadow: 0 0 15px #00FF41 !important; 
 }
-
-button.crear-button{
-  font-family: 'PressStart2P', sans-serif;
-  background-color: rgba(255, 255, 255, 0.8);
-  color: black;
-  border: 2px solid black;
-  border-radius: 5px;
-  padding: 7px 10px;
-  margin: 5px;
-  cursor: pointer;
-  font-size: 0.8em;
-  transition: background-color 0.2s, color 0.2s;
-}
-
-ul.roomList{
-    background-color: rgba(255, 255, 255, 0.8);
-    border: 2px solid black;
-    padding: 20px 30px;
-    border-radius: 5px;
-}
-
-li.room{
-  padding: 5px;
-}
-
-h3{
-  text-decoration: underline;
- }

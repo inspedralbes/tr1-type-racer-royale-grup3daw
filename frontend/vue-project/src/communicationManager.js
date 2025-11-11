@@ -282,6 +282,10 @@ export const communicationManager = {
     return apiClient.get(`/scores/history/${playerName}`);
   },
 
+  async sendGameStats(stats) {
+    return apiClient.post('/stats/game', stats);
+  },
+
   // --- Métodos de Salas (REST) ---
 
   // Obtiene la lista de salas públicas.
@@ -368,6 +372,20 @@ export const communicationManager = {
   sendReadyStatus(isReady) {
     const roomStore = useRoomStore();
     socket.emit('set-ready', { roomId: roomStore.roomId, isReady });
+  },
+
+  // --- Power-Up Methods (Socket.IO) ---
+
+  sendPowerUp(powerUpData) {
+    socket.emit('powerUp', powerUpData);
+  },
+
+  onReceivePowerUp(callback) {
+    socket.on('receivePowerUp', callback);
+  },
+
+  offReceivePowerUp(callback) {
+    socket.off('receivePowerUp', callback);
   },
 
   // --- Métodos de Socket.IO ---
