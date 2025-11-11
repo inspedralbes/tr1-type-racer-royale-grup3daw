@@ -16,9 +16,5 @@ COPY --from=build-stage /app/dist /usr/share/nginx/html
 RUN rm /etc/nginx/conf.d/default.conf
 # Copy the nginx configuration
 COPY nginx.conf /etc/nginx/conf.d/default.conf
-# Create htpasswd file with credentials from environment variables
-ARG ADMINER_USER
-ARG ADMINER_PASSWORD
-RUN htpasswd -cb /etc/nginx/.htpasswd ${ADMINER_USER:-admin} ${ADMINER_PASSWORD:-adminpass}
 EXPOSE 80
 CMD ["nginx", "-g", "daemon off;"]

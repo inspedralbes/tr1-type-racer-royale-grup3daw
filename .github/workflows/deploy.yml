@@ -3,7 +3,7 @@ name: Deploy to Production
 on:
   push:
     branches:
-      - main # Cambiado de 'main' para las pruebas
+      - main 
 
 jobs:
   deploy:
@@ -43,7 +43,6 @@ jobs:
             # Create .env file from GitHub Secrets
             echo "Creating .env file..."
             echo "NODE_ENV=${{ secrets.NODE_ENV }}" > .env
-            echo "PORT=${{ secrets.PORT }}" >> .env
             echo "FRONTEND_URL=${{ secrets.FRONTEND_URL }}" >> .env
             echo "MYSQL_ROOT_PASSWORD=${{ secrets.MYSQL_ROOT_PASSWORD }}" >> .env
             echo "MYSQL_PASSWORD=${{ secrets.MYSQL_PASSWORD }}" >> .env
@@ -52,17 +51,22 @@ jobs:
             # Las variables MONGO_ROOT_* son necesarias para la autenticación de MongoDB
             echo "MONGO_ROOT_USER=${{ secrets.MONGO_ROOT_USER }}" >> .env
             echo "MONGO_ROOT_PASSWORD=${{ secrets.MONGO_ROOT_PASSWORD }}" >> .env
-            echo "MONGO_URI=${{ secrets.MONGO_URI }}" >> .env
+            echo "MONGO_URI=mongodb://${{ secrets.MONGO_ROOT_USER }}:${{ secrets.MONGO_ROOT_PASSWORD }}@mongo:27017/" >> .env
+            # Credenciales para Adminer (autenticación básica en Nginx)
+            echo "ADMINER_USER=${{ secrets.ADMINER_USER }}" >> .env
+            echo "ADMINER_PASSWORD=${{ secrets.ADMINER_PASSWORD }}" >> .env
             # Las variables VITE_* son cruciales para el build del frontend
             echo "VITE_NODE_ENV=${{ secrets.NODE_ENV }}" >> .env
             echo "VITE_API_URL=${{ secrets.FRONTEND_URL }}" >> .env
             echo "VITE_SOCKET_URL=${{ secrets.FRONTEND_URL }}" >> .env
+            # JWT secret used by the backend for signing tokens
+            echo "JWT_SECRET=${{ secrets.JWT_SECRET }}" >> .env
 
             # Run docker-compose
             echo "Starting docker-compose..."
             # Actualiza los servicios: reconstruye las imágenes que han cambiado y reinicia
             # los contenedores correspondientes. Los datos de las bases de datos se conservan.
-            docker compose -f docker-compose.prod.yml up --build -d --remove-orphans
+            docker compose --env-file ./.env -f docker-compose.prod.yml up --build -d --remove-orphans
 
-            # Limpia cualquier otra imagen de Docker que no se esté utilizando.
+            # Limpia cualquier otra imagen de Docker que no se esté utilizando
             docker image prune -f

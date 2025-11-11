@@ -104,7 +104,6 @@ const joinRoomById = (roomId) => {
   communicationManager.joinRoom(roomId);
   sessionStore.setRoomId(roomId);
   sessionStore.setEtapa('lobby');
-  router.push(`/game/lobby/${roomId}`);
 };
 
 /**
