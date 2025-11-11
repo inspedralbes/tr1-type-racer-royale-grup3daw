@@ -1,34 +1,38 @@
 <template>
-  <div class="player-stats-container">
-    <button class="back-button" @click="goBack">←</button>
-    <h2>Estadísticas de Jugadores</h2>
-    <div v-if="loading">Cargando estadísticas...</div>
-    <div v-else-if="error">Error al cargar estadísticas: {{ error }}</div>
-    <div v-else>
-      <!-- Gráfico de Ranking General -->
-      <div class="chart-container">
-        <h3>Ranking por Puntuación Media</h3>
-        <div id="chart"></div>
-      </div>
+  <div class="stats-background">
+    <div class="centra-console-panel">
+      <div class="stats-container hologram">
+        <button class="back-button" @click="goBack">Volver</button>
+        <h2>Estadísticas de Jugadores</h2>
+        <div v-if="loading">Cargando estadísticas...</div>
+        <div v-else-if="error">Error al cargar estadísticas: {{ error }}</div>
+        <div v-else>
+          <!-- Gráfico de Ranking General -->
+          <div class="chart-container">
+            <h3>Ranking por Puntuación Media</h3>
+            <div id="chart"></div>
+          </div>
 
-      <!-- Gráfico de Evolución Personal -->
-      <div class="chart-container">
-        <h3>Evolución de WPM de {{ sessionStore.playerName }}</h3>
-        <div id="wpm-chart"></div>
-        <p v-if="scoreHistory.length < 2">No hay suficientes datos para mostrar la evolución.</p>
-      </div>
+          <!-- Gráfico de Evolución Personal -->
+          <div class="chart-container">
+            <h3>Evolución de WPM de {{ sessionStore.playerName }}</h3>
+            <div id="wpm-chart"></div>
+            <p v-if="scoreHistory.length < 2">No hay suficientes datos para mostrar la evolución.</p>
+          </div>
 
-      <!-- Lista de Estadísticas (opcional, se puede mantener o quitar) -->
-      <ul class="stats-list">
-        <li v-for="stat in playerStats" :key="stat._id">
-          <h3>{{ stat._id }}</h3>
-          <p>Partidas Jugadas: {{ stat.totalGames }}</p>
-          <p>Puntuación Media: {{ stat.avgScore ? stat.avgScore.toFixed(2) : 0 }}</p>
-          <p>WPM Media: {{ stat.avgWpm ? stat.avgWpm.toFixed(2) : 0 }}</p>
-          <p>Mejor Puntuación: {{ stat.maxScore ?? 0 }}</p>
-          <p>Mejor WPM: {{ stat.maxWpm ?? 0 }}</p>
-        </li>
-      </ul>
+          <!-- Lista de Estadísticas (opcional, se puede mantener o quitar) -->
+          <ul class="stats-list">
+            <li v-for="stat in playerStats" :key="stat._id">
+              <h3>{{ stat._id }}</h3>
+              <p>Partidas Jugadas: {{ stat.totalGames }}</p>
+              <p>Puntuación Media: {{ stat.avgScore ? stat.avgScore.toFixed(2) : 0 }}</p>
+              <p>WPM Media: {{ stat.avgWpm ? stat.avgWpm.toFixed(2) : 0 }}</p>
+              <p>Mejor Puntuación: {{ stat.maxScore ?? 0 }}</p>
+              <p>Mejor WPM: {{ stat.maxWpm ?? 0 }}</p>
+            </li>
+          </ul>
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -231,44 +235,5 @@ onUnmounted(() => {
 </script>
 
 <!-- Global styles for D3 elements appended to the body or for general line styles -->
-<style>
-.tooltip {
-  position: absolute;
-  background-color: #3a3f47;
-  color: #ffffff;
-  padding: 10px;
-  border-radius: 5px;
-  pointer-events: none;
-  opacity: 0;
-}
-.line {
-  fill: none;
-  stroke-width: 2px;
-}
-.wpm-line {
-  stroke: #61dafb; /* Azul */
-}
-</style>
-
-<style scoped>
-.player-stats-container {
-  padding: 20px;
-  color: #ffffff;
-}
-.chart-container {
-  margin-bottom: 40px;
-  background-color: #2c2f36;
-  padding: 20px;
-  border-radius: 8px;
-}
-.stats-list {
-  list-style: none;
-  padding: 0;
-}
-.stats-list li {
-  background-color: #3a3f47;
-  padding: 15px;
-  margin-bottom: 10px;
-  border-radius: 5px;
-}
+<style src="../styles/styleStats.css">
 </style>

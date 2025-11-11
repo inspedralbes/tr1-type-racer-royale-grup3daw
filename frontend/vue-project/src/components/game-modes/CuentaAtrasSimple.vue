@@ -265,6 +265,23 @@ import { communicationManager } from '../../communicationManager';
         return estatDelJoc.value.paraules[estatDelJoc.value.indexParaulaActiva];
     });
 
+    // Computed para obtener la URL de la nave/avatar del jugador actual
+    const playerShipSrc = computed(() => {
+        try {
+            const nameToFind = playerName.value;
+            const player = jugadoresStore.value.find(j => j.name === nameToFind) || {};
+            const avatar = player.avatar || 'nave';
+            const color = player.color || 'Azul';
+            if (avatar === 'noImage') {
+                return new URL('../../img/noImage.png', import.meta.url).href;
+            }
+            const filename = `${avatar}${color}.png`;
+            return new URL(`../../img/${filename}`, import.meta.url).href;
+        } catch (e) {
+            return null;
+        }
+    });
+
     let temps = 0;
     /**
      * @description Inicia el cronómetro para medir el tiempo de escritura de una palabra.
@@ -394,6 +411,8 @@ import { communicationManager } from '../../communicationManager';
                             </span>
                         </h1>
                         <input type="text" v-model="estatDelJoc.textEntrat" @input="validarProgres" autofocus />
+                        <!-- Mostrar la nave seleccionada por el jugador debajo del input -->
+                        <img v-if="playerShipSrc" :src="playerShipSrc" alt="Nave seleccionada" class="player-ship" />
                     </div>
 
                     <div class="puntuacions">
