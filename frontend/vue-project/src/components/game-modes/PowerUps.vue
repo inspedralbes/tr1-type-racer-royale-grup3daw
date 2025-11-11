@@ -159,14 +159,16 @@
             wpm: wpm,
         };
 
-        try {
-            await communicationManager.sendGameStats(gameStats);
-        } catch (error) {
-            console.error("Error sending game stats:", error);
-            notificationStore.pushNotification({
-                type: 'error',
-                message: 'No se pudieron guardar las estadísticas de la partida.',
-            });
+        if (sessionStore.email) {
+            try {
+                await communicationManager.sendGameStats(gameStats);
+            } catch (error) {
+                console.error("Error sending game stats:", error);
+                notificationStore.pushNotification({
+                    type: 'error',
+                    message: 'No se pudieron guardar las estadísticas de la partida.',
+                });
+            }
         }
 
         const finalScores = jugadoresStore.value.map(p => ({

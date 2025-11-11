@@ -212,15 +212,17 @@ import { communicationManager } from '../../communicationManager';
             wpm: wpm,
         };
 
-        try {
-            await communicationManager.sendGameStats(gameStats);
-        } catch (error) {
-            console.error("Error sending game stats:", error);
-            const notificationStore = useNotificationStore();
-            notificationStore.pushNotification({
-                type: 'error',
-                message: 'No se pudieron guardar las estadísticas de la partida.',
-            });
+        if (sessionStore.email) {
+            try {
+                await communicationManager.sendGameStats(gameStats);
+            } catch (error) {
+                console.error("Error sending game stats:", error);
+                const notificationStore = useNotificationStore();
+                notificationStore.pushNotification({
+                    type: 'error',
+                    message: 'No se pudieron guardar las estadísticas de la partida.',
+                });
+            }
         }
 
         switch (currentGameMode.value) {
