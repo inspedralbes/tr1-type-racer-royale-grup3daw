@@ -79,14 +79,28 @@
     });
 
     watch([() => props.words, () => props.roomState?.isPlaying], ([newWords, newIsPlaying]) => {
+      console.log('PowerUps.vue watch triggered. props.wordsLoaded:', props.wordsLoaded, 'newWords:', newWords, 'newIsPlaying:', newIsPlaying, 'gameEnded:', gameEnded.value);
       if (props.wordsLoaded && newWords && newIsPlaying && !gameEnded.value) {
+        console.log('Words loaded and game is playing. Initializing game.');
         initializeGame();
+      } else {
+        console.log('Conditions not met for initializeGame in PowerUps.vue.');
       }
     }, { immediate: true, deep: true });
 
     function initializeGame() {
-        initializeWords(props.words);
-        startGameTimer();
+        switch (currentGameMode.value) {
+            case 'powerUps':
+                initializeWords(props.words);
+                startGameTimer();
+                break;
+            default:
+                console.warn('Modo de juego desconocido en PowerUps.vue:', currentGameMode.value);
+                // Fallback a la inicialización por defecto
+                initializeWords(props.words);
+                startGameTimer();
+                break;
+        }
     }
 
     const initializeTimer = () => {

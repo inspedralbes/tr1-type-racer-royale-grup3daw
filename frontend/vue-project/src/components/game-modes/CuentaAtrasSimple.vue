@@ -92,24 +92,8 @@ import { communicationManager } from '../../communicationManager';
      * @description Inicializa el juego, cargando las palabras y comenzando el temporizador.
      */
     function initializeGame() {
-        switch (currentGameMode.value) {
-            case 'cuentaAtrasSimple':
-                initializeWords(props.words);
-                startGameTimer();
-                break;
-            case 'modoJuego2':
-                // Lógica de inicialización para el modo de juego 2
-                console.log('Initializing Modo de Juego 2');
-                break;
-            case 'modoJuego3':
-                // Lógica de inicialización para el modo de juego 3
-                console.log('Initializing Modo de Juego 3');
-                break;
-            default:
-                console.warn('Modo de juego desconocido:', currentGameMode.value);
-                initializeWords(props.words);
-                startGameTimer();
-        }
+        initializeWords(props.words);
+        startGameTimer();
     }
 
     /**

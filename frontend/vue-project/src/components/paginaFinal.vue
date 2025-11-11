@@ -50,6 +50,8 @@ const ranking = computed(() => {
 
 function volverAJugar() {
   gameStore.setFinalResults([]);
+  gameStore.setWords(null);
+  gameStore.setWordsLoaded(false);
   sessionStore.setEtapa('lobby');
 }
 </script>

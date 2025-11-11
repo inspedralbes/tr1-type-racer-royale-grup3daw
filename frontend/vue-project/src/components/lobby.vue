@@ -26,7 +26,7 @@
         <button class="btn" v-if="isAdmin" @click="iniciarJuego" :disabled="!isAdmin || !areAllPlayersReady">Començar Joc</button>
       </div>
     </div>
-    <img class="naves" :src="naveActual" @click="cambiarNave" />
+
   </div>
 </template>
 

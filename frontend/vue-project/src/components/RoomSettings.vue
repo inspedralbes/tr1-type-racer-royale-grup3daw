@@ -101,7 +101,7 @@ const goToProfile = () => {
 // ---- Define Game Modes as an array ----
 const gameModes = [
   { value: 'cuentaAtrasSimple', name: 'Cuenta Atrás Simple' },
-  { value: 'modoJuego2', name: 'Modo de Juego 2' },
+  { value: 'powerUps', name: 'Power-Ups' },
   { value: 'modoJuego3', name: 'Modo de Juego 3' }
 ];
 
