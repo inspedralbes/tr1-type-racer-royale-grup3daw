@@ -1,9 +1,32 @@
+/* === Animations === */
+@keyframes march-x {
+  from { background-position-x: 0; }
+  to   { background-position-x: 16px; } 
+}
+
+@keyframes march-y {
+  from { background-position-y: 0; }
+  to   { background-position-y: 16px; } 
+}
+
+/* === UPDATED: Animation now includes the rotation === */
+@keyframes modal-fade-in {
+  from { 
+    opacity: 0; 
+    transform: rotateX(-25deg) scale(0.9); 
+  }
+  to   { 
+    opacity: 1; 
+    transform: rotateX(-25deg) scale(1);
+  }
+}
+
 /*
- * Base styles for the notification center
+ * Base styles for the notification center (toasts)
  */
 .notification-center {
   position: fixed;
-  top: 1rem;
+  top: 6rem;
   left: 50%;
   transform: translateX(-50%);
   z-index: 10000;
@@ -15,119 +38,228 @@
 }
 
 /*
- * Default "hologram" style for all notifications
+ * Default/Success/Info notification (toasts)
  */
 .notification {
-  min-width: 280px;
-  padding: 0.8rem 1rem;
+  border: 2px solid transparent; 
+  background-color: transparent;
   border-radius: 0;
+  position: relative; 
+  min-width: 280px;
+  transform-origin: center;
+}
+/* ... (toast border styles ::before/::after are unchanged) ... */
+.notification::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  z-index: 2;
+  background-image:
+    repeating-linear-gradient(90deg, #00FF41, #00FF41 8px, transparent 8px, transparent 16px),
+    repeating-linear-gradient(90deg, #00FF41, #00FF41 8px, transparent 8px, transparent 16px);
+  background-size: 100% 2px;
+  background-position: 0 0, 0 100%;
+  background-repeat: no-repeat;
+  animation: march-x 0.5s linear infinite;
+  pointer-events: none;
+}
+.notification::after {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  z-index: 2;
+  background-image:
+    repeating-linear-gradient(0deg, #00FF41, #00FF41 8px, transparent 8px, transparent 16px),
+    repeating-linear-gradient(0deg, #00FF41, #00FF41 8px, transparent 8px, transparent 16px);
+  background-size: 2px 100%;
+  background-position: 0 0, 100% 0;
+  background-repeat: no-repeat;
+  animation: march-y 0.5s linear infinite;
+  pointer-events: none;
+}
+.notification-content {
   background-color: rgba(0, 0, 0, 0.9);
-  border: 1px solid rgba(0, 255, 65, 0.8);
+  background-image: linear-gradient(rgba(0, 255, 65, 0.05) 1px, transparent 1px),
+                    linear-gradient(90deg, rgba(0, 255, 65, 0.05) 1px, transparent 1px);
+  background-size: 5px 5px;
   box-shadow: 0 0 10px rgba(0, 255, 65, 0.5);
   color: #00FF41;
   text-shadow: 0 0 5px #00FF41;
+  padding: 0.8rem 1rem;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  transform-origin: center;
+  position: relative;
+  z-index: 1;
 }
-
-/*
- * Override for "info" notifications (cyan)
- */
-.notification.info {
-  border-color: rgba(0, 255, 255, 0.8);
+.notification.info .notification-content {
+  background-image: linear-gradient(rgba(0, 255, 255, 0.05) 1px, transparent 1px),
+                    linear-gradient(90deg, rgba(0, 255, 255, 0.05) 1px, transparent 1px);
   box-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
   color: #00FFFF;
   text-shadow: 0 0 5px #00FFFF;
 }
+.notification.info::before {
+  background-image:
+    repeating-linear-gradient(90deg, #00FFFF, #00FFFF 8px, transparent 8px, transparent 16px),
+    repeating-linear-gradient(90deg, #00FFFF, #00FFFF 8px, transparent 8px, transparent 16px);
+}
+.notification.info::after {
+  background-image:
+    repeating-linear-gradient(0deg, #00FFFF, #00FFFF 8px, transparent 8px, transparent 16px),
+    repeating-linear-gradient(0deg, #00FFFF, #00FFFF 8px, transparent 8px, transparent 16px);
+}
+
 
 /*
- * Override for "error" notifications (red)
+ * * === NEW: CRITICAL ERROR MODAL === *
  */
+
+/* 1. NEW: The Perspective Wrapper */
+.error-modal-perspective-wrapper {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  perspective: 1000px;
+  perspective-origin: center center;
+  z-index: 10000;
+}
+
+/* 2. NEW: The Dark Overlay (moved to wrapper) */
+.error-modal-perspective-wrapper::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 1; /* Sits behind the modal */
+}
+
+/* 3. The Modal Container */
 .notification.error {
-  border-color: rgba(255, 65, 65, 0.8);
-  box-shadow: 0 0 10px rgba(255, 65, 65, 0.5);
+  /* No longer fixed */
+  position: relative; 
+  z-index: 2; /* Sits on top of the overlay */
+  
+  /* Remove old positioning */
+  top: auto;
+  left: auto;
+
+  /* This is the new 3D transform */
+  transform: rotateX(-25deg);
+  transform-origin: center center;
+
+  /* Keep other styles */
+  width: 90vw;
+  max-width: 400px;
+  border: 2px solid rgba(255, 65, 65, 0.8);
+  
+  /* Apply the updated animation */
+  animation: modal-fade-in 0.3s cubic-bezier(0.5, 0, 0.5, 1);
+}
+
+/* 4. Remove the old overlay rule */
+.notification.error::before {
+  display: none;
+}
+
+/* 5. Remove the other border animation */
+.notification.error::after {
+  display: none;
+}
+
+/* 6. The Modal Content (styles are unchanged) */
+.notification.error .notification-content {
+  background-image: linear-gradient(rgba(255, 65, 65, 0.1) 1px, transparent 1px),
+                    linear-gradient(90deg, rgba(255, 65, 65, 0.1) 1px, transparent 1px);
+  background-size: 5px 5px;
+  box-shadow: 0 0 15px rgba(255, 65, 65, 0.5);
   color: #FF4141;
   text-shadow: 0 0 5px #FF4141;
+  flex-direction: column;
+  padding: 1.5rem;
+  gap: 1rem;
+}
+/* ... (rest of .error styles are unchanged) ... */
+.notification.error .error-title {
+  margin: 0;
+  font-size: 1.5rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid rgba(255, 65, 65, 0.5);
+}
+.notification.error .message {
+  font-size: 1rem;
+  text-align: center;
+  margin-right: 0;
+}
+.notification.error .hologram-button-group {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  margin-top: 1rem;
+}
+.notification.error .btn {
+  background-color: rgba(0, 0, 0, 0.3);
+  color: #FF4141;               
+  border: 2px solid #FF4141;    
+  padding: 10px 15px; 
+  border-radius: 0;
+  transition: all 0.1s;
+  font-size: 1em; 
+  width: 50%;
+  min-width: 100px;
+  cursor: pointer;
+  font-family: inherit;
+}
+.notification.error .btn:hover {
+  background-color: #FF4141; 
+  color: #000000;
+  box-shadow: 0 0 15px #FF4141; 
 }
 
 /*
- * Close button (default/success)
+ * Close button (for toasts only)
  */
 .notification .close {
   background: transparent;
   border: none;
-  color: rgba(0, 255, 65, 0.8);
+  color: inherit; 
+  opacity: 0.8;
   font-size: 1.3rem;
   cursor: pointer;
   padding: 0 5px;
   line-height: 1;
   transition: all 0.1s;
 }
-
 .notification .close:hover {
-  color: #00FF41;
-  background-color: rgba(0, 255, 65, 0.1);
-}
-
-/* Close button (info) */
-.notification.info .close {
-  color: rgba(0, 255, 255, 0.8);
-}
-.notification.info .close:hover {
-  color: #00FFFF;
-  background-color: rgba(0, 255, 255, 0.1);
-}
-
-/* Close button (error) */
-.notification.error .close {
-  color: rgba(255, 65, 65, 0.8);
-}
-.notification.error .close:hover {
-  color: #FF4141;
-  background-color: rgba(255, 65, 65, 0.1);
+  opacity: 1;
 }
 
 /*
- * Message text
+ * Message text (for toasts)
  */
 .notification .message {
   flex: 1;
   margin-right: 0.5rem;
 }
 
-
-/* * === HOLOGRAM EXPAND ANIMATION === 
- * === THIS SECTION IS UPDATED ===
- */
-
-/* 1. Entering: Start state (hidden and scaled to zero width) */
+/* * === HOLOGRAM EXPAND ANIMATION (for toasts) === */
 .hologram-expand-enter-from {
   opacity: 0;
   transform: scaleX(0);
 }
-
-/* 2. Leaving: End state (hidden and scaled to zero width) */
 .hologram-expand-leave-to {
   opacity: 0;
   transform: scaleX(0);
 }
-
-/* 3. Define the animation for ENTERING (with delay) */
 .hologram-expand-enter-active {
   transition: all 0.4s cubic-bezier(0.5, 0, 0.5, 1);
-  
-  /* THIS IS THE 0.5 SECOND DELAY BEFORE THE ANIMATION STARTS */
   transition-delay: 0.5s; 
 }
-
-/* 4. Define the animation for LEAVING (no delay) */
 .hologram-expand-leave-active {
   transition: all 0.4s cubic-bezier(0.5, 0, 0.5, 1);
 }
-
-/* 5. Make sure leaving items don't break layout */
 .hologram-expand-leave-active {
   position: absolute;
 }
