@@ -1,6 +1,9 @@
 <script setup>
+    // === MODIFICADO ===
     // Importaciones de Vue para la reactividad y gestión del ciclo de vida del componente.
-    import { ref, computed, onMounted, watch, onUnmounted } from 'vue';
+    // Añadido 'nextTick' para manejar el reinicio de la animación
+    import { ref, computed, onMounted, watch, onUnmounted, nextTick } from 'vue';
+    
     // Importación de Pinia para desestructurar propiedades reactivas de los stores.
     import { storeToRefs } from 'pinia';
         import { useRouter } from 'vue-router';
@@ -59,6 +62,10 @@ import { communicationManager } from '../../communicationManager';
         errorTotal: 0, // Contador total de errores.
     });
 
+    // === AÑADIDO ===
+    // Referencia al elemento <h1> del meteorito/palabra
+    const meteorWordEl = ref(null);
+
     // Tiempo restante para el juego, inicializado con el tiempo de la sala.
     const timeLeft = ref(props.roomState?.time ?? 0);
     // Puntuación del jugador actual, computada a partir del store de la sala.
@@ -88,12 +95,48 @@ import { communicationManager } from '../../communicationManager';
       }
     }, { immediate: true, deep: true });
 
+    // === AÑADIDO ===
+    /**
+     * @description Observador que se activa CADA VEZ que cambia la palabra (indexParaulaActiva).
+     * Se encarga de reiniciar la animación de caída.
+     */
+    watch(() => estatDelJoc.value.indexParaulaActiva, async () => {
+        // Esperamos a que Vue actualice el DOM con el contenido de la nueva palabra
+        await nextTick(); 
+        
+        if (meteorWordEl.value) {
+            // 1. Quitar la clase de animación
+            meteorWordEl.value.classList.remove('fall-animation');
+            // 2. Forzar un "reflow" (truco para que el navegador "olvide" la animación)
+            void meteorWordEl.value.offsetWidth; 
+            // 3. Volver a añadir la clase para que se reproduzca de nuevo
+            meteorWordEl.value.classList.add('fall-animation');
+        }
+    });
+
+
     /**
      * @description Inicializa el juego, cargando las palabras y comenzando el temporizador.
      */
     function initializeGame() {
-        initializeWords(props.words);
-        startGameTimer();
+        switch (currentGameMode.value) {
+            case 'cuentaAtrasSimple':
+                initializeWords(props.words);
+                startGameTimer();
+                break;
+            case 'modoJuego2':
+                // Lógica de inicialización para el modo de juego 2
+                console.log('Initializing Modo de Juego 2');
+                break;
+            case 'modoJuego3':
+                // Lógica de inicialización para el modo de juego 3
+                console.log('Initializing Modo de Juego 3');
+                break;
+            default:
+                console.warn('Modo de juego desconocido:', currentGameMode.value);
+                initializeWords(props.words);
+                startGameTimer();
+        }
     }
 
     /**
@@ -389,13 +432,13 @@ import { communicationManager } from '../../communicationManager';
             <main class="joc" v-if="estatDelJoc.paraules.length > 0">
                 <div class="game-content-wrapper">
                     <div class="paraula-actual">
-                        <h1>
+                        
+                        <h1 ref="meteorWordEl">
                             <span v-for="(lletra, index) in paraulaActiva.text" :key="index" :class="obtenirClasseLletra(lletra, index)">
                                 {{ lletra }}
                             </span>
                         </h1>
                         <input type="text" v-model="estatDelJoc.textEntrat" @input="validarProgres" autofocus />
-                        <!-- Mostrar la nave seleccionada por el jugador debajo del input -->
                         <img v-if="playerShipSrc" :src="playerShipSrc" alt="Nave seleccionada" class="player-ship" />
                     </div>
 
@@ -427,5 +470,4 @@ import { communicationManager } from '../../communicationManager';
     
 </template>
 
-<!-- Importa los estilos específicos para el componente de juego. -->
 <style src="../../styles/stylesCuentaAtrasSimple.css"></style>
