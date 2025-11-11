@@ -43,6 +43,13 @@ import { communicationManager } from '../../communicationManager';
    const currentGameMode = computed(() => props.gameMode);
 
 
+   // === AÑADIDO: Computed para ordenar jugadores por puntuación ===
+   const jugadoresOrdenats = computed(() => {
+       // Hacemos una copia antes de ordenar para no mutar el store
+       return [...jugadoresStore.value].sort((a, b) => b.score - a.score);
+   });
+
+
    // Definición de puntos por dificultad de palabra.
    const POINTS_PER_DIFFICULTY = {
        facil: 5,
@@ -460,29 +467,43 @@ import { communicationManager } from '../../communicationManager';
 <template>
    <div class="main-background">
        <div class="game-container">
-   <h2>Compte enrere, {{ playerName }}!</h2>
+           <h2>Compte enrere, {{ playerName }}!</h2>
 
 
-       <div v-if="!gameEnded">
-           <div class="game-info">
-               <p>Temps restant: {{ timeLeft }}s</p>
-               <p>Puntuació: {{ score }}</p>
-           </div>
-           <main class="joc" v-if="estatDelJoc.paraules.length > 0">
-               <div class="game-content-wrapper">
-                   <div class="paraula-actual">
-                      
-                       <h1 ref="meteorWordEl" class="fall-animation">
-                           <span v-for="(lletra, index) in paraulaActiva.text" :key="index" :class="obtenirClasseLletra(lletra, index)">
-                               {{ lletra }}
-                           </span>
-                       </h1>
-                       <input type="text" v-model="estatDelJoc.textEntrat" @input="validarProgres" autofocus />
-                       <img v-if="playerShipSrc" :src="playerShipSrc" alt="Nave seleccionada" class="player-ship" />
-                   </div>
+           <div v-if="!gameEnded">
+               <div class="game-info">
+                   <p>Temps restant: {{ timeLeft }}s</p>
+                   <p>Puntuació: {{ score }}</p>
                </div>
-           </main>
-       </div>
+
+
+               <div class="puntuacions">
+                   <h2>Puntuacions</h2>
+                   <ul id="llista-jugadors">
+                       <li v-for="jugador in jugadoresOrdenats" :key="jugador.name">
+                           <span>{{ jugador.name }}</span>
+                           <strong>{{ jugador.score }}</strong>
+                       </li>
+                   </ul>
+               </div>
+               <main class="joc" v-if="estatDelJoc.paraules.length > 0">
+                   <div class="game-content-wrapper">
+                       <div class="paraula-actual">
+                          
+                           <h1 ref="meteorWordEl" class="fall-animation">
+                               <span v-for="(lletra, index) in paraulaActiva.text" :key="index" :class="obtenirClasseLletra(lletra, index)">
+                                   {{ lletra }}
+                               </span>
+                           </h1>
+                           <input type="text" v-model="estatDelJoc.textEntrat" @input="validarProgres" autofocus />
+                           <img v-if="playerShipSrc" :src="playerShipSrc" alt="Nave seleccionada" class="player-ship" />
+                       </div>
+                   </div>
+               </main>
+
+
+           </div>
        </div>
    </div>
 </template>
+<style src="../../styles/stylesCuentaAtrasSimple.css"></style>
