@@ -567,11 +567,11 @@
 @keyframes fallDown {
  0% {
    /* Empieza muy arriba y un poco más pequeño */
-   transform: translateY(-100vh);
+   transform: translateY(-100%);
  }
  100% {
    /* Llega a su posición normal */
-   transform: translateY(120px) scale(1);
+   transform: translateY(60%) scale(1);
    opacity: 1;
  }
 }  
