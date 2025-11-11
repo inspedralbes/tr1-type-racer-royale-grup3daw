@@ -9,7 +9,6 @@
   to   { background-position-y: 16px; } 
 }
 
-/* === UPDATED: Animation now includes the rotation === */
 @keyframes modal-fade-in {
   from { 
     opacity: 0; 
@@ -23,10 +22,11 @@
 
 /*
  * Base styles for the notification center (toasts)
+ * === THIS IS UPDATED ===
  */
 .notification-center {
   position: fixed;
-  top: 6rem;
+  top: 7.5rem; 
   left: 50%;
   transform: translateX(-50%);
   z-index: 10000;
@@ -35,10 +35,14 @@
   gap: 0.5rem;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   align-items: center; 
+  
+  /* === NEW: Add perspective for the toasts === */
+  perspective: 1000px;
 }
 
 /*
  * Default/Success/Info notification (toasts)
+ * === THIS IS UPDATED ===
  */
 .notification {
   border: 2px solid transparent; 
@@ -47,6 +51,9 @@
   position: relative; 
   min-width: 280px;
   transform-origin: center;
+  
+  /* === NEW: Apply the trapezium transform to all notifications === */
+  transform: rotateX(-25deg);
 }
 /* ... (toast border styles ::before/::after are unchanged) ... */
 .notification::before {
@@ -112,10 +119,10 @@
 
 
 /*
- * * === NEW: CRITICAL ERROR MODAL === *
+ * * === CRITICAL ERROR MODAL === *
  */
 
-/* 1. NEW: The Perspective Wrapper */
+/* 1. The Perspective Wrapper */
 .error-modal-perspective-wrapper {
   position: fixed;
   top: 0; left: 0; right: 0; bottom: 0;
@@ -125,9 +132,10 @@
   perspective: 1000px;
   perspective-origin: center center;
   z-index: 10000;
+  transform: translate(0, -5%);
 }
 
-/* 2. NEW: The Dark Overlay (moved to wrapper) */
+/* 2. The Dark Overlay (on the wrapper) */
 .error-modal-perspective-wrapper::before {
   content: '';
   position: absolute;
@@ -138,33 +146,27 @@
 
 /* 3. The Modal Container */
 .notification.error {
-  /* No longer fixed */
   position: relative; 
-  z-index: 2; /* Sits on top of the overlay */
-  
-  /* Remove old positioning */
+  z-index: 2; 
   top: auto;
   left: auto;
 
-  /* This is the new 3D transform */
-  transform: rotateX(-25deg);
+  /* === UPDATED: transform is now inherited from .notification === */
+  /* transform: rotateX(-25deg); */ 
   transform-origin: center center;
 
-  /* Keep other styles */
   width: 90vw;
   max-width: 400px;
   border: 2px solid rgba(255, 65, 65, 0.8);
-  
-  /* Apply the updated animation */
   animation: modal-fade-in 0.3s cubic-bezier(0.5, 0, 0.5, 1);
 }
 
-/* 4. Remove the old overlay rule */
+/* 4. Remove the old overlay rule from .notification.error */
 .notification.error::before {
   display: none;
 }
 
-/* 5. Remove the other border animation */
+/* 5. Remove the border animation from .notification.error */
 .notification.error::after {
   display: none;
 }
@@ -181,7 +183,6 @@
   padding: 1.5rem;
   gap: 1rem;
 }
-/* ... (rest of .error styles are unchanged) ... */
 .notification.error .error-title {
   margin: 0;
   font-size: 1.5rem;
@@ -245,14 +246,21 @@
 }
 
 /* * === HOLOGRAM EXPAND ANIMATION (for toasts) === */
+/* === THIS IS UPDATED === */
+
+/* 1. Entering: Start state (now includes rotation) */
 .hologram-expand-enter-from {
   opacity: 0;
-  transform: scaleX(0);
+  transform: rotateX(-25deg) scaleX(0);
 }
+
+/* 2. Leaving: End state (now includes rotation) */
 .hologram-expand-leave-to {
   opacity: 0;
-  transform: scaleX(0);
+  transform: rotateX(-25deg) scaleX(0);
 }
+
+/* ... (rest of animation is unchanged) ... */
 .hologram-expand-enter-active {
   transition: all 0.4s cubic-bezier(0.5, 0, 0.5, 1);
   transition-delay: 0.5s; 
