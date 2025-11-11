@@ -41,6 +41,9 @@
  justify-content: center;
  text-align: center;
  min-width: 0;
+ /* === MODIFICADO === */
+ /* Necesario para posicionar el disparo de forma absoluta dentro */
+ position: relative; 
 }
 
 
@@ -132,6 +135,9 @@
 
 /* Estilo para la nave del jugador */
 .player-ship {
+ /* === MODIFICADO === */
+ /* La nave necesita position: relative para que el disparo se posicione respecto a ella */
+ position: relative; 
  width: 55%;
  max-width: 40vw;
  display: block;
@@ -139,6 +145,48 @@
  filter: drop-shadow(0 6px 18px rgba(0,200,220,0.18));
  transition: transform 180ms ease, opacity 180ms ease;
  order: 2;                         /* Aparece en segundo lugar */
+}
+
+
+/* === MODIFICADO: Estilos para el disparo (Recto hacia arriba) === */
+.ship-shot {
+    position: fixed; /* Usamos fixed para que el JS 'left' y 'top' se basen en la ventana */
+    width: 3px; /* Grosor del disparo */
+    height: 60px; /* Longitud del disparo */
+    
+    /* Degradado vertical */
+    background: linear-gradient(to top, #00f0ff, transparent); /* Apunta hacia arriba */
+    
+    box-shadow: 0 0 8px #00f0ff, 0 0 15px #00f0ff80; /* Brillo */
+    border-radius: 2px;
+    z-index: 100; /* Asegura que esté por encima de otros elementos */
+    
+    /* Esto es clave:
+      1. Centra horizontalmente (translateX -50%)
+      2. Mueve el disparo para que su *base* (translateY -100%)
+         esté en la coordenada 'top' que da el JS.
+    */
+    transform: translateX(-50%) translateY(-100%);
+    
+    /* Origen de la transformación: Arriba y al centro */
+    transform-origin: 50% 100%; /* Base del disparo */
+    
+    animation: fireShot 0.5s forwards ease-out; /* Animación de disparo */
+}
+
+/* === MODIFICADO: Keyframes para disparo (Recto hacia arriba) === */
+@keyframes fireShot {
+    0% {
+        opacity: 1;
+        /* La 'transform' base del .ship-shot ya lo posiciona */
+    }
+    100% {
+        opacity: 0;
+        /* Mantenemos el centrado horizontal
+          Movemos el disparo 500px hacia arriba DESDE SU POSICIÓN INICIAL
+        */
+        transform: translateX(-50%) translateY(-500px);
+    }
 }
 
 
@@ -565,26 +613,30 @@
 }
 
 
-/* === AÑADIDO: Keyframes para la caída === */
+/* === CORREGIDO: Keyframes para la caída === */
 @keyframes fallDown {
   0% {
     /* Empieza muy arriba y un poco más pequeño */
-    transform: translateY(-100%); 
+    transform: translateY(-100vh) scale(0.8); 
+    opacity: 0;
+  }
+  20% {
+    opacity: 1; /* Aparece por completo al inicio de la caída */
   }
   100% {
-    transform: translateY(60%); 
+    /* Llega a su posición normal */
+    transform: translateY(0) scale(1); 
+    opacity: 1;
   }
 }
 
 
 /*
 ===========================================================
-== AÑADIDO: ESTILOS PARA TRANSICIÓN DE RANKING ==
+== ESTILOS PARA TRANSICIÓN DE RANKING ==
 ===========================================================
 */
 
-
-/* Esta es la clase clave que anima el MOVIMIENTO */
 .list-ranking-move {
   transition: transform 0.6s cubic-bezier(0.55, 0, 0.1, 1);
 }
