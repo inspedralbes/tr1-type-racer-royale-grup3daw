@@ -1,3 +1,9 @@
+/*
+===========================================================
+== ESTILOS DE JUEGO (CON RESPONSIVE MEJORADO) ==
+===========================================================
+*/
+
 .countdown-container {
   display: flex;
   justify-content: center;
@@ -15,7 +21,7 @@
 .game-content-wrapper {
   display: flex;
   align-items: center;
-  justify-content: center; /* centra el bloque de palabra horizontalmente dentro del espacio disponible */
+  justify-content: center; /* centra el bloque de palabra horizontalmente */
   gap: 24px;
   width: 100%;
   padding: 12px;
@@ -30,49 +36,51 @@
   align-items: center;
   justify-content: center;
   text-align: center;
-  min-width: 0; /* para que el texto pueda truncarse en contenedores flex */
+  min-width: 0;
 }
 
+/* === MODIFICADO === */
 .paraula-actual h1 {
-  font-size: 4rem;
+  /* Usamos clamp() para un tamaño de fuente fluido */
+  /* Mínimo 2.4rem, ideal 6vw, máximo 4rem */
+  font-size: clamp(2.4rem, 6vw, 4rem);
+ 
   margin: 0 0 12px 0;
   letter-spacing: 0.02em;
   line-height: 1;
-  white-space: nowrap; /* evita saltos de línea en palabras largas */
+  white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  display: inline-block; /* para que el fondo se ajuste al texto */
-  padding: 100px 18px;
+  display: inline-block;
+ 
+  /* Usamos 'em' para que el padding escale con la fuente */
+  padding: 2.5em 1em;
+
   border-radius: 10px;
-  color: #ffffff; /* texto claro sobre la imagen */
+  color: #ffffff;
   text-shadow: 0 2px 10px rgba(0,0,0,0.6);
+  position: relative; /* Necesario para el ::before */
 }
 
+/* === MODIFICADO === */
 .paraula-actual h1::before {
-content: '';
-position: absolute;
+  content: '';
+  position: absolute;
 
-/* Hacemos que ocupe todo el espacio del h1 */
-top: -15%;
-left: 25%;
-width: 50%;
-height: 100%;
+  /* Hacemos que ocupe todo el espacio del h1 (incluyendo padding) */
+  inset: 0;
  
- /* Ponemos el meteorito aquí */
- background-image: url('../img/meteorito.png');
- background-size: contain;
- background-position: center;
- background-repeat: no-repeat;
+  background-image: url('../img/meteorito.png');
+  background-size: contain;
+  background-position: center;
+  background-repeat: no-repeat;
  
- /* La animación de giro */
- /* Gira en 10s, de forma lineal (constante) y sin parar (infinite) */
- animation: spin 10s linear infinite;
- 
- /* Lo ponemos detrás del texto */
- z-index: -1; 
- 
- /* Mantenemos las esquinas redondeadas */
- border-radius: 10px; 
+  animation: spin 10s linear infinite;
+  z-index: -1;
+  border-radius: 10px;
+
+  /* Reducimos la opacidad para que no compita con el texto */
+  opacity: 0.5;
 }
 
 .paraula-actual input {
@@ -82,46 +90,45 @@ height: 100%;
   padding: 10px 14px;
   font-size: 1.15rem;
   border-radius: 6px;
-  border: 1px solid rgba(255,255,255,0.12); /* sutil borde claro para foco */
-  background: transparent; /* quitar color de fondo para que se vea la imagen */
+  border: 1px solid rgba(255,255,255,0.12);
+  background: transparent;
   color: inherit;
+  margin-top: 15px; /* Margen para separarlo de la nave */
+  order: 3;         /* Aparece en tercer lugar */
 }
 
-/* Estilo para la nave del jugador que aparece debajo del input */
+/* Estilo para la nave del jugador */
 .player-ship {
   width: 35%;
   max-width: 28vw;
   display: block;
-  margin: 14px auto 0 auto;
+  margin: 15px auto 0 auto; /* Margen para separarlo de la palabra */
   filter: drop-shadow(0 6px 18px rgba(0,200,220,0.18));
   transition: transform 180ms ease, opacity 180ms ease;
+  order: 2;                         /* Aparece en segundo lugar */
 }
-
 
 /* Panel de clasificación a la derecha */
 .puntuacions {
-  /* Fijamos la clasificación en la esquina superior derecha usando porcentajes */
   position: fixed;
   top: 8%;
   right: 4%;
   width: 22%; /* ancho relativo a la ventana */
   max-width: 360px;
   min-width: 160px;
-  /* HUD look: slight translucent panel with cyan highlights */
-  background: rgba(0, 10, 14, 0.18); /* tenue para dejar ver la galaxia pero dar contraste */
+  background: rgba(0, 10, 14, 0.18);
   padding: 12px 10px;
   border-radius: 8px;
   display: flex;
   flex-direction: column;
   gap: 8px;
   box-shadow: 0 6px 30px rgba(0,200,220,0.06), 0 0 24px rgba(0,200,220,0.06) inset;
-  overflow: visible; /* lista estática: no scroll interno, se mostrará completa */
-  z-index: 30; /* por encima del contenido del juego */
+  overflow: visible;
+  z-index: 30;
   border: 1px solid rgba(0,220,200,0.12);
   backdrop-filter: blur(4px) saturate(120%);
 }
 
-/* No scrollbars: la lista será totalmente estática (no scroll interno) */
 
 .puntuacions h2 {
   margin: 0 0 6px 0;
@@ -142,7 +149,7 @@ height: 100%;
 
 #llista-jugadors li, #llista-jugadors-final li {
   padding: 8px 6px;
-  border-bottom: 1px solid rgba(0,220,200,0.12); /* línea separadora entre jugadores */
+  border-bottom: 1px solid rgba(0,220,200,0.12);
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -150,13 +157,11 @@ height: 100%;
   font-size: 0.95rem;
 }
 
-/* quitar la línea del último elemento para estética */
 .puntuacions #llista-jugadors li:last-child,
 .puntuacions #llista-jugadors-final li:last-child {
   border-bottom: none;
 }
 
-/* HUD decorations: small cyan accent line and index bullet */
 #llista-jugadors li::before, #llista-jugadors-final li::before {
   content: '';
   display: inline-block;
@@ -178,7 +183,6 @@ height: 100%;
   text-shadow: 0 1px 6px rgba(0,200,220,0.12);
 }
 
-/* Top-right HUD frame accents */
 .puntuacions::before {
   content: '';
   position: absolute;
@@ -191,19 +195,16 @@ height: 100%;
   box-shadow: 0 0 40px rgba(0,200,220,0.06) inset, 0 0 24px rgba(0,200,220,0.06);
 }
 
-/* subtle grid lines */
 .puntuacions ul {
   display: block;
 }
 
-/* make scores column slightly dimmer to emphasize names */
 #llista-jugadors li span {
   color: rgba(191,255,255,0.9);
 }
 
 /* Indicadores de letra correcta/incorrecta */
 .lletra-correcta {
-  /* Forzar color verde para letra correcta (sobrescribe regla global) */
   color: var(--color-correct, #4caf50) !important;
   font-weight: 700;
   padding: 0 2px;
@@ -214,7 +215,6 @@ height: 100%;
 }
 
 .lletra-incorrecta {
-  /* Forzar color rojo para letra incorrecta (sobrescribe regla global) */
   color: var(--color-error, #f44336) !important;
   font-weight: 700;
   padding: 0 2px;
@@ -228,15 +228,175 @@ height: 100%;
   transform: scale(1.04);
 }
 
-/* Responsive: en pantallas pequeñas apilamos en columna */
+/* Fondo espacial para la pantalla de juego */
+.main-background {
+  position: relative;
+  min-height: 100vh;
+  background-image: url('../img/espacio.png');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Capa oscura encima de la imagen */
+.main-background::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,0.35);
+  pointer-events: none;
+}
+
+.main-background .main-background {
+  background-image: none !important;
+  background-color: transparent !important;
+}
+.main-background .main-background::before {
+  background: transparent !important;
+}
+
+/* === MODIFICADO === */
+/* Contenedor del juego por encima del overlay */
+.game-container {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  margin: 0 auto;
+  box-sizing: border-box;
+
+  /* Añadimos padding para dejar espacio a los paneles fijos */
+  /* 22% (ancho del panel) + 4% (margen) = 26% en cada lado */
+  padding: 18px 26%;
+}
+
+/* Texto claro por defecto */
+.main-background,
+.main-background * {
+  color: var(--color-text-light, #f3f6f9);
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.08); }
+  100% { transform: scale(1); }
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/*
+===========================================================
+== ESTILOS PARA PANEL IZQUIERDO ==
+===========================================================
+*/
+
+.game-container > h2 {
+  position: fixed;
+  top: calc(8% + 12px);
+  left: 4%;
+  width: 22%;
+  max-width: 360px;
+  min-width: 160px;
+  z-index: 31;
+  margin: 0;
+  padding: 0 10px;
+  font-size: 1rem;
+  text-align: center;
+  letter-spacing: 1px;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  color: #bffcff;
+  text-shadow: 0 2px 8px rgba(0,220,200,0.18);
+}
+
+.game-info {
+  position: fixed;
+  top: 8%;
+  left: 4%;
+  width: 22%;
+  max-width: 360px;
+  min-width: 160px;
+  background: rgba(0, 10, 14, 0.18);
+  padding: 12px 10px;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  box-shadow: 0 6px 30px rgba(0,200,220,0.06), 0 0 24px rgba(0,200,220,0.06) inset;
+  overflow: visible;
+  z-index: 30;
+  border: 1px solid rgba(0,220,200,0.12);
+  backdrop-filter: blur(4px) saturate(120%);
+  padding-top: 42px;
+}
+
+.game-info p {
+  padding: 8px 6px;
+  border-bottom: 1px solid rgba(0,220,200,0.12);
+  display: block;
+  font-size: 0.95rem;
+  color: #e7ffff;
+  margin: 0;
+  font-family: monospace;
+  color: #dffcff;
+  text-shadow: 0 1px 6px rgba(0,200,220,0.12);
+}
+
+.game-info p:last-child {
+  border-bottom: none;
+}
+
+.game-info p::before {
+  content: '';
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  margin-right: 8px;
+  border-radius: 2px;
+  background: linear-gradient(180deg, #9ff8ff, #00d6c0);
+  box-shadow: 0 0 10px rgba(0,200,220,0.6);
+  vertical-align: middle;
+}
+
+
+.game-info::before {
+  content: '';
+  position: absolute;
+  left: -8px;
+  top: -8px;
+  width: calc(100% + 16px);
+  height: calc(100% + 16px);
+  border-radius: 10px;
+  pointer-events: none;
+  box-shadow: 0 0 40px rgba(0,200,220,0.06) inset, 0 0 24px rgba(0,200,220,0.06);
+}
+
+/*
+===========================================================
+== BREAKPOINTS RESPONSIVE ==
+===========================================================
+*/
+
+/* === MODIFICADO: Breakpoint TABLET === */
 @media (max-width: 900px) {
+
+  /* Ajustamos el padding para la vista de tablet */
+  .game-container {
+    /* 28% (ancho del panel) + 4% (margen) = 32% en cada lado */
+    padding: 18px 32%;
+  }
+
   .game-content-wrapper {
     flex-direction: column;
     align-items: stretch;
   }
 
+  /* Ajustamos el panel derecho */
   .puntuacions {
-    /* mantener la posición fija en móviles también */
     position: fixed;
     top: 6%;
     right: 4%;
@@ -249,72 +409,81 @@ height: 100%;
     width: 92%;
   }
 
+  /* Ajustamos el h1 de la palabra */
   .paraula-actual h1 {
     font-size: 2.4rem;
     white-space: normal;
+    /* Mantenemos el padding relativo */
+    padding: 2em 0.5em;
+  }
+ 
+  /* Ocultamos el título flotante */
+  .game-container > h2 {
+    display: none;
+  }
+
+  /* Ajustamos el panel izquierdo en móvil */
+  .game-info {
+    top: 6%;
+    left: 4%;
+    width: 28%;
+    max-width: 420px;
+    min-width: 140px;
+    padding-top: 12px; /* Quitamos el padding extra del h2 */
+  }
+
+  /* Reducir texto en móvil */
+  .game-info p {
+    font-size: 0.85rem;
+    padding: 6px 4px;
   }
 }
 
-/* Animación simple usada por el contador si hace falta */
-@keyframes pulse {
-  0% { transform: scale(1); }
-  50% { transform: scale(1.08); }
-  100% { transform: scale(1); }
-}
 
-/* Fondo espacial para la pantalla de juego */
-.main-background {
-  position: relative; /* para el overlay */
-  min-height: 100vh; /* que cubra toda la pantalla */
-  background-image: url('../img/espacio.png');
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
+/* === AÑADIDO: Breakpoint para MÓVILES PEQUEÑOS === */
+@media (max-width: 600px) {
+ 
+  /* 1. Resetear padding del contenedor principal */
+  .game-container {
+    padding: 18px;
+  }
 
-/* Capa oscura encima de la imagen para asegurar legibilidad del texto */
-.main-background::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: rgba(0,0,0,0.35);
-  pointer-events: none;
-}
+  /* 2. Paneles (izq y der) dejan de ser fijos y se apilan */
+  .game-info,
+  .puntuacions {
+    position: relative; /* Dejan de ser 'fixed' */
+    width: 100%;       /* Ocupan todo el ancho */
+    max-width: none;
+    top: auto;
+    left: auto;
+    right: auto;
+    margin-bottom: 15px; /* Espacio entre ellos */
+    backdrop-filter: blur(2px); /* Reducir blur por rendimiento */
+  }
+ 
+  /* 3. Ocultamos el H2 flotante (ya estaba oculto desde 900px) */
+  .game-container > h2 {
+    display: none;
+  }
 
-/* Evitar que elementos .main-background anidados vuelvan a pintar la imagen */
-.main-background .main-background {
-  background-image: none !important;
-  background-color: transparent !important;
-}
-.main-background .main-background::before {
-  background: transparent !important;
-}
+  /* 4. Devolvemos el padding-top al panel de info */
+  .game-info {
+    padding-top: 12px;
+  }
 
-/* Asegurar que el contenedor del juego esté por encima del overlay */
-.game-container {
-  position: relative;
-  z-index: 1;
-  width: 100%;
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 18px;
-  box-sizing: border-box;
-}
-
-/* Texto claro por defecto sobre el fondo espacial */
-.main-background,
-.main-background * {
-  color: var(--color-text-light, #f3f6f9);
-}
-
-@keyframes spin {
-from {
- transform: rotate(0deg);
-}
-to {
-transform: rotate(360deg);
-}
+  /* 5. Ajustar el texto de la palabra (más pequeño) */
+  .paraula-actual h1 {
+    font-size: clamp(1.8rem, 7vw, 2.2rem);
+    padding: 2em 0.5em;
+  }
+ 
+  /* 6. Ajustar el input y la nave */
+  .paraula-actual input {
+    width: 100%;
+    font-size: 1rem;
+  }
+  .player-ship {
+    width: 40%;
+    max-width: 150px; /* Un máximo fijo para que no crezca demasiado */
+  }
 }
