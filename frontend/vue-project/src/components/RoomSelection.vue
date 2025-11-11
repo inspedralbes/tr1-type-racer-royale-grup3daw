@@ -50,10 +50,10 @@
 import { ref, onMounted } from 'vue';
 import { storeToRefs } from 'pinia';
 import { useGameStore } from '../stores/game';
-import { useRoomStore } from '../stores/room';
-import { useSessionStore } from '../stores/session';
+import { useRoomStore } from '../stores/room.js';
+import { useSessionStore } from '../stores/session.js';
 import { usePublicRoomsStore } from '../stores/publicRooms';
-import { communicationManager, socket } from '../communicationManager';
+import { communicationManager, socket } from '../communicationManager.js';
 import { useNotificationStore } from '../stores/notification';
 
 import { useRouter } from 'vue-router';
@@ -122,16 +122,13 @@ const logoutAndReset = () => {
   // Llama al método centralizado de logout que notifica al backend y limpia la sesión.
   communicationManager.logout();
 
-  // Disconnect the socket after emitting the logout event
-  if (socket) {
-    socket.disconnect();
-  }
+  // Desconecta el socket después de emitir el evento de logout.
+  communicationManager.disconnect();
   
   // Resetea los stores de estado del juego y de las salas.
   gameStore.resetState();
   roomStore.resetState();
   publicRoomsStore.resetState();
-  sessionStore.clearSession();
 
   router.push('/login');
 };

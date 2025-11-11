@@ -22,8 +22,8 @@
 
       <div class="lobby-button-group">
         <button class="btn" v-if="!isAdmin" @click="toggleReady">{{ isPlayerReady ? 'No listo' : 'Listo' }}</button>
-        <button class="btn" v-if="isAdmin" @click="goToRoomSettings">Editar Sala</button>
-        <button class="btn" v-if="isAdmin" @click="iniciarJuego" :disabled="!isAdmin || !areAllPlayersReady">Començar Joc</button>
+        <button class="btn" v-if="isAdmin" @click="goToRoomSettings" :title="jugadores.length < 2 ? 'Se necesitan al menos 2 jugadores' : ''">Editar Sala</button>
+        <button class="btn" v-if="isAdmin" @click="iniciarJuego" :disabled="!isAdmin || !areAllPlayersReady || jugadores.length < 2" :title="jugadores.length < 2 ? 'Se necesitan al menos 2 jugadores para empezar' : (!areAllPlayersReady ? 'No todos los jugadores están listos' : '')">Començar Joc</button>
       </div>
     </div>
 
@@ -39,11 +39,11 @@ import { computed, onMounted, ref } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useRouter } from 'vue-router';
 // Importaciones de módulos de comunicación y stores personalizados.
-import { communicationManager, socket } from '../communicationManager'
+import { communicationManager, socket } from '../communicationManager.js'
 import { useNotificationStore } from '../stores/notification'
 import { useGameStore } from '../stores/game';
-import { useRoomStore } from '../stores/room';
-import { useSessionStore } from '../stores/session';
+import { useRoomStore } from '../stores/room.js';
+import { useSessionStore } from '../stores/session.js';
 import { usePublicRoomsStore } from '../stores/publicRooms';
 
 // removed decorative ship images (no longer shown in lobby)
@@ -94,7 +94,7 @@ const isPlayerReady = computed(() => {
  * @returns {boolean} - Verdadero si todos los jugadores están listos, falso en caso contrario.
  */
 const areAllPlayersReady = computed(() => {
-  return jugadores.value.length > 0 && jugadores.value.every(p => p.isReady && !p.disconnected);
+  return jugadores.value.length > 1 && jugadores.value.filter(p => p.role !== 'admin').every(p => p.isReady && !p.disconnected);
 });
 
 /**

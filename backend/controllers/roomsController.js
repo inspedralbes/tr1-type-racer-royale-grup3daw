@@ -120,6 +120,12 @@ exports.updateRoom = (req, res) => {
 exports.startGame = (req, res) => {
   const { roomId } = req.params;
 
+  // Verifica si hay al menos dos jugadores en la sala.
+  const room = stateManager.getRoom(roomId);
+  if (room && room.players.length < 2) {
+    return res.status(403).json({ message: 'Se necesitan al menos 2 jugadores para empezar la partida.' });
+  }
+
   // Verifica si todos los jugadores en la sala están listos para iniciar la partida.
   if (!stateManager.areAllPlayersReady(roomId)) {
     return res.status(403).json({ message: 'No todos los jugadores están listos.' });
@@ -132,9 +138,16 @@ exports.startGame = (req, res) => {
     return res.status(404).json({ message: result.error });
   }
 
-  // Notifica a los clientes de la sala que el juego ha comenzado y actualiza la lista de jugadores.
+  // Notifica a los clientes de la sala que el juego ha comenzado.
+  // Esto es lo que hace que el frontend cambie a la pantalla de juego.
   const broadcastRoomState = req.app.get('broadcastRoomState');
   broadcastRoomState(roomId);
+
+  // Una vez iniciada la partida, resetea el estado de "listo" de todos los jugadores
+  // para que en la siguiente ronda deban confirmar de nuevo.
+  stateManager.resetReadyStatusInRoom(roomId);
+
+  // Se emite la lista de jugadores de nuevo para reflejar el estado de "no listo" en el lobby para la siguiente ronda.
   const broadcastPlayerList = req.app.get('broadcastPlayerList');
   broadcastPlayerList(roomId);
 

@@ -84,7 +84,7 @@
 import { ref, onMounted, onUnmounted } from 'vue';
 import { useRoomStore } from '../stores/room';
 import { useGameStore } from '../stores/game';
-import { useSessionStore } from '../stores/session';
+import { useSessionStore } from '../stores/session.js';
 import { communicationManager } from '../communicationManager';
 import { useNotificationStore } from '../stores/notification';
 import { useRouter } from 'vue-router';

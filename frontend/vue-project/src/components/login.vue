@@ -2,8 +2,8 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { communicationManager } from '@/communicationManager'
-import { useSessionStore } from '@/stores/session';
+import { communicationManager } from '../communicationManager.js'
+import { useSessionStore } from '@/stores/session.js';
 import { useGameStore } from '@/stores/game';
 import { useNotificationStore } from '../stores/notification';
 
@@ -41,7 +41,7 @@ const login = async () => {
   try {
     const response = await communicationManager.login(email.value, password.value);
     const { token, username, email: userEmail } = response.data;
-    console.log('Login successful:', { token, username, email: userEmail });
+    // console.log('Login successful:', { token, username, email: userEmail });
     session.setSession(token, username, userEmail);
     gameStore.setNombreJugador(username);
     communicationManager.connect(); // Conecta el socket después del login

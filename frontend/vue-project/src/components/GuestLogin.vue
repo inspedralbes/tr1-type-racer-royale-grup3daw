@@ -2,8 +2,8 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { communicationManager } from '@/communicationManager'
-import { useSessionStore } from '@/stores/session';
+import { communicationManager } from '../communicationManager.js'
+import { useSessionStore } from '../stores/session.js';
 import { useGameStore } from '@/stores/game';
 import { useNotificationStore } from '../stores/notification';
 
@@ -33,7 +33,8 @@ const loginAsGuest = async () => {
   try {
     const response = await communicationManager.loginAsGuest(nom.value);
     const { token, username, email } = response.data;
-    session.setSession(token, username, email);
+    // Al hacer login como invitado, pasamos 'true' al cuarto argumento de setSession.
+    session.setSession(token, username, email, true);
     gameStore.setNombreJugador(username);
     communicationManager.connect(); // Conecta el socket después del login
     await communicationManager.waitUntilConnected(); // Ensure socket is connected

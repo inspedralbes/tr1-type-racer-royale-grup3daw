@@ -1,5 +1,5 @@
 <template>
-  <router-view />
+  <router-view v-slot="{ Component }"> <component :is="Component" /> </router-view>
 </template>
 
 <script setup>
@@ -21,8 +21,8 @@ import { onMounted, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useRouter } from 'vue-router';
 import { communicationManager, socket } from '../communicationManager'
-import { useNotificationStore } from '../stores/notification';
-import { useSessionStore } from '../stores/session';
+import { useNotificationStore } from '../stores/notification.js';
+import { useSessionStore } from '../stores/session.js';
 import { useGameStore } from '../stores/game';
 import { useRoomStore } from '../stores/room';
 import { usePublicRoomsStore } from '../stores/publicRooms';
@@ -35,7 +35,7 @@ const sessionStore = useSessionStore();
 const publicRoomsStore = usePublicRoomsStore();
 
 const { nombreJugador, words, wordsLoaded, finalResults } = storeToRefs(gameStore);
-const { etapa } = storeToRefs(sessionStore);
+const { etapa, roomId: sessionRoomId } = storeToRefs(sessionStore);
 const { jugadores, roomState, roomId } = storeToRefs(roomStore);
 
 // Función para navegar según la etapa actual
@@ -101,40 +101,35 @@ const navigateByEtapa = (currentEtapa) => {
       if (token && playerNameFromSession) {
         console.log('onMounted - Existing token and playerName found. Attempting to reconnect...');
         try {
-          // 1. Conectar el socket. El token se envía automáticamente.
+          // Si hay un token, simplemente conectamos. El backend validará el token en la conexión del socket.
+          // La información sobre si es un invitado o un usuario registrado ya está en el sessionStore.
           communicationManager.connect();
+          // Restauramos el nombre del jugador desde la sesión.
           gameStore.setNombreJugador(playerNameFromSession);
-  
-          // Si el jugador estaba en una sala, recuperamos su estado.
+
+          // Si el jugador estaba en una sala, intentamos que se una de nuevo.
           if (roomIdFromSession) {
-            // Simplemente emitimos 'joinRoom'. El listener 'join-room-success'
-            // o los eventos 'updateRoomState' se encargarán de poner al jugador
-            // en la etapa correcta ('lobby' o 'game') con el estado actualizado.
             communicationManager.joinRoom(roomIdFromSession);
           } else {
-            // Si no estaba en ninguna sala, va a la selección de sala.
             sessionStore.setEtapa('room-selection');
           }
-          // Después de la reconexión o establecimiento de etapa, navegar
-          navigateByEtapa(sessionStore.etapa);
         } catch (error) {
+          // Captura de errores generales durante el proceso de reconexión.
           console.error('Error al reconectar la sesión:', error);
           const notificationStore = useNotificationStore();
           notificationStore.pushNotification({ type: 'error', message: 'Error al reconectar la sesión: ' + (error.message || '') });
-          // Si la reconexión falla, limpia todos los datos de sesión y estado,
-          // y redirige al usuario a la pantalla de login.
-          sessionStore.clearSession();
+          sessionStore.resetState();
           gameStore.resetState();
           roomStore.resetState();
           publicRoomsStore.resetState();
-          router.push('/login'); // Redirigir explícitamente al login
+          router.push('/login'); // Redirigir explícitamente al login.
         }
       } else {
-        // Si no hay sesión válida, GameEngine no debería estar montado.
-        // Esto debería ser manejado por un guardia de ruta (router guard).
-        // Por ahora, simplemente reseteamos el estado y esperamos la redirección del router.
-        console.log('onMounted - No valid token or playerName found. Resetting state.');
-        sessionStore.clearSession();
+        // Si no hay sesión válida (no hay token o playerNameFromSession),
+        // o si es un invitado que recarga la página sin token.
+        console.log('onMounted - No valid token or playerName found. Resetting state and redirecting to login.');
+        // Si no hay token, no hay sesión. Limpiamos todo y redirigimos al login.
+        sessionStore.resetState();
         gameStore.resetState();
         roomStore.resetState();
         publicRoomsStore.resetState();
@@ -173,18 +168,24 @@ async function fetchWordsForGame() {
  * Observador (`watch`) que reacciona a los cambios en la `etapa` del juego.
  * Cuando la etapa cambia, navega a la ruta correspondiente.
  */
-watch(etapa, async (newEtapa) => {
+watch(etapa, async (newEtapa, oldEtapa) => {
   console.log('GameEngine etapa changed to:', newEtapa);
-  console.log('Current wordsLoaded:', wordsLoaded.value);
+  // console.log('Current wordsLoaded:', wordsLoaded.value);
   await communicationManager.updatePlayerPage(newEtapa);
-  // Solo navegar si la etapa no es 'game' y wordsLoaded no es true, o si es 'game' y wordsLoaded es false
-  // Esto evita navegación redundante si ya estamos en la ruta correcta y solo se actualiza el estado interno
+
+  // Lógica para cargar palabras solo cuando se entra a la etapa 'game'.
   if (newEtapa === 'game' && !wordsLoaded.value) {
     console.log('Etapa is game. Resetting wordsLoaded and fetching words.');
     gameStore.setWordsLoaded(false); // Reset wordsLoaded
     fetchWordsForGame(); // Always fetch words when entering game stage
   }
-  navigateByEtapa(newEtapa);
+
+  // Navega a la nueva etapa. La función `navigateByEtapa` ya contiene la lógica
+  // para manejar casos donde falten datos (como el roomId) y redirigir de forma segura.
+  // Esto centraliza la navegación y la hace más predecible.
+  if (newEtapa !== oldEtapa) {
+    navigateByEtapa(newEtapa);
+  }
 });
 
 /**

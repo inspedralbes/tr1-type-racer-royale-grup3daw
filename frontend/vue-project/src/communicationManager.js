@@ -12,7 +12,7 @@
  */
 import axios from 'axios';
 import { io } from 'socket.io-client';
-import { useSessionStore } from './stores/session';
+import { useSessionStore } from './stores/session.js';
 import { useRoomStore } from './stores/room';
 import { useGameStore } from './stores/game';
 import { useRouter } from 'vue-router';
@@ -138,7 +138,7 @@ export function setupSocketListeners(router) {
       const publicRoomsStore = usePublicRoomsStore();
 
       // Limpia el sessionStorage y resetea los stores
-      sessionStore.clearSession(); // Corregido: La función en stores/session.js se llama clearSession.
+      sessionStore.resetState();
       gameStore.resetState();
       roomStore.resetState();
       publicRoomsStore.resetState();
@@ -239,7 +239,7 @@ export const communicationManager = {
       socket.emit('explicit-logout', token);
     }
     // Limpia la sesión localmente después de notificar al backend.
-    sessionStore.clearSession();
+    sessionStore.resetState();
   },
 
   // Desconecta el socket y elimina cualquier auth pendiente (no notifica al servidor).

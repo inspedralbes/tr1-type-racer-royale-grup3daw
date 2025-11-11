@@ -116,6 +116,47 @@ import { communicationManager } from '../../communicationManager';
 
 
     /**
+     * @description Inicializa las palabras para el juego, mezclándolas y seleccionando un número fijo.
+     * @param {Object} wordsData - Objeto que contiene arrays de palabras por dificultad (facil, normal, dificil).
+     */
+    const initializeWords = (wordsData) => {
+        if (!wordsData) {
+            console.error("initializeWords: wordsData es nulo o indefinido.");
+            try {
+                const notificationStore = useNotificationStore();
+                notificationStore.pushNotification({ type: 'error', message: 'No se han podido cargar las palabras para la partida.' });
+            } catch (e) {
+                // ignore if store not available
+            }
+            estatDelJoc.value.paraules = [];
+            return;
+        }
+
+        let allWords = [];
+        // Concatena las palabras de cada dificultad con su etiqueta.
+        if (wordsData.facil) {
+            allWords = allWords.concat(wordsData.facil.map(word => ({ text: word, difficulty: 'facil' })));
+        }
+        if (wordsData.normal) {
+            allWords = allWords.concat(wordsData.normal.map(word => ({ text: word, difficulty: 'normal' })));
+        }
+        if (wordsData.dificil) {
+            allWords = allWords.concat(wordsData.dificil.map(word => ({ text: word, difficulty: 'dificil' })));
+        }
+
+        // Mezcla las palabras aleatoriamente.
+        for (let i = allWords.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [allWords[i], allWords[j]] = [allWords[j], allWords[i]];
+        }
+
+        // Usa TODAS las palabras disponibles; no hay límite fijo por juego.
+        estatDelJoc.value.paraules = allWords.map(p => ({ ...p, errors: 0, estat: 'pendent' }));
+        estatDelJoc.value.indexParaulaActiva = 0;
+        estatDelJoc.value.textEntrat = ''; // Limpia el campo de entrada.
+    };
+
+    /**
      * @description Inicializa el juego, cargando las palabras y comenzando el temporizador.
      */
     function initializeGame() {
@@ -172,47 +213,6 @@ import { communicationManager } from '../../communicationManager';
                 finishGame();
             }
         }, 1000);
-    };
-
-    /**
-     * @description Inicializa las palabras para el juego, mezclándolas y seleccionando un número fijo.
-     * @param {Object} wordsData - Objeto que contiene arrays de palabras por dificultad (facil, normal, dificil).
-     */
-    const initializeWords = (wordsData) => {
-        if (!wordsData) {
-            console.error("initializeWords: wordsData es nulo o indefinido.");
-            try {
-                const notificationStore = useNotificationStore();
-                notificationStore.pushNotification({ type: 'error', message: 'No se han podido cargar las palabras para la partida.' });
-            } catch (e) {
-                // ignore if store not available
-            }
-            estatDelJoc.value.paraules = [];
-            return;
-        }
-
-        let allWords = [];
-        // Concatena las palabras de cada dificultad con su etiqueta.
-        if (wordsData.facil) {
-            allWords = allWords.concat(wordsData.facil.map(word => ({ text: word, difficulty: 'facil' })));
-        }
-        if (wordsData.normal) {
-            allWords = allWords.concat(wordsData.normal.map(word => ({ text: word, difficulty: 'normal' })));
-        }
-        if (wordsData.dificil) {
-            allWords = allWords.concat(wordsData.dificil.map(word => ({ text: word, difficulty: 'dificil' })));
-        }
-
-        // Mezcla las palabras aleatoriamente.
-        for (let i = allWords.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [allWords[i], allWords[j]] = [allWords[j], allWords[i]];
-        }
-
-        // Usa TODAS las palabras disponibles; no hay límite fijo por juego.
-        estatDelJoc.value.paraules = allWords.map(p => ({ ...p, errors: 0, estat: 'pendent' }));
-        estatDelJoc.value.indexParaulaActiva = 0;
-        estatDelJoc.value.textEntrat = ''; // Limpia el campo de entrada.
     };
 
     /**
