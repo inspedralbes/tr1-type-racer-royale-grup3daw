@@ -42,8 +42,8 @@
 /* === MODIFICADO === */
 .paraula-actual h1 {
   /* Usamos clamp() para un tamaño de fuente fluido */
-  /* Mínimo 2.4rem, ideal 6vw, máximo 4rem */
-  font-size: clamp(2.4rem, 6vw, 4rem);
+  /* Mínimo 1.8rem, ideal 4.5vw, máximo 3rem (más pequeño) */
+  font-size: clamp(1.8rem, 4.5vw, 3rem);
  
   margin: 0 0 12px 0;
   letter-spacing: 0.02em;
@@ -54,7 +54,7 @@
   display: inline-block;
  
   /* Usamos 'em' para que el padding escale con la fuente */
-  padding: 2.5em 1em;
+  padding: 1.6em 0.8em; /* menos padding para reducir el tamaño visual */
 
   border-radius: 10px;
   color: #ffffff;
@@ -68,10 +68,10 @@
   position: absolute;
 
   /* Hacemos que ocupe todo el espacio del h1 (incluyendo padding) */
-  inset: 0;
+  inset: -2%; /* menos offset para que el meteorito sea más pequeño */
  
   background-image: url('../img/meteorito.png');
-  background-size: contain;
+  background-size: 95%; /* hacerlo más pequeño para que no domine la palabra */
   background-position: center;
   background-repeat: no-repeat;
  
@@ -80,29 +80,30 @@
   border-radius: 10px;
 
   /* Reducimos la opacidad para que no compita con el texto */
-  opacity: 0.5;
+  /* Hacer meteorito menos transparente */
+  opacity: 0.85;
 }
 
 .paraula-actual input {
   width: 60%;
   max-width: 700px;
   min-width: 220px;
-  padding: 10px 14px;
-  font-size: 1.15rem;
+  padding: 8px 12px;
+  font-size: 1.05rem;
   border-radius: 6px;
   border: 1px solid rgba(255,255,255,0.12);
   background: transparent;
   color: inherit;
-  margin-top: 15px; /* Margen para separarlo de la nave */
+  margin-top: 8px; /* Reducido para acercar el input a la nave/meteorito */
   order: 3;         /* Aparece en tercer lugar */
 }
 
 /* Estilo para la nave del jugador */
 .player-ship {
-  width: 35%;
-  max-width: 28vw;
+  width: 55%;
+  max-width: 40vw;
   display: block;
-  margin: 15px auto 0 auto; /* Margen para separarlo de la palabra */
+  margin: 8px auto 0 auto; /* Menor margen superior para acercarla al meteorito */
   filter: drop-shadow(0 6px 18px rgba(0,200,220,0.18));
   transition: transform 180ms ease, opacity 180ms ease;
   order: 2;                         /* Aparece en segundo lugar */
@@ -483,7 +484,7 @@
     font-size: 1rem;
   }
   .player-ship {
-    width: 40%;
-    max-width: 150px; /* Un máximo fijo para que no crezca demasiado */
+    width: 60%;
+    max-width: 220px; /* Un máximo fijo para que no crezca demasiado */
   }
 }
