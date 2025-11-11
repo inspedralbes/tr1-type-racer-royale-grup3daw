@@ -182,6 +182,8 @@
  list-style: none;
  padding: 0;
  margin: 0;
+ /* === AÑADIDO: Ayuda a que la animación FLIP funcione mejor === */
+ position: relative;
 }
 
 
@@ -565,13 +567,46 @@
 
 /* === AÑADIDO: Keyframes para la caída === */
 @keyframes fallDown {
- 0% {
-   /* Empieza muy arriba y un poco más pequeño */
-   transform: translateY(-100%);
- }
- 100% {
-   /* Llega a su posición normal */
-   transform: translateY(60%) scale(1);
-   opacity: 1;
- }
-}  
+  0% {
+    /* Empieza muy arriba y un poco más pequeño */
+    transform: translateY(-100%); 
+  }
+  100% {
+    transform: translateY(60%); 
+  }
+}
+
+
+/*
+===========================================================
+== AÑADIDO: ESTILOS PARA TRANSICIÓN DE RANKING ==
+===========================================================
+*/
+
+
+/* Esta es la clase clave que anima el MOVIMIENTO */
+.list-ranking-move {
+  transition: transform 0.6s cubic-bezier(0.55, 0, 0.1, 1);
+}
+
+
+/* Clases opcionales para animar la entrada/salida de jugadores */
+.list-ranking-enter-active,
+.list-ranking-leave-active {
+  transition: all 0.3s ease;
+}
+
+
+.list-ranking-enter-from,
+.list-ranking-leave-to {
+  opacity: 0;
+  transform: translateX(30px);
+}
+
+
+/* Asegura que los elementos que salen no rompan el layout */
+.list-ranking-leave-active {
+  position: absolute;
+  /* Hacemos que ocupe el ancho del panel para que no colapse */
+  width: calc(100% - 20px); /* 100% - padding (10px * 2) */
+}

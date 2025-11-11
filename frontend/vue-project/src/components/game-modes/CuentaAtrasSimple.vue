@@ -228,7 +228,7 @@ import { communicationManager } from '../../communicationManager';
        }
 
 
-       // Mezcla las palabras aleatoriamente.
+       // Mezcla las palabras aleatoria mente.
        for (let i = allWords.length - 1; i > 0; i--) {
            const j = Math.floor(Math.random() * (i + 1));
            [allWords[i], allWords[j]] = [allWords[j], allWords[i]];
@@ -479,12 +479,12 @@ import { communicationManager } from '../../communicationManager';
 
                <div class="puntuacions">
                    <h2>Puntuacions</h2>
-                   <ul id="llista-jugadors">
+                   <TransitionGroup tag="ul" id="llista-jugadors" name="list-ranking">
                        <li v-for="jugador in jugadoresOrdenats" :key="jugador.name">
                            <span>{{ jugador.name }}</span>
                            <strong>{{ jugador.score }}</strong>
                        </li>
-                   </ul>
+                   </TransitionGroup>
                </div>
                <main class="joc" v-if="estatDelJoc.paraules.length > 0">
                    <div class="game-content-wrapper">
