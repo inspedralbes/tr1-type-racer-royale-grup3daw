@@ -246,7 +246,7 @@
             };
         };
         
-        if (entrada === paraula.originalText){
+        if (entrada === paraula.text){
             estatDelJoc.value.completedWords++; // Increment before calculating score
             
             let pointsForWord = POINTS_PER_DIFFICULTY[paraula.difficulty];
@@ -255,7 +255,7 @@
 
             if (isPowerUpTurn && noErrorsInWord) {
                 pointsForWord *= 2; // Double the points
-                activatePowerUp(); // Activate the penalty for others
+                activatePowerUp(); // Llama a la función para activar el power-up
                 notificationStore.pushNotification({
                     type: 'success',
                     message: `¡Power-up por palabra perfecta! Puntuación x2.`

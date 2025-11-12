@@ -3,7 +3,6 @@
     <div class="centra-console-panel">
       <div class="login-container hologram room-settings-container">
         <h2>Configuración de la Sala</h2>
-        <button class="back-button" @click="goBack">←</button>
         <form @submit.prevent="saveSettings">
           
           <div class="form-group" v-if="room.id">
@@ -49,7 +48,7 @@
             {{ validationError }}
           </div>
           
-          <div class="form-group">
+          <div class="form-group" v-if="room.gameMode !== 'MuerteSubita'">
             <label for="gameTime">Tiempo (segundos):</label>
             <div class="custom-number-input">
               <button type="button" @click="decrementTime" class="btn-time-adjust" :disabled="room.time <= 30">-</button>
@@ -97,10 +96,6 @@ const router = useRouter();
 
 const goToProfile = () => {
   router.push('/profile');
-}
-
-const goBack = () => {
-  router.back() 
 }
 
 // ---- Define Game Modes as an array ----
@@ -226,7 +221,7 @@ const saveSettings = async () => {
       roomStore.setRoom(newRoom.data);
       try {
         const notificationStore = useNotificationStore();
-        notificationStore.pushNotification({ type: 'success', message: 'Sala creada correctamente.' });
+        notificationStore.pushNotification({ type: 'success', message: `Sala '${newRoom.data.name}' creada.` });
       } catch (e) {}
       // Guarda el ID de la sala en la sesión para persistencia.
       sessionStore.setRoomId(newRoom.data.id);

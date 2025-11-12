@@ -136,7 +136,7 @@
        }, 1000);
    };
   
-   const initializeWords = (wordsData) => {
+   function initializeWords(wordsData) {
        if (!wordsData) {
            console.error("initializeWords: wordsData es nulo o indefinido.");
            try {
@@ -168,7 +168,7 @@
        estatDelJoc.value.paraules = allWords.map(p => ({ ...p, errors: 0, estat: 'pendent' }));
        estatDelJoc.value.indexParaulaActiva = 0;
        estatDelJoc.value.textEntrat = '';
-   };
+   }
   
    async function finishGame(){
        if(gameInterval){

@@ -109,9 +109,6 @@ const initializeSockets = (app) => {
       socket.data.roomId = roomId;
       console.log(`Socket ${socket.id} se unió a la sala ${roomId}`);
 
-      // Emit success event to the joining client
-      socket.emit('join-room-success', result.room);
-
       // Notificar a todos en la sala sobre el nuevo jugador (await enrichment)
       await broadcastPlayerList(roomId);
     });
@@ -142,11 +139,16 @@ const initializeSockets = (app) => {
       const { roomId, powerUpType } = data;
       const senderSocketId = socket.id;
 
-      if (roomId && powerUpType) {
-        console.log(`Power-up activated in room ${roomId} by ${senderSocketId}: ${powerUpType}`);
-        socket.to(roomId).except(senderSocketId).emit('receivePowerUp', {
-          powerUpType: powerUpType,
-          senderId: senderSocketId
+      const room = stateManager.getRoom(roomId);
+      if (room && powerUpType) {
+        console.log(`Power-up '${powerUpType}' activado en la sala ${roomId} por ${senderSocketId}`);
+        
+        // Itera sobre todos los jugadores en la sala
+        room.players.forEach(player => {
+          // Si el jugador no es el que activó el power-up, le envía el evento
+          if (player.socketId !== senderSocketId) {
+            io.to(player.socketId).emit('receivePowerUp', { powerUpType });
+          }
         });
       }
     });
