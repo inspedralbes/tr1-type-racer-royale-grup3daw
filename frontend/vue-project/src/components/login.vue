@@ -1,4 +1,3 @@
-
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
@@ -12,6 +11,9 @@ const password = ref('')
 const session = useSessionStore()
 const gameStore = useGameStore()
 const router = useRouter()
+
+// Controla si se muestra el login o la bienvenida
+const showLogin = ref(false)
 
 // Limpia los campos cuando el componente se monta. Se usa un setTimeout
 // para asegurar que se ejecute después de cualquier autocompletado del navegador.
@@ -56,11 +58,26 @@ const login = async () => {
 const goToGuestLogin = () => {
   router.push('/guest-login');
 }
+
+// Función para mostrar el login al hacer clic
+const startLogin = () => {
+  showLogin.value = true;
+}
 </script>
 <template>
   <div class="login-background">
     <div class="centra-console-panel">
-      <div class="login-container hologram">
+
+      <!-- Welcome Screen -->
+      <div v-if="!showLogin" 
+           class="login-container hologram welcome-screen" 
+           @click="startLogin">
+        <h1 class="welcome-title">space typers</h1>
+        <p class="welcome-prompt flicker">fes clic per a continuar</p>
+      </div>
+
+      <!-- Login Form (Original content) -->
+      <div v-if="showLogin" class="login-container hologram">
         <h2>Inici de sessió</h2>
         <input
           v-model="email"
@@ -83,6 +100,7 @@ const goToGuestLogin = () => {
         </div>
         <p>No tens un compte? <router-link to="/register">Registra't</router-link></p>
       </div>
+
     </div>
   </div>
 </template>

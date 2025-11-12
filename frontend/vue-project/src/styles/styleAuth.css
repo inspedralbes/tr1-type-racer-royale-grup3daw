@@ -62,6 +62,14 @@ div.login-container.hologram {
     transparent 1px
   );
   background-size: 5px 5px; 
+  
+  /* --- LÍNEAS AÑADIDAS PARA CENTRAR CONTENIDO --- */
+  /* Esto centrará verticalmente el contenido 
+     tanto de la bienvenida como del formulario de login */
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center; /* <-- AÑADE ESTA LÍNEA */
 }
 
 .hologram-button-group {
@@ -129,4 +137,59 @@ div.login-container.hologram {
 .hologram a:hover {
     color: #00FF41;
     border-bottom: 1px solid #00FF41;
+}
+
+/* --- Added styles --- */
+
+.welcome-screen {
+  cursor: pointer;
+  /* El centrado vertical ahora lo gestiona la clase
+     .login-container.hologram, así que aquí no 
+     necesitamos nada más.
+  */
+}
+
+.welcome-title {
+  font-size: 6.5em; /* Larger title */
+  color: #00FF41;
+  text-shadow: 0 0 10px #00FF41, 0 0 5px #00FF41;
+  margin: 0;
+  font-weight: bold;
+  text-transform: uppercase;
+}
+
+.welcome-prompt {
+  font-size: 1.5em;
+  color: #00FF41;
+  text-shadow: 0 0 5px #00FF41;
+  margin-top: 20px;
+}
+
+/* Flicker Animation */
+.flicker {
+  animation: flicker-animation 1.5s infinite;
+  -webkit-animation: flicker-animation 1.5s infinite;
+  -moz-animation: flicker-animation 1.5s infinite;
+  -o-animation: flicker-animation 1.5s infinite;
+}
+
+@keyframes flicker-animation {
+  0%   { opacity: 1; }
+  50%  { opacity: 0.3; }
+  100% { opacity: 1; }
+}
+@-webkit-keyframes flicker-animation {
+  0%   { opacity: 1; }
+  50%  { opacity: 0.3; }
+  100% { opacity: 1; }
+}
+@-moz-keyframes flicker-animation {
+  0%   { opacity: 1; }
+  50%  { opacity: 0.3; }
+  100% { opacity: 1; }
+}
+@-o-keyframes flicker-animation {
+  0%   { opacity: 1; }
+  50%  { opacity: 0.3; }
+  100% { opacity: 1; }
 }
