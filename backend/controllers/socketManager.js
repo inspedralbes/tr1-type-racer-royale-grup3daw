@@ -136,17 +136,6 @@ const initializeSockets = (app) => {
       const { roomId, isReady } = data;
       stateManager.setPlayerReadyStatusInRoom(roomId, socket.id, isReady);
       await broadcastPlayerList(roomId);
-      
-      const room = stateManager.getRoom(roomId);
-      if (room && room.players.length > 0 && room.players.every(p => p.isReady)) {
-        room.isPlaying = true;
-        room.gameStartTime = Date.now();
-        broadcastRoomState(roomId);
-
-        if (room.gameMode === 'MuerteSubita') {
-          startMuerteSubitaGame(roomId, io);
-        }
-      }
     });
 
     socket.on('powerUp', (data) => {
@@ -264,6 +253,7 @@ function startMuerteSubitaGame(roomId, io) {
   const room = stateManager.getRoom(roomId);
   if (!room) return;
 
+  console.log(`[startMuerteSubitaGame] Iniciando bucle de juego para la sala ${roomId}`);
   console.log(`Iniciando modo 'Muerte Súbita' para la sala ${roomId}`);
 
   room.players.forEach(player => {
@@ -307,21 +297,24 @@ function startMuerteSubitaGame(roomId, io) {
 
     io.to(roomId).emit('muerte-subita-state-update', { players: playersData });
 
-    if (activePlayersCount <= 1) {
+    const totalPlayers = currentRoom.players.length;
+    // El juego termina si queda 1 o 0 jugadores activos
+    if (activePlayersCount <= 1 && totalPlayers > 1) {
       clearInterval(gameLoops[roomId]);
       delete gameLoops[roomId];
       
       const finalResults = currentRoom.players.map(p => ({
         nombre: p.name,
-        puntuacion: p.gameData.isEliminated ? 0 : p.gameData.time, // Score is remaining time
-        wpm: 0, // WPM not tracked in backend for this mode, set to 0
+        // El ganador es el que no fue eliminado. Su puntuación es su tiempo restante.
+        puntuacion: p.gameData.isEliminated ? 0 : p.gameData.time,
+        wpm: 0,
         isEliminated: p.gameData.isEliminated,
       }));
-
+      
       io.to(roomId).emit('game-over', { results: finalResults });
       console.log(`Juego 'Muerte Súbita' terminado en la sala ${roomId}. Resultados:`, finalResults);
     }
   }, 1000);
 }
 
-module.exports = { initializeSockets };
+module.exports = { initializeSockets, startMuerteSubitaGame };
