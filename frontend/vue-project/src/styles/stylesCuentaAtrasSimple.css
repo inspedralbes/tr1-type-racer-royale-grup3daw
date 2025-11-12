@@ -658,7 +658,7 @@
 }
 /*
 ===========================================================
-== ESTILOS PARA METEORITO ROTO (AÑADIDO) ==
+== ESTILOS PARA METEORITO ROTO (MODIFICADO) ==
 ===========================================================
 */
 
@@ -676,12 +676,18 @@
   /* Detenemos la animación de giro del meteorito */
   animation: none !important; 
   
-  /* Hacemos que la imagen del meteorito desaparezca */
-  opacity: 0 !important; 
+  /* === CAMBIO CLAVE AQUÍ === */
+  /* Cambiamos la imagen de fondo por la del meteorito roto */
+  background-image: url('../img/meteoritoRoto.png') !important;
   
-  /* Hacemos que crezca (efecto explosión) */
-  transform: scale(2.5);
+  /* Aseguramos que la nueva imagen se muestre inmediatamente */
+  opacity: 1 !important; 
   
-  /* Definimos la velocidad de la "explosión" */
-  transition: transform 0.3s ease-out, opacity 0.3s ease-out;
+  /* Mantenemos el tamaño y la posición para la imagen rota */
+  transform: scale(1);
+  
+  /* Añadimos una transición para que el cambio de imagen no sea abrupto,
+     aunque el cambio de background-image no se transiciona directamente,
+     la opacidad y escala sí lo harían si las usáramos. */
+  transition: background-image 0.2s ease-out; /* Esto es más declarativo */
 }

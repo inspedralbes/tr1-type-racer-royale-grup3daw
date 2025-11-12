@@ -54,7 +54,6 @@
    const isShooting = ref(false);
    const shotStyle = ref({});
    
-   // === AÑADIDO ===
    // Estado para controlar la animación de explosión
    const isMeteorBroken = ref(false);
 
@@ -87,14 +86,12 @@
    watch(() => estatDelJoc.value.indexParaulaActiva, async () => {
        await nextTick();
        if (meteorWordEl.value) {
-           // Resetea todos los estados para el nuevo meteorito
            meteorWordEl.value.classList.remove('fall-animation');
-           meteorWordEl.value.classList.remove('broken-animation'); // Quita la clase de roto
-           isMeteorBroken.value = false; // Resetea el estado
+           // Asegúrate de que el estado de 'roto' se resetee para el nuevo meteorito
+           isMeteorBroken.value = false; // <-- Esto es clave aquí
            
            void meteorWordEl.value.offsetWidth; // Fuerza un reflow
            
-           // Añade la nueva animación de caída
            meteorWordEl.value.classList.add('fall-animation');
        }
    });
@@ -186,7 +183,6 @@
        }
        gameEnded.value = true;
        
-       // === CORREGIDO (Error tipográfico) ===
        const totalTypedChars = estatDelJoc.value.stats.reduce((acc, word) => acc + word.paraula.length, 0);
        const gameDurationInMinutes = props.roomState.time / 60;
        const wpm = gameDurationInMinutes > 0 ? (totalTypedChars / 5) / gameDurationInMinutes : 0;
@@ -302,16 +298,14 @@
        };
   
        if (entrada === paraula.text){
-           // Activar el disparo ANTES de cambiar la palabra
            await triggerShot();
            
-           // === AÑADIDO ===
-           // Activa la animación de explosión
+           // === CAMBIO CLAVE AQUÍ ===
+           // Activa el estado para que el CSS cambie la imagen
            isMeteorBroken.value = true;
            
-           // === MODIFICADO ===
-           // Añadimos un pequeño retraso para que la animación de explosión
-           // sea visible antes de que cambie la palabra.
+           // Añadimos un pequeño retraso para que la animación del meteorito roto
+           // sea visible antes de que cambie a la siguiente palabra.
            setTimeout(async () => {
                try {
                    const newScore = score.value + POINTS_PER_DIFFICULTY[paraula.difficulty];
@@ -345,21 +339,18 @@
                        finishGame();
                    }
                }
-           }, 300); // 300ms de retraso, justo la duración de la animación de explosión
+           }, 300); // 300ms de retraso, para que la animación de "roto" sea visible
        };
    };
 
-   // === Lógica para el disparo (Recto hacia arriba) ===
+   // Lógica para el disparo (Recto hacia arriba)
    async function triggerShot() {
-       if (!meteorWordEl.value) { // Sigue siendo una buena idea comprobar que la palabra existe
+       if (!meteorWordEl.value) {
            console.warn("No se puede disparar, el meteorito (h1) no está montado.");
            return;
        }
        if (!audioDisparo) {
-           // === ESTA ES LA LÍNEA CORREGIDA ===
-           // Usamos la ruta absoluta que confirmaste que funciona
            audioDisparo = new Audio('/src/sound/disparo.mp3');
-           // ==================================
            audioDisparo.volume = 1.0;
        }
        try {
@@ -370,9 +361,8 @@
        }
 
        isShooting.value = true;
-       await nextTick(); // Asegura que el div del disparo esté en el DOM.
+       await nextTick();
 
-       // 1. Encontrar la posición de la nave
        const shipEl = document.querySelector('.player-ship');
        if (!shipEl) {
             isShooting.value = false;
@@ -380,21 +370,18 @@
        }
        const shipRect = shipEl.getBoundingClientRect();
        
-       // 2. Calcular el punto de partida (centro-superior de la nave)
        const shipX = shipRect.left + shipRect.width / 2;
-       const shipY = shipRect.top; // Usamos el borde superior de la imagen
+       const shipY = shipRect.top;
 
-       // 3. Aplicar solo la posición inicial. La animación CSS se encarga del resto.
        shotStyle.value = {
            'left': `${shipX}px`,
            'top': `${shipY}px`,
        };
 
-       // 4. Resetear el estado de disparo después de que la animación termine
        setTimeout(() => {
            isShooting.value = false;
-           shotStyle.value = {}; // Limpiar estilos
-       }, 500); // Coincide con la duración de la animación en CSS
+           shotStyle.value = {};
+       }, 500);
    }
 
    if (timeLeft.value <= 0){
