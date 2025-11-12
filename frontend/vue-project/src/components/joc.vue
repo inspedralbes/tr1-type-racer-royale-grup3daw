@@ -41,8 +41,8 @@ const currentGameModeComponent = computed(() => {
       return defineAsyncComponent(() => import('./game-modes/CuentaAtrasSimple.vue'));
     case 'powerUps':
       return defineAsyncComponent(() => import('./game-modes/PowerUps.vue'));
-    case 'modoJuego3':
-      return defineAsyncComponent(() => import('./game-modes/ModoJuego3.vue'));
+    case 'MuerteSubita':
+      return defineAsyncComponent(() => import('./game-modes/MuerteSubita.vue'));
     default:
       // Fallback to CuentaAtrasSimple or a default error component
       console.warn(`Unknown game mode: ${props.gameMode}. Falling back to CuentaAtrasSimple.`);

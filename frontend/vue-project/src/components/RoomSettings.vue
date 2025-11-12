@@ -102,7 +102,7 @@ const goToProfile = () => {
 const gameModes = [
   { value: 'cuentaAtrasSimple', name: 'Cuenta Atrás Simple' },
   { value: 'powerUps', name: 'Power-Ups' },
-  { value: 'modoJuego3', name: 'Modo de Juego 3' }
+  { value: 'MuerteSubita', name: 'Muerte Súbita' }
 ];
 
 // `room` es una referencia reactiva que contiene los datos del formulario.
