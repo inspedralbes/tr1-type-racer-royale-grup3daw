@@ -16,7 +16,7 @@
        roomState: { type: Object, default: () => ({ time: 0, isPlaying: false, gameStartTime: null }) },
        gameMode: { type: String, required: true },
    });
-  
+   let audioDisparo = null;
    const gameStore = useGameStore();
    const roomStore = useRoomStore();
    const sessionStore = useSessionStore();
@@ -175,7 +175,7 @@
        }
        gameEnded.value = true;
   
-       const totalTypedChars = estatDelJoc.value.stats.reduce((acc, word) => acc + word.paraula.length, 0);
+       const totalTypedChars = estatDelJLlegir.value.stats.reduce((acc, word) => acc + word.paraula.length, 0);
        const gameDurationInMinutes = props.roomState.time / 60;
        const wpm = gameDurationInMinutes > 0 ? (totalTypedChars / 5) / gameDurationInMinutes : 0;
   
@@ -334,6 +334,19 @@
            console.warn("No se puede disparar, el meteorito (h1) no está montado.");
            return;
        }
+       if (!audioDisparo) {
+           // === ESTA ES LA LÍNEA CORREGIDA ===
+           // Usamos la ruta absoluta que confirmaste que funciona
+           audioDisparo = new Audio('/src/sound/disparo.mp3');
+           // ==================================
+           audioDisparo.volume = 1.0;
+       }
+       try {
+           audioDisparo.currentTime = 0;
+           await audioDisparo.play();
+       } catch (e) {
+           console.warn("No se pudo reproducir el sonido de disparo:", e);
+       }
 
        isShooting.value = true;
        await nextTick(); // Asegura que el div del disparo esté en el DOM.
@@ -372,7 +385,6 @@
        sessionStore.setEtapa('lobby');
    };
 </script>
-
 
 <template>
    <div class="main-background">
