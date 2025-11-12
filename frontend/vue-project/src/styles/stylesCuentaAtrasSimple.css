@@ -78,7 +78,7 @@
 /* === AÑADIDO: Clase para controlar la animación === */
 .fall-animation {
  /* Durará 2.5s, decelerará al final (ease-out) y mantendrá su posición (forwards) */
- animation: fallDown 6s ease-out forwards;
+ animation: fallDown 6s linear forwards;
 }
 
 
