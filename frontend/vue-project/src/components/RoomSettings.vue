@@ -3,6 +3,7 @@
     <div class="centra-console-panel">
       <div class="login-container hologram room-settings-container">
         <h2>Configuración de la Sala</h2>
+        <button class="back-button" @click="goBack">←</button>
         <form @submit.prevent="saveSettings">
           
           <div class="form-group" v-if="room.id">
@@ -96,6 +97,10 @@ const router = useRouter();
 
 const goToProfile = () => {
   router.push('/profile');
+}
+
+const goBack = () => {
+  router.back() 
 }
 
 // ---- Define Game Modes as an array ----
