@@ -16,7 +16,7 @@
        roomState: { type: Object, default: () => ({ time: 0, isPlaying: false, gameStartTime: null }) },
        gameMode: { type: String, required: true },
    });
-  
+   let audioDisparo = null;
    const gameStore = useGameStore();
    const roomStore = useRoomStore();
    const sessionStore = useSessionStore();
@@ -38,7 +38,9 @@
        dificil: 15,
    };
    const PENALTY_PER_ERROR = 1;
-  
+   // === AÑADIDO (De nuevo) ===
+   const PENALTY_PER_TIMEOUT = 10; // Penalización por tiempo agotado
+
    const emits = defineEmits(['done']);
   
    const estatDelJoc = ref({
@@ -53,6 +55,9 @@
    const shipShotEl = ref(null);
    const isShooting = ref(false);
    const shotStyle = ref({});
+   
+   // Estado para controlar la animación de explosión
+   const isMeteorBroken = ref(false);
 
    const timeLeft = ref(props.roomState?.time ?? 0);
    const score = computed(() => {
@@ -79,11 +84,21 @@
        }
    }, { immediate: true, deep: true });
   
+   // Este 'watch' es el que resetea la animación CADA vez que cambia la palabra
    watch(() => estatDelJoc.value.indexParaulaActiva, async () => {
-       await nextTick();
+       await nextTick(); // Espera a que el DOM se actualice (cambie la palabra)
        if (meteorWordEl.value) {
+           
+           // 1. Resetea el estado de 'roto' para el nuevo meteorito
+           isMeteorBroken.value = false; 
+            
+           // 2. QUITA la clase de animación de caída
            meteorWordEl.value.classList.remove('fall-animation');
-           void meteorWordEl.value.offsetWidth;
+
+           // 3. FUERZA al navegador a recalcular el estilo (reflow)
+           void meteorWordEl.value.offsetWidth; 
+
+           // 4. AÑADE la clase de nuevo
            meteorWordEl.value.classList.add('fall-animation');
        }
    });
@@ -174,7 +189,8 @@
            gameInterval = null;
        }
        gameEnded.value = true;
-  
+       
+       // === CORREGIDO (Error tipográfico) ===
        const totalTypedChars = estatDelJoc.value.stats.reduce((acc, word) => acc + word.paraula.length, 0);
        const gameDurationInMinutes = props.roomState.time / 60;
        const wpm = gameDurationInMinutes > 0 ? (totalTypedChars / 5) / gameDurationInMinutes : 0;
@@ -290,24 +306,124 @@
        };
   
        if (entrada === paraula.text){
-           // Activar el disparo ANTES de cambiar la palabra
            await triggerShot();
+           isMeteorBroken.value = true;
            
-           try {
-               const newScore = score.value + POINTS_PER_DIFFICULTY[paraula.difficulty];
-               await communicationManager.updateScore(playerName.value, newScore, roomStore.roomId);
-           } catch (e) {
-               console.warn('Error updating score on word completion:', e);
-           }
-  
-           estatDelJoc.value.stats.push({
-               paraula: paraula.text,
-               errors: paraula.errors
-           });            
-           paraula.estat = 'completada';
+           setTimeout(async () => {
+               try {
+                   const newScore = score.value + POINTS_PER_DIFFICULTY[paraula.difficulty];
+                   await communicationManager.updateScore(playerName.value, newScore, roomStore.roomId);
+               } catch (e) {
+                   console.warn('Error updating score on word completion:', e);
+               }
+      
+               estatDelJoc.value.stats.push({
+                   paraula: paraula.text,
+                   errors: paraula.errors
+               });            
+               paraula.estat = 'completada';
+               estatDelJoc.value.indexParaulaActiva++;
+               estatDelJoc.value.textEntrat = '';
+      
+               if (estatDelJoc.value.indexParaulaActiva >= estatDelJoc.value.paraules.length) {
+                   const wordsDataLocal = props.words;
+                   if (wordsDataLocal) {
+                       let allWords = [];
+                       if (wordsDataLocal.facil) allWords = allWords.concat(wordsDataLocal.facil.map(word => ({ text: word, difficulty: 'facil' })));
+                       if (wordsDataLocal.normal) allWords = allWords.concat(wordsDataLocal.normal.map(word => ({ text: word, difficulty: 'normal' })));
+                       if (wordsDataLocal.dificil) allWords = allWords.concat(wordsDataLocal.dificil.map(word => ({ text: word, difficulty: 'dificil' })));
+                       for (let i = allWords.length - 1; i > 0; i--) {
+                           const j = Math.floor(Math.random() * (i + 1));
+                           [allWords[i], allWords[j]] = [allWords[j], allWords[i]];
+                       }
+                       estatDelJoc.value.paraules = allWords.map(p => ({ ...p, errors: 0, estat: 'pendent' }));
+                       estatDelJoc.value.indexParaulaActiva = 0;
+                   } else {
+                       finishGame();
+                   }
+               }
+           }, 300); // 300ms de retraso
+       };
+   };
+
+   // Lógica para el disparo (Recto hacia arriba)
+   async function triggerShot() {
+       if (!meteorWordEl.value) {
+           console.warn("No se puede disparar, el meteorito (h1) no está montado.");
+           return;
+       }
+       if (!audioDisparo) {
+           audioDisparo = new Audio('/src/sound/disparo.mp3');
+           audioDisparo.volume = 1.0;
+       }
+       try {
+           audioDisparo.currentTime = 0;
+           await audioDisparo.play();
+       } catch (e) {
+           console.warn("No se pudo reproducir el sonido de disparo:", e);
+       }
+
+       isShooting.value = true;
+       await nextTick();
+
+       const shipEl = document.querySelector('.player-ship');
+       if (!shipEl) {
+            isShooting.value = false;
+            return;
+       }
+       const shipRect = shipEl.getBoundingClientRect();
+       
+       const shipX = shipRect.left + shipRect.width / 2;
+       const shipY = shipRect.top;
+
+       shotStyle.value = {
+           'left': `${shipX}px`,
+           'top': `${shipY}px`,
+       };
+
+       setTimeout(() => {
+           isShooting.value = false;
+           shotStyle.value = {};
+       }, 500);
+   }
+
+   // === AÑADIDO (De nuevo) ===
+   /**
+    * Se dispara cuando la animación 'fallDown' (6s) termina.
+    */
+   async function handleAnimationEnd(event) {
+       
+       // 1. Filtra para que SOLO reaccione a la animación 'fallDown'
+       if (event.animationName !== 'fallDown') {
+           return;
+       }
+       
+       // 2. Si el jugador ya acertó (y rompió el meteorito), no hagas nada.
+       //    (La clase .broken-animation pausa la animación, pero esta es una
+       //     doble seguridad por si acaso)
+       if (isMeteorBroken.value) {
+           return;
+       }
+
+       console.log("¡Tiempo agotado para la palabra! Penalización.");
+
+       // 3. Activa la explosión visual
+       isMeteorBroken.value = true;
+
+       // 4. Aplica la penalización de 10 puntos
+       try {
+           const newScore = Math.max(0, score.value - PENALTY_PER_TIMEOUT);
+           await communicationManager.updateScore(playerName.value, newScore, roomStore.roomId);
+       } catch (e) {
+           console.warn('Error applying penalty score for meteor end:', e);
+       }
+       
+       // 5. Pasa a la siguiente palabra (con un retraso para ver la explosión)
+       setTimeout(() => {
            estatDelJoc.value.indexParaulaActiva++;
            estatDelJoc.value.textEntrat = '';
-  
+   
+           // Lógica para recargar palabras si se acaban
            if (estatDelJoc.value.indexParaulaActiva >= estatDelJoc.value.paraules.length) {
                const wordsDataLocal = props.words;
                if (wordsDataLocal) {
@@ -325,43 +441,9 @@
                    finishGame();
                }
            }
-       };
-   };
-
-   // === MODIFICADO: Lógica para el disparo (Recto hacia arriba) ===
-   async function triggerShot() {
-       if (!meteorWordEl.value) { // Sigue siendo una buena idea comprobar que la palabra existe
-           console.warn("No se puede disparar, el meteorito (h1) no está montado.");
-           return;
-       }
-
-       isShooting.value = true;
-       await nextTick(); // Asegura que el div del disparo esté en el DOM.
-
-       // 1. Encontrar la posición de la nave
-       const shipEl = document.querySelector('.player-ship');
-       if (!shipEl) {
-            isShooting.value = false;
-            return;
-       }
-       const shipRect = shipEl.getBoundingClientRect();
-       
-       // 2. Calcular el punto de partida (centro-superior de la nave)
-       const shipX = shipRect.left + shipRect.width / 2;
-       const shipY = shipRect.top; // Usamos el borde superior de la imagen
-
-       // 3. Aplicar solo la posición inicial. La animación CSS se encarga del resto.
-       shotStyle.value = {
-           'left': `${shipX}px`,
-           'top': `${shipY}px`,
-       };
-
-       // 4. Resetear el estado de disparo después de que la animación termine
-       setTimeout(() => {
-           isShooting.value = false;
-           shotStyle.value = {}; // Limpiar estilos
-       }, 500); // Coincide con la duración de la animación en CSS
+       }, 300); // 300ms de retraso
    }
+
 
    if (timeLeft.value <= 0){
        finishGame();
@@ -372,7 +454,6 @@
        sessionStore.setEtapa('lobby');
    };
 </script>
-
 
 <template>
    <div class="main-background">
@@ -400,11 +481,14 @@
                    <div class="game-content-wrapper">
                        <div class="paraula-actual">
                            
-                           <h1 ref="meteorWordEl" class="fall-animation">
+                           <h1 ref="meteorWordEl" 
+                               :class="['fall-animation', { 'broken-animation': isMeteorBroken }]"
+                               @animationend="handleAnimationEnd($event)"> 
                                <span v-for="(lletra, index) in paraulaActiva.text" :key="index" :class="obtenirClasseLletra(lletra, index)">
                                    {{ lletra }}
                                </span>
                            </h1>
+                           
                            <input type="text" v-model="estatDelJoc.textEntrat" @input="validarProgres" autofocus />
                            <img v-if="playerShipSrc" :src="playerShipSrc" alt="Nave seleccionada" class="player-ship" />
                            

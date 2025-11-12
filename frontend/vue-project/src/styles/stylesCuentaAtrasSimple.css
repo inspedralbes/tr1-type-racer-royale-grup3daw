@@ -78,7 +78,7 @@
 /* === AÑADIDO: Clase para controlar la animación === */
 .fall-animation {
  /* Durará 2.5s, decelerará al final (ease-out) y mantendrá su posición (forwards) */
- animation: fallDown 6s ease-out forwards;
+ animation: fallDown 6s linear forwards;
 }
 
 
@@ -655,4 +655,40 @@
   position: absolute;
   /* Hacemos que ocupe el ancho del panel para que no colapse */
   width: calc(100% - 20px); /* 100% - padding (10px * 2) */
+}
+/*
+===========================================================
+== ESTILOS PARA METEORITO ROTO (MODIFICADO) ==
+===========================================================
+*/
+
+/* Esta clase se aplica al H1 cuando 'isMeteorBroken' es true */
+.broken-animation {
+  animation-play-state: paused !important;
+  /* Ocultamos el texto de la palabra haciéndolo transparente */
+  color: transparent !important;
+  text-shadow: none !important;
+  
+  /* Hacemos la transición del color del texto rápida */
+  transition: color 0.2s ease-out;
+}
+
+.broken-animation::before {
+  /* Detenemos la animación de giro del meteorito */
+  animation: none !important; 
+  
+  /* === CAMBIO CLAVE AQUÍ === */
+  /* Cambiamos la imagen de fondo por la del meteorito roto */
+  background-image: url('../img/meteoritoRoto.png') !important;
+  
+  /* Aseguramos que la nueva imagen se muestre inmediatamente */
+  opacity: 1 !important; 
+  
+  /* Mantenemos el tamaño y la posición para la imagen rota */
+  transform: scale(1);
+  
+  /* Añadimos una transición para que el cambio de imagen no sea abrupto,
+     aunque el cambio de background-image no se transiciona directamente,
+     la opacidad y escala sí lo harían si las usáramos. */
+  transition: background-image 0.2s ease-out; /* Esto es más declarativo */
 }
