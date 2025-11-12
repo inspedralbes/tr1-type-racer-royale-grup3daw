@@ -1,34 +1,36 @@
 <template>
-  <div class="main-background">
-    <div class="themed-container room-selection-container">
-      <h2>Seleccionar Sala</h2>
+  <div class="selection-background">
+    <div class="centra-console-panel">
+      <div class="selection hologram">
+        <div class="section-joinID">
+          <h3>Unirse a una sala existente</h3>
+          <div>
+            <input type="text" v-model="joinRoomId" placeholder="ID de la sala" @keyup.enter="joinRoom" />
+            <button class="btn btn-small" @click="joinRoom" title="Unirse a la sala por ID">›</button>
+          </div>
+        </div>
 
-      <div class="section">
-        <h3>Unirse a una sala existente</h3>
-        <input type="text" v-model="joinRoomId" placeholder="ID de la sala" />
-        <button class="btn btn-small" @click="joinRoom">Unirse</button>
-      </div>
+        <div class="section-joinPublic">
+          <h3>Salas Públicas</h3>
+          <ul class="roomList" v-if="publicRooms.length">
+            <li class="room" v-for="room in publicRooms" :key="room.id">
+              <span>{{ room.name }} ({{ room.players.length }} jug.)</span>
+              <button class="btn btn-small" @click="joinRoomById(room.id)" title="Unirse a esta sala">›</button>
+            </li>
+          </ul>
+          <p v-else>No hay salas públicas disponibles.</p>
+          <button class="btn btn-small" @click="fetchPublicRooms" title="Actualizar lista de salas">↻</button>
+        </div>
 
-      <div class="section">
-        <h3>Salas Públicas</h3>
-        <ul class="roomList" v-if="publicRooms.length">
-          <li class="room" v-for="room in publicRooms" :key="room.id">
-            {{ room.name }} (ID: {{ room.id }}) - {{ room.players.length }} jugadores
-            <button class="btn btn-small" @click="joinRoomById(room.id)">Unirse</button>
-          </li>
-        </ul>
-        <p v-else>No hay salas públicas disponibles.</p>
-        <button class="btn btn-small" @click="fetchPublicRooms">Actualizar Salas</button>
-      </div>
-
-      <div class="section">
-        <h3>Crear nueva sala</h3>
-        <button class="btn" @click="createRoom">Crear Sala</button>
-      </div>
-      <div style="margin-top:12px">
-        <button class="btn" v-if="sessionStore.email" @click="goToPlayerStats">Ver Estadísticas</button>
-        <button class="btn" v-if="sessionStore.email" @click="goToProfile" style="margin-left:8px">Profile</button>
-        <button class="btn logout-button" @click="logoutAndReset" style="margin-left:8px">Logout</button>
+        <div class="section-create">
+          <h3>Crear nueva sala</h3>
+          <button class="btn" @click="createRoom" title="Crear nueva sala">*</button>
+        </div>
+        <div class="user-actions" style="margin-top:12px">
+          <button class="btn" v-if="sessionStore.email" @click="goToPlayerStats" title="Ver estadísticas">📈</button>
+          <button class="btn" v-if="sessionStore.email" @click="goToProfile" style="margin-left:8px" title="Ir al perfil">👤</button>
+          <button class="btn logout-button" @click="logoutAndReset" style="margin-left:8px" title="Cerrar sesión">⏻</button>
+        </div>
       </div>
     </div>
   </div>
@@ -50,10 +52,10 @@
 import { ref, onMounted } from 'vue';
 import { storeToRefs } from 'pinia';
 import { useGameStore } from '../stores/game';
-import { useRoomStore } from '../stores/room';
-import { useSessionStore } from '../stores/session';
+import { useRoomStore } from '../stores/room.js';
+import { useSessionStore } from '../stores/session.js';
 import { usePublicRoomsStore } from '../stores/publicRooms';
-import { communicationManager, socket } from '../communicationManager';
+import { communicationManager, socket } from '../communicationManager.js';
 import { useNotificationStore } from '../stores/notification';
 
 import { useRouter } from 'vue-router';
@@ -102,6 +104,7 @@ const joinRoom = () => {
  */
 const joinRoomById = (roomId) => {
   communicationManager.joinRoom(roomId);
+  roomStore.setRoomId(roomId); // Añadido para que la navegación funcione
   sessionStore.setRoomId(roomId);
   sessionStore.setEtapa('lobby');
 };
@@ -122,16 +125,13 @@ const logoutAndReset = () => {
   // Llama al método centralizado de logout que notifica al backend y limpia la sesión.
   communicationManager.logout();
 
-  // Disconnect the socket after emitting the logout event
-  if (socket) {
-    socket.disconnect();
-  }
+  // Desconecta el socket después de emitir el evento de logout.
+  communicationManager.disconnect();
   
   // Resetea los stores de estado del juego y de las salas.
   gameStore.resetState();
   roomStore.resetState();
   publicRoomsStore.resetState();
-  sessionStore.clearSession();
 
   router.push('/login');
 };

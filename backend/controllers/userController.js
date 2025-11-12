@@ -33,6 +33,18 @@ const getProfile = async (req, res) => {
     const reg = stateManager.findRegisteredPlayerByToken(token);
     if (!reg || !reg.name) return res.status(404).json({ message: 'User not found' });
 
+    // Si el jugador es un invitado, no buscamos en la base de datos.
+    // Devolvemos un perfil "invitado" con email nulo.
+    if (reg.isGuest) {
+      return res.json({
+        id: reg.id, // Asegurarse de que el ID del jugador invitado se incluya
+        username: reg.name,
+        email: null,
+        avatar: reg.avatar || null, // Asumiendo que los invitados pueden tener avatar/color
+        color: reg.color || null,
+      });
+    }
+
     const user = await User.findOne({ where: { username: reg.name } });
     if (!user) return res.status(404).json({ message: 'User not found in DB' });
 

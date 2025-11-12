@@ -12,7 +12,7 @@
  */
 import axios from 'axios';
 import { io } from 'socket.io-client';
-import { useSessionStore } from './stores/session';
+import { useSessionStore } from './stores/session.js';
 import { useRoomStore } from './stores/room';
 import { useGameStore } from './stores/game';
 import { useRouter } from 'vue-router';
@@ -138,7 +138,7 @@ export function setupSocketListeners(router) {
       const publicRoomsStore = usePublicRoomsStore();
 
       // Limpia el sessionStorage y resetea los stores
-      sessionStore.clearSession(); // Corregido: La función en stores/session.js se llama clearSession.
+      sessionStore.resetState();
       gameStore.resetState();
       roomStore.resetState();
       publicRoomsStore.resetState();
@@ -165,27 +165,6 @@ export function setupSocketListeners(router) {
     }
   });
 
-  socket.on('join-room-success', (room) => {
-    const roomStore = useRoomStore();
-    const sessionStore = useSessionStore();
-
-    // Actualiza el estado local con los datos recibidos ANTES de redirigir.
-    // Esto asegura que el lobby tenga la información correcta desde el principio.
-    roomStore.setRoomId(room.id);
-    roomStore.setRoomState(room);
-    sessionStore.setRoomId(room.id);
-    roomStore.setJugadores(room.players); // ¡Esta es la línea clave!
-    // En lugar de navegar directamente, cambiamos la etapa en el store.
-    sessionStore.setEtapa('lobby');
-    // Informar al usuario que se unió correctamente
-    try {
-      const notificationStore = useNotificationStore();
-      notificationStore.pushNotification({ type: 'success', message: `Te has unido a la sala ${room.name || room.id}` });
-    } catch (e) {
-      // ignore
-    }
-    // router.push('/lobby'); // Redirige al lobby - Eliminado, GameEngine gestiona la vista
-  });
 }
 
 // Objeto que agrupa todos los métodos de comunicación con el backend.
@@ -216,7 +195,7 @@ export const communicationManager = {
 
   async deleteAccount() {
     return apiClient.delete('/user/me');
-  },
+  }, // <-- ESTA COMA FALTABA
 
 
 
@@ -239,7 +218,7 @@ export const communicationManager = {
       socket.emit('explicit-logout', token);
     }
     // Limpia la sesión localmente después de notificar al backend.
-    sessionStore.clearSession();
+    sessionStore.resetState();
   },
 
   // Desconecta el socket y elimina cualquier auth pendiente (no notifica al servidor).
@@ -280,6 +259,10 @@ export const communicationManager = {
   // Obtiene el historial de WPM de un jugador.
   async getPlayerScoreHistory(playerName) {
     return apiClient.get(`/scores/history/${playerName}`);
+  },
+
+  async sendGameStats(stats) {
+    return apiClient.post('/stats/game', stats);
   },
 
   // --- Métodos de Salas (REST) ---
@@ -370,6 +353,20 @@ export const communicationManager = {
     socket.emit('set-ready', { roomId: roomStore.roomId, isReady });
   },
 
+  // --- Power-Up Methods (Socket.IO) ---
+
+  sendPowerUp(powerUpData) {
+    socket.emit('powerUp', powerUpData);
+  },
+
+  onReceivePowerUp(callback) {
+    socket.on('receivePowerUp', callback);
+  },
+
+  offReceivePowerUp(callback) {
+    socket.off('receivePowerUp', callback);
+  },
+
   // --- Métodos de Socket.IO ---
 
   // Emite el evento para unirse a una sala.
@@ -377,6 +374,12 @@ export const communicationManager = {
     this.waitUntilConnected().then(() => {
       const sessionStore = useSessionStore();
       const player = { name: sessionStore.playerName, socketId: socket.id, token: sessionStore.token };
+      try {
+        const notificationStore = useNotificationStore();
+        notificationStore.pushNotification({ type: 'success', message: `Uniéndote a la sala ${roomId}...` });
+      } catch (e) {
+        // ignore
+      }
       socket.emit('join-room', { roomId, player });
     });
   },
