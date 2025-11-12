@@ -216,7 +216,7 @@ export const communicationManager = {
 
   async deleteAccount() {
     return apiClient.delete('/user/me');
-  },
+  }, // <-- ESTA COMA FALTABA
 
 
 

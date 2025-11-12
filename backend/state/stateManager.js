@@ -175,6 +175,12 @@ const startGame = (roomId) => {
   room.gameStartTime = Date.now();
   room.players.forEach(p => {
     p.score = 0;
+    // Reset gameData for all players when a new game starts
+    p.gameData = {
+      time: 10, // Default time for Muerte Subita, will be overwritten if not Muerte Subita
+      streak: 0,
+      isEliminated: false
+    };
   });
 
   return { room };

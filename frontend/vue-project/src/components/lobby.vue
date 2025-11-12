@@ -198,7 +198,6 @@ function iniciarJuego() {
     communicationManager.startGame(roomStore.roomId)
       .then(response => {
         console.log('Game started:', response.data);
-        sessionStore.setEtapa('game');
       })
       .catch(error => {
         console.error('Error al iniciar el juego:', error);

@@ -104,22 +104,9 @@
    });
   
    function initializeGame() {
-       switch (currentGameMode.value) {
-           case 'cuentaAtrasSimple':
-               initializeWords(props.words);
-               startGameTimer();
-               break;
-           case 'modoJuego2':
-               console.log('Initializing Modo de Juego 2');
-               break;
-           case 'modoJuego3':
-               console.log('Initializing Modo de Juego 3');
-               break;
-           default:
-               console.warn('Modo de juego desconocido:', currentGameMode.value);
-               initializeWords(props.words);
-               startGameTimer();
-       }
+       // Este componente solo se usa para 'cuentaAtrasSimple', no se necesita un switch.
+       initializeWords(props.words);
+       startGameTimer();
    }
   
    const initializeTimer = () => {
@@ -217,34 +204,14 @@
            }
        }
   
-       switch (currentGameMode.value) {
-           case 'cuentaAtrasSimple':
-               const finalScores = jugadoresStore.value.map(p => ({
-                   nombre: p.name,
-                   puntuacion: p.score,
-                   wpm: p.wpm,
-               }));
-               gameStore.setFinalResults(finalScores);
-               sessionStore.setEtapa('done');
-               break;
-           case 'modoJuego2':
-               console.log('Finishing Modo de Juego 2');
-               sessionStore.setEtapa('done');
-               break;
-           case 'modoJuego3':
-               console.log('Finishing Modo de Juego 3');
-               sessionStore.setEtapa('done');
-               break;
-           default:
-               console.warn('Modo de juego desconocido al finalizar:', currentGameMode.value);
-               const defaultFinalScores = jugadoresStore.value.map(p => ({
-                   nombre: p.name,
-                   puntuacion: p.score,
-                   wpm: p.wpm
-               }));
-               gameStore.setFinalResults(defaultFinalScores);
-               sessionStore.setEtapa('done');
-       }
+       // Este componente solo se usa para 'cuentaAtrasSimple', no se necesita un switch.
+       const finalScores = jugadoresStore.value.map(p => ({
+           nombre: p.name,
+           puntuacion: p.score,
+           wpm: p.wpm,
+       }));
+       gameStore.setFinalResults(finalScores);
+       sessionStore.setEtapa('done');
    }
   
    const paraulaActiva = computed(() => {

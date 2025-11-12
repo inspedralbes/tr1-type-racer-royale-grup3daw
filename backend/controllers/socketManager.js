@@ -136,7 +136,6 @@ const initializeSockets = (app) => {
       const { roomId, isReady } = data;
       stateManager.setPlayerReadyStatusInRoom(roomId, socket.id, isReady);
       await broadcastPlayerList(roomId);
-      broadcastRoomState(roomId); // Notificar también el cambio de estado de la sala
     });
 
     socket.on('powerUp', (data) => {
@@ -149,6 +148,29 @@ const initializeSockets = (app) => {
           powerUpType: powerUpType,
           senderId: senderSocketId
         });
+      }
+    });
+
+    socket.on('muerte-subita-word-correct', (data) => {
+      const { roomId, difficulty } = data;
+      const room = stateManager.getRoom(roomId);
+      if (!room || room.gameMode !== 'MuerteSubita') return;
+
+      const player = room.players.find(p => p.socketId === socket.id);
+      if (player && player.gameData && !player.gameData.isEliminated) {
+          const timeToAdd = { 'facil': 3, 'normal': 2, 'dificil': 1 }[difficulty] || 1;
+          player.gameData.time += timeToAdd;
+
+          player.gameData.streak++;
+          if (player.gameData.streak >= 5) {
+              player.gameData.streak = 0; 
+
+              room.players.forEach(opponent => {
+                  if (opponent.socketId !== socket.id && opponent.gameData && !opponent.gameData.isEliminated) {
+                      io.to(opponent.socketId).emit('apply-debuff', { type: 'INPUT_LOCK', duration: 3000 });
+                  }
+              });
+          }
       }
     });
 
@@ -225,4 +247,74 @@ const initializeSockets = (app) => {
   });
 };
 
-module.exports = { initializeSockets };
+const gameLoops = {};
+
+function startMuerteSubitaGame(roomId, io) {
+  const room = stateManager.getRoom(roomId);
+  if (!room) return;
+
+  console.log(`[startMuerteSubitaGame] Iniciando bucle de juego para la sala ${roomId}`);
+  console.log(`Iniciando modo 'Muerte Súbita' para la sala ${roomId}`);
+
+  room.players.forEach(player => {
+    player.gameData = {
+      time: 10,
+      streak: 0,
+      isEliminated: false
+    };
+  });
+
+  if (gameLoops[roomId]) {
+    clearInterval(gameLoops[roomId]);
+  }
+
+  gameLoops[roomId] = setInterval(() => {
+    const currentRoom = stateManager.getRoom(roomId);
+    if (!currentRoom) {
+      clearInterval(gameLoops[roomId]);
+      delete gameLoops[roomId];
+      return;
+    }
+
+    let activePlayersCount = 0;
+    currentRoom.players.forEach(player => {
+      if (player.gameData && !player.gameData.isEliminated) {
+        player.gameData.time -= 1;
+        if (player.gameData.time <= 0) {
+          player.gameData.isEliminated = true;
+          io.to(roomId).emit('player-eliminated', { playerId: player.socketId });
+        } else {
+          activePlayersCount++;
+        }
+      }
+    });
+    
+    const playersData = currentRoom.players.map(p => ({
+      socketId: p.socketId,
+      name: p.name,
+      gameData: p.gameData
+    }));
+
+    io.to(roomId).emit('muerte-subita-state-update', { players: playersData });
+
+    const totalPlayers = currentRoom.players.length;
+    // El juego termina si queda 1 o 0 jugadores activos
+    if (activePlayersCount <= 1 && totalPlayers > 1) {
+      clearInterval(gameLoops[roomId]);
+      delete gameLoops[roomId];
+      
+      const finalResults = currentRoom.players.map(p => ({
+        nombre: p.name,
+        // El ganador es el que no fue eliminado. Su puntuación es su tiempo restante.
+        puntuacion: p.gameData.isEliminated ? 0 : p.gameData.time,
+        wpm: 0,
+        isEliminated: p.gameData.isEliminated,
+      }));
+      
+      io.to(roomId).emit('game-over', { results: finalResults });
+      console.log(`Juego 'Muerte Súbita' terminado en la sala ${roomId}. Resultados:`, finalResults);
+    }
+  }, 1000);
+}
+
+module.exports = { initializeSockets, startMuerteSubitaGame };

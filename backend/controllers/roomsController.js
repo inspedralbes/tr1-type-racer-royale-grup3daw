@@ -119,10 +119,21 @@ exports.updateRoom = (req, res) => {
  */
 exports.startGame = (req, res) => {
   const { roomId } = req.params;
+  const token = req.headers.authorization; // Obtener el token del jugador
+
+  const room = stateManager.getRoom(roomId);
+  if (!room) {
+    return res.status(404).json({ message: 'Sala no encontrada.' });
+  }
+
+  // Verificar si el jugador que hace la solicitud es el host
+  const playerInRoom = room.players.find(p => p.token === token);
+  if (!playerInRoom || playerInRoom.role !== 'admin') {
+    return res.status(403).json({ message: 'Solo el host puede iniciar la partida.' });
+  }
 
   // Verifica si hay al menos dos jugadores en la sala.
-  const room = stateManager.getRoom(roomId);
-  if (room && room.players.length < 2) {
+  if (room.players.length < 2) {
     return res.status(403).json({ message: 'Se necesitan al menos 2 jugadores para empezar la partida.' });
   }
 
@@ -132,6 +143,7 @@ exports.startGame = (req, res) => {
   }
 
   // Inicia la partida a través del stateManager.
+  console.log(`[startGame] Iniciando partida para la sala ${roomId}. Modo de juego: ${room.gameMode}`);
   const result = stateManager.startGame(roomId);
 
   if (result.error) {
@@ -142,6 +154,13 @@ exports.startGame = (req, res) => {
   // Esto es lo que hace que el frontend cambie a la pantalla de juego.
   const broadcastRoomState = req.app.get('broadcastRoomState');
   broadcastRoomState(roomId);
+
+  // Si el modo de juego es Muerte Súbita, inicia el bucle de juego específico.
+  console.log(`[startGame] Comprobando modo de juego: ${result.room.gameMode}`);
+  if (result.room.gameMode === 'MuerteSubita') {
+    const { startMuerteSubitaGame } = require('./socketManager'); // Importación local para evitar dependencia circular
+    startMuerteSubitaGame(roomId, req.app.get('io'));
+  }
 
   // Una vez iniciada la partida, resetea el estado de "listo" de todos los jugadores
   // para que en la siguiente ronda deban confirmar de nuevo.

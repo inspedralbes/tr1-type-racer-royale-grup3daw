@@ -35,6 +35,11 @@
     const playerName = computed(() => props.playerName || nombreJugador.value || '');
     const currentGameMode = computed(() => props.gameMode);
 
+    // Jugadores ordenados para la clasificación
+    const jugadoresOrdenats = computed(() => {
+       return [...jugadoresStore.value].sort((a, b) => b.score - a.score);
+    });
+
     // Definición de puntos por dificultad de palabra.
     const POINTS_PER_DIFFICULTY = {
         facil: 5,
@@ -241,7 +246,7 @@
             };
         };
         
-        if (entrada === paraula.text){
+        if (entrada === paraula.originalText){
             estatDelJoc.value.completedWords++; // Increment before calculating score
             
             let pointsForWord = POINTS_PER_DIFFICULTY[paraula.difficulty];
@@ -363,12 +368,14 @@
 
                         <div class="puntuacions">
                             <h2>Classificació</h2>
-                            <ul id="llista-jugadors">
-                                <li v-for="jugador in jugadoresStore" :key="jugador.name">
-                                    <strong>{{ jugador.name }}</strong> - {{ jugador.score }} punts
+                            <TransitionGroup tag="ul" id="llista-jugadors" name="list-ranking">
+                                <li v-for="jugador in jugadoresOrdenats" :key="jugador.name">
+                                    <span>{{ jugador.name }}</span>
+                                    <strong>{{ jugador.score }}</strong>
                                 </li>
-                            </ul>
+                            </TransitionGroup>
                         </div>
+
                     </div>
                 </main>
             </div>
