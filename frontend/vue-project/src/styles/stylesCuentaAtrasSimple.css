@@ -656,3 +656,32 @@
   /* Hacemos que ocupe el ancho del panel para que no colapse */
   width: calc(100% - 20px); /* 100% - padding (10px * 2) */
 }
+/*
+===========================================================
+== ESTILOS PARA METEORITO ROTO (AÑADIDO) ==
+===========================================================
+*/
+
+/* Esta clase se aplica al H1 cuando 'isMeteorBroken' es true */
+.broken-animation {
+  /* Ocultamos el texto de la palabra haciéndolo transparente */
+  color: transparent !important;
+  text-shadow: none !important;
+  
+  /* Hacemos la transición del color del texto rápida */
+  transition: color 0.2s ease-out;
+}
+
+.broken-animation::before {
+  /* Detenemos la animación de giro del meteorito */
+  animation: none !important; 
+  
+  /* Hacemos que la imagen del meteorito desaparezca */
+  opacity: 0 !important; 
+  
+  /* Hacemos que crezca (efecto explosión) */
+  transform: scale(2.5);
+  
+  /* Definimos la velocidad de la "explosión" */
+  transition: transform 0.3s ease-out, opacity 0.3s ease-out;
+}

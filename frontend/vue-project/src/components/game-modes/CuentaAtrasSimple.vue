@@ -53,6 +53,10 @@
    const shipShotEl = ref(null);
    const isShooting = ref(false);
    const shotStyle = ref({});
+   
+   // === AÑADIDO ===
+   // Estado para controlar la animación de explosión
+   const isMeteorBroken = ref(false);
 
    const timeLeft = ref(props.roomState?.time ?? 0);
    const score = computed(() => {
@@ -79,11 +83,18 @@
        }
    }, { immediate: true, deep: true });
   
+   // === MODIFICADO ===
    watch(() => estatDelJoc.value.indexParaulaActiva, async () => {
        await nextTick();
        if (meteorWordEl.value) {
+           // Resetea todos los estados para el nuevo meteorito
            meteorWordEl.value.classList.remove('fall-animation');
-           void meteorWordEl.value.offsetWidth;
+           meteorWordEl.value.classList.remove('broken-animation'); // Quita la clase de roto
+           isMeteorBroken.value = false; // Resetea el estado
+           
+           void meteorWordEl.value.offsetWidth; // Fuerza un reflow
+           
+           // Añade la nueva animación de caída
            meteorWordEl.value.classList.add('fall-animation');
        }
    });
@@ -174,8 +185,9 @@
            gameInterval = null;
        }
        gameEnded.value = true;
-  
-       const totalTypedChars = estatDelJLlegir.value.stats.reduce((acc, word) => acc + word.paraula.length, 0);
+       
+       // === CORREGIDO (Error tipográfico) ===
+       const totalTypedChars = estatDelJoc.value.stats.reduce((acc, word) => acc + word.paraula.length, 0);
        const gameDurationInMinutes = props.roomState.time / 60;
        const wpm = gameDurationInMinutes > 0 ? (totalTypedChars / 5) / gameDurationInMinutes : 0;
   
@@ -293,42 +305,51 @@
            // Activar el disparo ANTES de cambiar la palabra
            await triggerShot();
            
-           try {
-               const newScore = score.value + POINTS_PER_DIFFICULTY[paraula.difficulty];
-               await communicationManager.updateScore(playerName.value, newScore, roomStore.roomId);
-           } catch (e) {
-               console.warn('Error updating score on word completion:', e);
-           }
-  
-           estatDelJoc.value.stats.push({
-               paraula: paraula.text,
-               errors: paraula.errors
-           });            
-           paraula.estat = 'completada';
-           estatDelJoc.value.indexParaulaActiva++;
-           estatDelJoc.value.textEntrat = '';
-  
-           if (estatDelJoc.value.indexParaulaActiva >= estatDelJoc.value.paraules.length) {
-               const wordsDataLocal = props.words;
-               if (wordsDataLocal) {
-                   let allWords = [];
-                   if (wordsDataLocal.facil) allWords = allWords.concat(wordsDataLocal.facil.map(word => ({ text: word, difficulty: 'facil' })));
-                   if (wordsDataLocal.normal) allWords = allWords.concat(wordsDataLocal.normal.map(word => ({ text: word, difficulty: 'normal' })));
-                   if (wordsDataLocal.dificil) allWords = allWords.concat(wordsDataLocal.dificil.map(word => ({ text: word, difficulty: 'dificil' })));
-                   for (let i = allWords.length - 1; i > 0; i--) {
-                       const j = Math.floor(Math.random() * (i + 1));
-                       [allWords[i], allWords[j]] = [allWords[j], allWords[i]];
-                   }
-                   estatDelJoc.value.paraules = allWords.map(p => ({ ...p, errors: 0, estat: 'pendent' }));
-                   estatDelJoc.value.indexParaulaActiva = 0;
-               } else {
-                   finishGame();
+           // === AÑADIDO ===
+           // Activa la animación de explosión
+           isMeteorBroken.value = true;
+           
+           // === MODIFICADO ===
+           // Añadimos un pequeño retraso para que la animación de explosión
+           // sea visible antes de que cambie la palabra.
+           setTimeout(async () => {
+               try {
+                   const newScore = score.value + POINTS_PER_DIFFICULTY[paraula.difficulty];
+                   await communicationManager.updateScore(playerName.value, newScore, roomStore.roomId);
+               } catch (e) {
+                   console.warn('Error updating score on word completion:', e);
                }
-           }
+      
+               estatDelJoc.value.stats.push({
+                   paraula: paraula.text,
+                   errors: paraula.errors
+               });            
+               paraula.estat = 'completada';
+               estatDelJoc.value.indexParaulaActiva++;
+               estatDelJoc.value.textEntrat = '';
+      
+               if (estatDelJoc.value.indexParaulaActiva >= estatDelJoc.value.paraules.length) {
+                   const wordsDataLocal = props.words;
+                   if (wordsDataLocal) {
+                       let allWords = [];
+                       if (wordsDataLocal.facil) allWords = allWords.concat(wordsDataLocal.facil.map(word => ({ text: word, difficulty: 'facil' })));
+                       if (wordsDataLocal.normal) allWords = allWords.concat(wordsDataLocal.normal.map(word => ({ text: word, difficulty: 'normal' })));
+                       if (wordsDataLocal.dificil) allWords = allWords.concat(wordsDataLocal.dificil.map(word => ({ text: word, difficulty: 'dificil' })));
+                       for (let i = allWords.length - 1; i > 0; i--) {
+                           const j = Math.floor(Math.random() * (i + 1));
+                           [allWords[i], allWords[j]] = [allWords[j], allWords[i]];
+                       }
+                       estatDelJoc.value.paraules = allWords.map(p => ({ ...p, errors: 0, estat: 'pendent' }));
+                       estatDelJoc.value.indexParaulaActiva = 0;
+                   } else {
+                       finishGame();
+                   }
+               }
+           }, 300); // 300ms de retraso, justo la duración de la animación de explosión
        };
    };
 
-   // === MODIFICADO: Lógica para el disparo (Recto hacia arriba) ===
+   // === Lógica para el disparo (Recto hacia arriba) ===
    async function triggerShot() {
        if (!meteorWordEl.value) { // Sigue siendo una buena idea comprobar que la palabra existe
            console.warn("No se puede disparar, el meteorito (h1) no está montado.");
@@ -412,11 +433,13 @@
                    <div class="game-content-wrapper">
                        <div class="paraula-actual">
                            
-                           <h1 ref="meteorWordEl" class="fall-animation">
+                           <h1 ref="meteorWordEl" 
+                               :class="['fall-animation', { 'broken-animation': isMeteorBroken }]">
                                <span v-for="(lletra, index) in paraulaActiva.text" :key="index" :class="obtenirClasseLletra(lletra, index)">
                                    {{ lletra }}
                                </span>
                            </h1>
+                           
                            <input type="text" v-model="estatDelJoc.textEntrat" @input="validarProgres" autofocus />
                            <img v-if="playerShipSrc" :src="playerShipSrc" alt="Nave seleccionada" class="player-ship" />
                            
