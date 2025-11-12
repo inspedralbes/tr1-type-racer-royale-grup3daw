@@ -664,6 +664,7 @@
 
 /* Esta clase se aplica al H1 cuando 'isMeteorBroken' es true */
 .broken-animation {
+  animation-play-state: paused !important;
   /* Ocultamos el texto de la palabra haciéndolo transparente */
   color: transparent !important;
   text-shadow: none !important;
