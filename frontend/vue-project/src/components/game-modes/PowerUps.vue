@@ -388,4 +388,4 @@
     </div>
 </template>
 
-<style src="../../styles/stylesCuentaAtrasSimple.css"></style>
+<style src="../../styles/stylePowerUps.css"></style>
