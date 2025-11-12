@@ -75,8 +75,8 @@ div.selection.hologram{
 .hologram h3 {
     color: #00FF41;
     text-shadow: 0 0 5px #00FF41;
-    margin-bottom: 15px; 
-    font-size: 1.1em; 
+    margin-bottom: 15px;
+    font-size: 1.2em;
 }
 
 .hologram input[type="text"] {
@@ -103,7 +103,7 @@ div.selection.hologram{
   padding: 8px 10px; 
   border-radius: 0;
   transition: all 0.1s;
-  font-size: 0.9em; 
+  font-size: 1em;
   margin-bottom: 0; 
   width: 15%;
   margin-right:10px ; 
@@ -122,6 +122,12 @@ div.section-joinID {
   text-align: left;
 }
 
+div.section-joinID > div {
+  display: flex;
+  width: 100%;
+  align-items: center;
+}
+
 
 div.section-joinPublic {
   display: flex;
@@ -138,8 +144,12 @@ div.section-create {
   text-align: right; 
 }
 
-div.section-joinID .btn,
-div.section-joinPublic .btn,
+div.section-joinID > div > .btn {
+  width: auto;
+  margin-left: 10px;
+}
+
+div.section-joinPublic > .btn,
 div.section-create .btn {
   width: auto; 
 }
@@ -191,7 +201,7 @@ div.section-create .btn {
 .roomList .room .btn-small {
   width: 1%;
   padding: 10px 8px; 
-  font-size: 0.8em;
+  font-size: 1em;
   margin-left: 20px; 
   flex-shrink: 0; 
 }
