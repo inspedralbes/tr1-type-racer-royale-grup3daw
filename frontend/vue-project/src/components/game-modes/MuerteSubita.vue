@@ -69,7 +69,13 @@ const estatDelJoc = ref({
   paraules: [],
   indexParaulaActiva: 0,
   textEntrat: '',
+  stats: [],
+  errorTotal: 0,
 });
+
+let startTime = 0;
+let survivalTime = 0;
+const statsSent = ref(false);
 
 const gameEnded = ref(false);
 const jugadoresSupervivientes = ref([]);
@@ -99,6 +105,40 @@ const playerShipSrc = computed(() => {
   }
 });
 
+const sendGameStats = async () => {
+  if (statsSent.value) return;
+  statsSent.value = true;
+
+  if (startTime === 0) survivalTime = 0;
+  else survivalTime = (Date.now() - startTime) / 1000;
+
+  const totalTypedChars = estatDelJoc.value.stats.reduce((acc, word) => acc + word.paraula.length, 0);
+  const gameDurationInMinutes = survivalTime / 60;
+  const wpm = gameDurationInMinutes > 0 ? (totalTypedChars / 5) / gameDurationInMinutes : 0;
+
+  const gameStats = {
+    playerName: playerName.value,
+    words: estatDelJoc.value.stats,
+    score: estatDelJoc.value.stats.length, 
+    gameMode: 'MuerteSubita',
+    errors: estatDelJoc.value.errorTotal,
+    wpm: wpm,
+    survivalTime: survivalTime,
+  };
+
+  if (sessionStore.email) {
+    try {
+      await communicationManager.sendGameStats(gameStats);
+    } catch (error) {
+      console.error("Error sending game stats:", error);
+      notificationStore.pushNotification({
+        type: 'error',
+        message: 'No se pudieron guardar las estadísticas de la partida.',
+      });
+    }
+  }
+};
+
 const handleStateUpdate = (data) => {
   jugadoresSupervivientes.value = data.players.sort((a, b) => {
     if (a.gameData.isEliminated && !b.gameData.isEliminated) return 1;
@@ -119,6 +159,12 @@ const handlePlayerEliminated = ({ playerId }) => {
 
 const handleGameOver = ({ results }) => {
   gameEnded.value = true;
+  
+  const winner = results.find(p => p.nombre === playerName.value);
+  if (winner && !isPlayerEliminated.value) {
+    sendGameStats();
+  }
+
   gameStore.setFinalResults(results);
   sessionStore.setEtapa('done');
 };
@@ -128,6 +174,7 @@ onMounted(async () => {
   socket.on('muerte-subita-state-update', handleStateUpdate);
   socket.on('player-eliminated', handlePlayerEliminated);
   socket.on('game-over', handleGameOver);
+  startTime = Date.now();
 });
 
 onUnmounted(() => {
@@ -141,6 +188,12 @@ watch([() => props.words, () => props.roomState?.isPlaying], ([newWords, newIsPl
     initializeWords(props.words);
   }
 }, { immediate: true, deep: true });
+
+watch(isPlayerEliminated, (newValue) => {
+  if (newValue) {
+    sendGameStats();
+  }
+});
 
 watch(() => estatDelJoc.value.indexParaulaActiva, async () => {
   await nextTick();
@@ -162,7 +215,7 @@ function initializeWords(wordsData) {
     const j = Math.floor(Math.random() * (i + 1));
     [allWords[i], allWords[j]] = [allWords[j], allWords[i]];
   }
-  estatDelJoc.value.paraules = allWords;
+  estatDelJoc.value.paraules = allWords.map(p => ({ ...p, errors: 0, estat: 'pendent' }));
   estatDelJoc.value.indexParaulaActiva = 0;
   estatDelJoc.value.textEntrat = '';
 }
@@ -180,10 +233,25 @@ async function validarProgres() {
   const paraula = paraulaActiva.value;
   if (!paraula) return;
 
+  paraula.errors = 0;
+  paraula._errors = paraula._errors || [];
+  for (let i = 0; i < entrada.length; i++) {
+    if (entrada[i] !== paraula.text[i] && !paraula._errors[i]) {
+      paraula.errors++;
+      estatDelJoc.value.errorTotal++;
+      paraula._errors[i] = true;
+    }
+  }
+
   if (entrada === paraula.text) {
     socket.emit('muerte-subita-word-correct', {
       roomId: roomStore.roomId,
       difficulty: paraula.difficulty,
+    });
+
+    estatDelJoc.value.stats.push({
+      paraula: paraula.text,
+      errors: paraula.errors,
     });
 
     estatDelJoc.value.indexParaulaActiva++;

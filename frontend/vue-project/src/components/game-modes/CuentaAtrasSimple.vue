@@ -102,13 +102,7 @@
            meteorWordEl.value.classList.add('fall-animation');
        }
    });
-  
-   function initializeGame() {
-       // Este componente solo se usa para 'cuentaAtrasSimple', no se necesita un switch.
-       initializeWords(props.words);
-       startGameTimer();
-   }
-  
+
    const initializeTimer = () => {
        const now = Date.now();
        const startTime = props.roomState?.gameStartTime;
@@ -135,6 +129,12 @@
            }
        }, 1000);
    };
+  
+   function initializeGame() {
+       // Este componente solo se usa para 'cuentaAtrasSimple', no se necesita un switch.
+       initializeWords(props.words);
+       startGameTimer();
+   }
   
    function initializeWords(wordsData) {
        if (!wordsData) {

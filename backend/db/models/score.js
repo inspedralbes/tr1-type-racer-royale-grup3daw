@@ -34,6 +34,10 @@ const ScoreSchema = new mongoose.Schema({
     type: Number,
     required: false,
   },
+  survivalTime: {
+    type: Number,
+    required: false,
+  },
   date: {
     type: Date,
     default: Date.now,

@@ -252,8 +252,12 @@ export const communicationManager = {
   },
 
   // Obtiene estadísticas agregadas de los jugadores.
-  async getPlayerStats() {
-    return apiClient.get('/stats/player');
+  async getPlayerStats(gameMode) {
+    let url = '/stats/player';
+    if (gameMode) {
+      url += `?gameMode=${gameMode}`;
+    }
+    return apiClient.get(url);
   },
 
   // Obtiene el historial de WPM de un jugador.
