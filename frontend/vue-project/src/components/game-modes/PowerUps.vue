@@ -38,6 +38,7 @@
 
     // Jugadores ordenados para la clasificación
     const jugadoresOrdenats = computed(() => {
+       // console.log('DATOS DE JUGADORES EN EL STORE:', JSON.stringify(jugadoresStore.value, null, 2));
        return [...jugadoresStore.value].sort((a, b) => b.score - a.score);
     });
 
@@ -264,7 +265,25 @@
         return lletra === entrada ? 'lletra-correcta' : 'lletra-incorrecta';
     };
 
-    // === MODIFICADO === (Función 'validarProgres' actualizada)
+    // Función para activar la animación de "shake"
+    function triggerShake() {
+        // === MODIFICADO: Ahora apuntamos al wrapper interno ===
+        const meteor = meteorWordEl.value ? meteorWordEl.value.querySelector('.shakable-wrapper') : null;
+        
+        if (meteor) {
+            meteor.classList.remove('shake-animation');
+            void meteor.offsetWidth; 
+            meteor.classList.add('shake-animation');
+
+            setTimeout(() => {
+                if (meteor) { 
+                    meteor.classList.remove('shake-animation');
+                }
+            }, 500); 
+        }
+    }
+
+    // Función 'validarProgres'
     async function validarProgres() {
         const entrada = estatDelJoc.value.textEntrat.toLowerCase();
         estatDelJoc.value.textEntrat = entrada;
@@ -275,7 +294,6 @@
 
         const paraula = paraulaActiva.value;
 
-        // Guard clause
         if (!paraula) {
             return;
         }
@@ -288,6 +306,8 @@
                 estatDelJoc.value.errorTotal++;
                 paraula._errors[i] = true;
 
+                // === ELIMINADO: triggerShake() ya no se llama aquí ===
+
                 try {
                     const newScore = Math.max(0, score.value - PENALTY_PER_ERROR);
                     await communicationManager.updateScore(playerName.value, newScore, roomStore.roomId);
@@ -298,13 +318,10 @@
         };
         
         if (entrada === paraula.text){
-            // === AÑADIDO === (Disparo y explosión)
             await triggerShot();
             isMeteorBroken.value = true;
 
-            // === AÑADIDO === (Retraso para mostrar la explosión)
             setTimeout(async () => {
-                // Lógica de PowerUps (ya estaba aquí)
                 estatDelJoc.value.completedWords++;
                 
                 let pointsForWord = POINTS_PER_DIFFICULTY[paraula.difficulty];
@@ -312,8 +329,8 @@
                 const noErrorsInWord = paraula.errors === 0;
 
                 if (isPowerUpTurn && noErrorsInWord) {
-                    pointsForWord *= 2; // Double the points
-                    activatePowerUp(); // Llama a la función para activar el power-up
+                    pointsForWord *= 2; 
+                    activatePowerUp(); 
                     notificationStore.pushNotification({
                         type: 'success',
                         message: `¡Power-up por palabra perfecta! Puntuación x2.`
@@ -336,13 +353,13 @@
                 estatDelJoc.value.textEntrat = '';
 
                 if (estatDelJoc.value.indexParaulaActiva >= estatDelJoc.value.paraules.length) {
-                    initializeWords(props.words); // Recarga simple de palabras
+                    initializeWords(props.words); 
                 }
-            }, 300); // 300ms de retraso
+            }, 300); 
         };
     };
 
-    // === AÑADIDO === (Función de disparo)
+    // Función de disparo
     async function triggerShot() {
        if (!meteorWordEl.value) {
            console.warn("No se puede disparar, el meteorito (h1) no está montado.");
@@ -383,15 +400,13 @@
        }, 500);
     }
 
-    // === MODIFICADO PARA SONIDO EXPLOSIÓN ===
+    // MODIFICADO PARA SONIDO EXPLOSIÓN
     async function handleAnimationEnd(event) {
        
-       // 1. Filtra para que SOLO reaccione a la animación 'fallDown'
        if (event.animationName !== 'fallDown') {
            return;
        }
        
-       // 2. Si el jugador ya acertó (y rompió el meteorito), no hagas nada.
        if (isMeteorBroken.value) {
            return;
        }
@@ -400,9 +415,8 @@
 
        // 3. Reproducir sonido de explosión
        if (!audioExplosion) {
-           // *** ¡¡CAMBIA ESTA RUTA POR LA DE TU SONIDO!! ***
            audioExplosion = new Audio('/src/sound/meteoritoDestruido.mp3'); 
-           audioExplosion.volume = 1.0; // Ajusta el volumen si lo necesitas
+           audioExplosion.volume = 1.0; 
        }
        try {
            audioExplosion.currentTime = 0;
@@ -411,10 +425,8 @@
            console.warn("No se pudo reproducir el sonido de explosión:", e);
        }
 
-       // 4. Activa la explosión visual (Antes era el paso 3)
        isMeteorBroken.value = true;
 
-       // 5. Aplica la penalización de 10 puntos (Antes era el paso 4)
        try {
            const newScore = Math.max(0, score.value - PENALTY_PER_TIMEOUT);
            await communicationManager.updateScore(playerName.value, newScore, roomStore.roomId);
@@ -422,17 +434,14 @@
            console.warn('Error applying penalty score for meteor end:', e);
        }
        
-       // 6. Pasa a la siguiente palabra (Antes era el paso 5)
        setTimeout(() => {
            estatDelJoc.value.indexParaulaActiva++;
            estatDelJoc.value.textEntrat = '';
    
-           // Lógica para recargar palabras si se acaban
            if (estatDelJoc.value.indexParaulaActiva >= estatDelJoc.value.paraules.length) {
-               // Usamos la función de inicialización que ya existe en PowerUps.vue
                initializeWords(props.words);
            }
-       }, 300); // 300ms de retraso
+       }, 300); 
     }
 
     async function activatePowerUp() {
@@ -479,6 +488,10 @@
         if (activeWord) {
             const scrambled = scrambleWord(activeWord.text);
             estatDelJoc.value.paraules[estatDelJoc.value.indexParaulaActiva].text = scrambled;
+            
+            // === AÑADIDO: Llamada a "shake" en el sitio correcto ===
+            triggerShake();
+
             notificationStore.pushNotification({
                 type: 'warning',
                 message: '¡Un oponente ha mezclado tu palabra!'
@@ -514,8 +527,11 @@
                             <h1 ref="meteorWordEl" 
                                 :class="['fall-animation', { 'broken-animation': isMeteorBroken }]"
                                 @animationend="handleAnimationEnd($event)">
-                                <span v-for="(lletra, index) in paraulaActiva.text" :key="index" :class="obtenirClasseLletra(lletra, index)">
-                                    {{ lletra }}
+                                
+                                <span class="shakable-wrapper">
+                                    <span v-for="(lletra, index) in paraulaActiva.text" :key="index" :class="obtenirClasseLletra(lletra, index)">
+                                        {{ lletra }}
+                                    </span>
                                 </span>
                             </h1>
 
@@ -527,9 +543,13 @@
 
                         <div class="puntuacions">
                             <h2>Classificació</h2>
-                            <ul id="llista-jugadors">
-                                <li v-for="jugador in jugadoresStore" :key="jugador.name">
-                                    <strong>{{ jugador.name }}</strong> - {{ jugador.score }} punts
+                            <TransitionGroup tag="ul" id="llista-jugadors" name="list-ranking">
+                                <li v-for="jugador in jugadoresOrdenats" 
+                                    :key="jugador.name"
+                                    :data-ship-model="`${jugador.avatar || 'nave'}${jugador.color || 'Azul'}`">
+
+                                    <span>{{ jugador.name }}</span>
+                                    <strong>{{ jugador.score }}</strong>
                                 </li>
                             </ul>
                         </div>
@@ -542,11 +562,14 @@
                 <p>Tu puntuación final: {{ score }}</p>
                 <h3>Clasificación Final</h3>
                 <ul id="llista-jugadors-final">
-                    <li v-for="jugador in jugadoresStore" :key="jugador.name">
+                    <li v-for="jugador in jugadoresStore" 
+                        :key="jugador.name"
+                        :data-ship-model="`${jugador.avatar || 'nave'}${jugador.color || 'Azul'}`">
+                        
                         <strong>{{ jugador.name }}</strong> - {{ jugador.score }} punts - {{ jugador.wpm ? jugador.wpm.toFixed(2) : 0 }} WPM
                     </li>
                 </ul>
-                <button classs="btn" @click="backToLobby">Volver al Lobby</button>
+                <button class="btn" @click="backToLobby">Volver al Lobby</button>
             </div>
         </div>
     </div>
