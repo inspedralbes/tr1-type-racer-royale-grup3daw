@@ -16,7 +16,10 @@
        roomState: { type: Object, default: () => ({ time: 0, isPlaying: false, gameStartTime: null }) },
        gameMode: { type: String, required: true },
    });
+
    let audioDisparo = null;
+   let audioExplosion = null; // === AÑADIDO PARA SONIDO EXPLOSIÓN ===
+
    const gameStore = useGameStore();
    const roomStore = useRoomStore();
    const sessionStore = useSessionStore();
@@ -29,6 +32,8 @@
    const currentGameMode = computed(() => props.gameMode);
   
    const jugadoresOrdenats = computed(() => {
+       // === MODIFICACIÓN VISTA ANTERIORMENTE (Añadido log de depuración) ===
+       // console.log('DATOS DE JUGADORES EN EL STORE:', JSON.stringify(jugadoresStore.value, null, 2));
        return [...jugadoresStore.value].sort((a, b) => b.score - a.score);
    });
   
@@ -38,8 +43,7 @@
        dificil: 15,
    };
    const PENALTY_PER_ERROR = 1;
-   // === AÑADIDO (De nuevo) ===
-   const PENALTY_PER_TIMEOUT = 10; // Penalización por tiempo agotado
+   const PENALTY_PER_TIMEOUT = 10; 
 
    const emits = defineEmits(['done']);
   
@@ -56,7 +60,6 @@
    const isShooting = ref(false);
    const shotStyle = ref({});
    
-   // Estado para controlar la animación de explosión
    const isMeteorBroken = ref(false);
 
    const timeLeft = ref(props.roomState?.time ?? 0);
@@ -84,21 +87,12 @@
        }
    }, { immediate: true, deep: true });
   
-   // Este 'watch' es el que resetea la animación CADA vez que cambia la palabra
    watch(() => estatDelJoc.value.indexParaulaActiva, async () => {
-       await nextTick(); // Espera a que el DOM se actualice (cambie la palabra)
+       await nextTick(); 
        if (meteorWordEl.value) {
-           
-           // 1. Resetea el estado de 'roto' para el nuevo meteorito
            isMeteorBroken.value = false; 
-            
-           // 2. QUITA la clase de animación de caída
            meteorWordEl.value.classList.remove('fall-animation');
-
-           // 3. FUERZA al navegador a recalcular el estilo (reflow)
            void meteorWordEl.value.offsetWidth; 
-
-           // 4. AÑADE la clase de nuevo
            meteorWordEl.value.classList.add('fall-animation');
        }
    });
@@ -131,7 +125,6 @@
    };
   
    function initializeGame() {
-       // Este componente solo se usa para 'cuentaAtrasSimple', no se necesita un switch.
        initializeWords(props.words);
        startGameTimer();
    }
@@ -142,23 +135,15 @@
            try {
                const notificationStore = useNotificationStore();
                notificationStore.pushNotification({ type: 'error', message: 'No se han podido cargar las palabras para la partida.' });
-           } catch (e) {
-               // ignore if store not available
-           }
+           } catch (e) { }
            estatDelJoc.value.paraules = [];
            return;
        }
   
        let allWords = [];
-       if (wordsData.facil) {
-           allWords = allWords.concat(wordsData.facil.map(word => ({ text: word, difficulty: 'facil' })));
-       }
-       if (wordsData.normal) {
-           allWords = allWords.concat(wordsData.normal.map(word => ({ text: word, difficulty: 'normal' })));
-       }
-       if (wordsData.dificil) {
-           allWords = allWords.concat(wordsData.dificil.map(word => ({ text: word, difficulty: 'dificil' })));
-       }
+       if (wordsData.facil) allWords = allWords.concat(wordsData.facil.map(word => ({ text: word, difficulty: 'facil' })));
+       if (wordsData.normal) allWords = allWords.concat(wordsData.normal.map(word => ({ text: word, difficulty: 'normal' })));
+       if (wordsData.dificil) allWords = allWords.concat(wordsData.dificil.map(word => ({ text: word, difficulty: 'dificil' })));
   
        for (let i = allWords.length - 1; i > 0; i--) {
            const j = Math.floor(Math.random() * (i + 1));
@@ -177,7 +162,6 @@
        }
        gameEnded.value = true;
        
-       // === CORREGIDO (Error tipográfico) ===
        const totalTypedChars = estatDelJoc.value.stats.reduce((acc, word) => acc + word.paraula.length, 0);
        const gameDurationInMinutes = props.roomState.time / 60;
        const wpm = gameDurationInMinutes > 0 ? (totalTypedChars / 5) / gameDurationInMinutes : 0;
@@ -204,7 +188,6 @@
            }
        }
   
-       // Este componente solo se usa para 'cuentaAtrasSimple', no se necesita un switch.
        const finalScores = jugadoresStore.value.map(p => ({
            nombre: p.name,
            puntuacion: p.score,
@@ -309,11 +292,10 @@
                        finishGame();
                    }
                }
-           }, 300); // 300ms de retraso
+           }, 300); 
        };
    };
 
-   // Lógica para el disparo (Recto hacia arriba)
    async function triggerShot() {
        if (!meteorWordEl.value) {
            console.warn("No se puede disparar, el meteorito (h1) no está montado.");
@@ -354,25 +336,32 @@
        }, 500);
    }
 
-   // === AÑADIDO (De nuevo) ===
-   /**
-    * Se dispara cuando la animación 'fallDown' (6s) termina.
-    */
+   // === MODIFICADO: AÑADIDO SONIDO DE EXPLOSIÓN ===
    async function handleAnimationEnd(event) {
        
-       // 1. Filtra para que SOLO reaccione a la animación 'fallDown'
        if (event.animationName !== 'fallDown') {
            return;
        }
        
-       // 2. Si el jugador ya acertó (y rompió el meteorito), no hagas nada.
-       //    (La clase .broken-animation pausa la animación, pero esta es una
-       //     doble seguridad por si acaso)
        if (isMeteorBroken.value) {
            return;
        }
 
        console.log("¡Tiempo agotado para la palabra! Penalización.");
+
+       // === AÑADIDO: Lógica de sonido de explosión ===
+       if (!audioExplosion) {
+           // *** ¡¡ASEGÚRATE DE QUE ESTA RUTA ES CORRECTA!! ***
+           audioExplosion = new Audio('/src/sound/meteoritoDestruido.mp3'); 
+           audioExplosion.volume = 1.0; 
+       }
+       try {
+           audioExplosion.currentTime = 0;
+           await audioExplosion.play();
+       } catch (e) {
+           console.warn("No se pudo reproducir el sonido de explosión:", e);
+       }
+       // === FIN DEL BLOQUE AÑADIDO ===
 
        // 3. Activa la explosión visual
        isMeteorBroken.value = true;
@@ -438,7 +427,10 @@
                <div class="puntuacions">
                    <h2>Puntuacions</h2>
                    <TransitionGroup tag="ul" id="llista-jugadors" name="list-ranking">
-                       <li v-for="jugador in jugadoresOrdenats" :key="jugador.name">
+                       <li v-for="jugador in jugadoresOrdenats" 
+                           :key="jugador.name"
+                           :data-ship-model="`${jugador.avatar || 'nave'}${jugador.color || 'Azul'}`"> 
+                           
                            <span>{{ jugador.name }}</span>
                            <strong>{{ jugador.score }}</strong>
                        </li>
