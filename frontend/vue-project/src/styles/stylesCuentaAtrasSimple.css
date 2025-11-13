@@ -251,17 +251,56 @@
  border-bottom: none;
 }
 
+/*
+===========================================================
+== ESTILOS PARA VIÑETAS DE NAVE (RANKING) ==
+===========================================================
+*/
 
-#llista-jugadors li::before, #llista-jugadors-final li::before {
- content: '';
- display: inline-block;
- width: 8px;
- height: 8px;
- margin-right: 8px;
- border-radius: 2px;
- background: linear-gradient(180deg, #9ff8ff, #00d6c0);
- box-shadow: 0 0 10px rgba(0,200,220,0.6);
+/* 1. REGLA BASE: Define el tamaño y una imagen por defecto. */
+#llista-jugadors li::before, 
+#llista-jugadors-final li::before {
+  content: '';
+  display: inline-block;
+  width: 20px; 
+  height: 20px;
+  margin-right: 8px;
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  vertical-align: middle; 
+  
+  /* Imagen por defecto (si no se encuentra el data-attribute) */
+  background-image: url('../img/naveAzul.png'); 
+
+  /* Anulamos las propiedades antiguas */
+  border-radius: 0;
+  background-color: transparent;
+  box-shadow: none;
 }
+
+/* 2. REGLAS ESPECÍFICAS (avatar + color) */
+#llista-jugadors li[data-ship-model="naveAzul"]::before, 
+#llista-jugadors-final li[data-ship-model="naveAzul"]::before {
+  background-image: url('../img/naveAzul.png');
+}
+
+#llista-jugadors li[data-ship-model="naveRojo"]::before, 
+#llista-jugadors-final li[data-ship-model="naveRojo"]::before {
+  background-image: url('../img/naveRojo.png');
+}
+
+#llista-jugadors li[data-ship-model="naveVerde"]::before, 
+#llista-jugadors-final li[data-ship-model="naveVerde"]::before {
+  background-image: url('../img/naveVerde.png');
+}
+
+#llista-jugadors li[data-ship-model="naveAmarillo"]::before, 
+#llista-jugadors-final li[data-ship-model="naveAmarillo"]::before {
+  background-image: url('../img/naveAmarillo.png');
+}
+
+/* ...añade aquí más combinaciones si tienes otros avatares... */
 
 
 #llista-jugadors li {
@@ -691,4 +730,40 @@
      aunque el cambio de background-image no se transiciona directamente,
      la opacidad y escala sí lo harían si las usáramos. */
   transition: background-image 0.2s ease-out; /* Esto es más declarativo */
+}
+
+/*
+===========================================================
+== CORREGIDO: ESTILOS PARA "SHAKE" (PENALIZACIÓN) ==
+===========================================================
+*/
+
+/* El nuevo wrapper debe ser 'inline-block' para poder
+   transformarse (agitarse) sin afectar al resto de letras */
+.shakable-wrapper {
+  display: inline-block;
+  /* Añadimos esto para que la vibración no se corte */
+  transform: translateZ(0);
+}
+
+/* Esta es ahora la clase que añade el JS.
+   Como se aplica a un hijo, no entra en conflicto con
+   la animación 'fallDown' del padre (el H1). */
+.shakable-wrapper.shake-animation {
+  animation: shake 0.5s ease-in-out;
+}
+
+/* Definición de los keyframes para "shake" */
+@keyframes shake {
+  0% { transform: translateX(0); }
+  10% { transform: translateX(-10px); }
+  20% { transform: translateX(10px); }
+  30% { transform: translateX(-10px); }
+  40% { transform: translateX(10px); }
+  50% { transform: translateX(-10px); }
+  60% { transform: translateX(10px); }
+  70% { transform: translateX(-10px); }
+  80% { transform: translateX(10px); }
+  90% { transform: translateX(-10px); }
+  100% { transform: translateX(0); }
 }
