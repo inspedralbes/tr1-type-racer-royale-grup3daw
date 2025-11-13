@@ -12,7 +12,7 @@
  */
 import axios from 'axios';
 import { io } from 'socket.io-client';
-import { useSessionStore } from './stores/session.js';
+import { useSessionStore } from './stores/session';
 import { useRoomStore } from './stores/room';
 import { useGameStore } from './stores/game';
 import { useRouter } from 'vue-router';
@@ -109,6 +109,7 @@ export function setupSocketListeners(router) {
       token: p.token,
       disconnected: !!p.disconnected,
       avatar: p.avatar,
+      isEliminated: !!p.isEliminated, // Asegurar que la propiedad isEliminated exista
       color: p.color,
       isGuest: !!p.isGuest,
     }));
@@ -138,7 +139,7 @@ export function setupSocketListeners(router) {
       const publicRoomsStore = usePublicRoomsStore();
 
       // Limpia el sessionStorage y resetea los stores
-      sessionStore.resetState();
+      sessionStore.clearSession(); // Corregido: La función en stores/session.js se llama clearSession.
       gameStore.resetState();
       roomStore.resetState();
       publicRoomsStore.resetState();
@@ -165,6 +166,27 @@ export function setupSocketListeners(router) {
     }
   });
 
+  socket.on('join-room-success', (room) => {
+    const roomStore = useRoomStore();
+    const sessionStore = useSessionStore();
+
+    // Actualiza el estado local con los datos recibidos ANTES de redirigir.
+    // Esto asegura que el lobby tenga la información correcta desde el principio.
+    roomStore.setRoomId(room.id);
+    roomStore.setRoomState(room);
+    sessionStore.setRoomId(room.id);
+    roomStore.setJugadores(room.players); // ¡Esta es la línea clave!
+    // En lugar de navegar directamente, cambiamos la etapa en el store.
+    sessionStore.setEtapa('lobby');
+    // Informar al usuario que se unió correctamente
+    try {
+      const notificationStore = useNotificationStore();
+      notificationStore.pushNotification({ type: 'success', message: `Te has unido a la sala ${room.name || room.id}` });
+    } catch (e) {
+      // ignore
+    }
+    // router.push('/lobby'); // Redirige al lobby - Eliminado, GameEngine gestiona la vista
+  });
 }
 
 // Objeto que agrupa todos los métodos de comunicación con el backend.
@@ -195,7 +217,7 @@ export const communicationManager = {
 
   async deleteAccount() {
     return apiClient.delete('/user/me');
-  }, // <-- ESTA COMA FALTABA
+  },
 
 
 
@@ -218,7 +240,7 @@ export const communicationManager = {
       socket.emit('explicit-logout', token);
     }
     // Limpia la sesión localmente después de notificar al backend.
-    sessionStore.resetState();
+    sessionStore.clearSession();
   },
 
   // Desconecta el socket y elimina cualquier auth pendiente (no notifica al servidor).
@@ -252,12 +274,8 @@ export const communicationManager = {
   },
 
   // Obtiene estadísticas agregadas de los jugadores.
-  async getPlayerStats(gameMode) {
-    let url = '/stats/player';
-    if (gameMode) {
-      url += `?gameMode=${gameMode}`;
-    }
-    return apiClient.get(url);
+  async getPlayerStats() {
+    return apiClient.get('/stats/player');
   },
 
   // Obtiene el historial de WPM de un jugador.
@@ -357,6 +375,11 @@ export const communicationManager = {
     socket.emit('set-ready', { roomId: roomStore.roomId, isReady });
   },
 
+  // Notifica al servidor que el jugador ha sido eliminado en Muerte Súbita
+  sendPlayerEliminated(roomId) {
+    socket.emit('player-eliminated', { roomId });
+  },
+
   // --- Power-Up Methods (Socket.IO) ---
 
   sendPowerUp(powerUpData) {
@@ -378,12 +401,6 @@ export const communicationManager = {
     this.waitUntilConnected().then(() => {
       const sessionStore = useSessionStore();
       const player = { name: sessionStore.playerName, socketId: socket.id, token: sessionStore.token };
-      try {
-        const notificationStore = useNotificationStore();
-        notificationStore.pushNotification({ type: 'success', message: `Uniéndote a la sala ${roomId}...` });
-      } catch (e) {
-        // ignore
-      }
       socket.emit('join-room', { roomId, player });
     });
   },
@@ -410,12 +427,15 @@ export const communicationManager = {
    * 3. Devuelve los datos del jugador recibidos del backend.
    */
   async connectAndRegister(username) {
-    // La conexión del socket y el envío del token ya se gestionan en el flujo de login/reconexión.
-    // Esta función ahora solo necesita establecer el nombre del jugador en el estado local.
-    const sessionStore = useSessionStore();
+    // 1. Asegura que el socket esté conectado.
+    this.connect();
+    await this.waitUntilConnected();
 
-    sessionStore.setPlayerName(username);
-    // No es necesario devolver nada, ya que el estado se gestiona a través de Pinia.
-    return { name: username };
+    // 2. Llama al endpoint de login/registro del backend.
+    // Usamos el método de login como invitado.
+    const response = await this.loginAsGuest(username);
+    
+    // 3. Devuelve los datos del jugador recibidos del backend.
+    return response.data;
   },
 };

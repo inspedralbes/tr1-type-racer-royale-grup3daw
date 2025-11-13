@@ -35,11 +35,6 @@
     const playerName = computed(() => props.playerName || nombreJugador.value || '');
     const currentGameMode = computed(() => props.gameMode);
 
-    // Jugadores ordenados para la clasificación
-    const jugadoresOrdenats = computed(() => {
-       return [...jugadoresStore.value].sort((a, b) => b.score - a.score);
-    });
-
     // Definición de puntos por dificultad de palabra.
     const POINTS_PER_DIFFICULTY = {
         facil: 5,
@@ -83,15 +78,9 @@
         }
     });
 
-    watch([() => props.words, () => props.roomState?.isPlaying], ([newWords, newIsPlaying]) => {
-      console.log('PowerUps.vue watch triggered. props.wordsLoaded:', props.wordsLoaded, 'newWords:', newWords, 'newIsPlaying:', newIsPlaying, 'gameEnded:', gameEnded.value);
-      if (props.wordsLoaded && newWords && newIsPlaying && !gameEnded.value) {
-        console.log('Words loaded and game is playing. Initializing game.');
-        initializeGame();
-      } else {
-        console.log('Conditions not met for initializeGame in PowerUps.vue.');
-      }
-    }, { immediate: true, deep: true });
+    // === BLOQUE DE FUNCIONES MOVIDO ARRIBA ===
+    // Se mueven las declaraciones de funciones antes de los `watch` que las utilizan
+    // para evitar errores de "Cannot access before initialization".
 
     function initializeGame() {
         switch (currentGameMode.value) {
@@ -157,6 +146,16 @@
         estatDelJoc.value.indexParaulaActiva = 0;
         estatDelJoc.value.textEntrat = '';
     };
+
+    watch([() => props.words, () => props.roomState?.isPlaying], ([newWords, newIsPlaying]) => {
+      console.log('PowerUps.vue watch triggered. props.wordsLoaded:', props.wordsLoaded, 'newWords:', newWords, 'newIsPlaying:', newIsPlaying, 'gameEnded:', gameEnded.value);
+      if (props.wordsLoaded && newWords && newIsPlaying && !gameEnded.value) {
+        console.log('Words loaded and game is playing. Initializing game.');
+        initializeGame();
+      } else {
+        console.log('Conditions not met for initializeGame in PowerUps.vue.');
+      }
+    }, { immediate: true, deep: true });
 
     async function finishGame(){
         if(gameInterval){
@@ -255,7 +254,7 @@
 
             if (isPowerUpTurn && noErrorsInWord) {
                 pointsForWord *= 2; // Double the points
-                activatePowerUp(); // Llama a la función para activar el power-up
+                activatePowerUp(); // Activate the penalty for others
                 notificationStore.pushNotification({
                     type: 'success',
                     message: `¡Power-up por palabra perfecta! Puntuación x2.`
@@ -368,14 +367,12 @@
 
                         <div class="puntuacions">
                             <h2>Classificació</h2>
-                            <TransitionGroup tag="ul" id="llista-jugadors" name="list-ranking">
-                                <li v-for="jugador in jugadoresOrdenats" :key="jugador.name">
-                                    <span>{{ jugador.name }}</span>
-                                    <strong>{{ jugador.score }}</strong>
+                            <ul id="llista-jugadors">
+                                <li v-for="jugador in jugadoresStore" :key="jugador.name">
+                                    <strong>{{ jugador.name }}</strong> - {{ jugador.score }} punts
                                 </li>
-                            </TransitionGroup>
+                            </ul>
                         </div>
-
                     </div>
                 </main>
             </div>
