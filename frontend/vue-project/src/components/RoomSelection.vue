@@ -3,33 +3,34 @@
     <div class="centra-console-panel">
       <div class="selection hologram">
         <div class="section-joinID">
-          <h3>Unirse a una sala existente</h3>
+          <h3>Unirse a una missio existent</h3>
           <div>
-            <input type="text" v-model="joinRoomId" placeholder="ID de la sala" @keyup.enter="joinRoom" />
+            <input type="text" v-model="joinRoomId" placeholder="ID de la missió" @keyup.enter="joinRoom" />
             <button class="btn btn-small" @click="joinRoom" title="Unirse a la sala por ID">›</button>
           </div>
         </div>
 
         <div class="section-joinPublic">
-          <h3>Salas Públicas</h3>
+          <h3>Missions Publiques</h3>
           <ul class="roomList" v-if="publicRooms.length">
             <li class="room" v-for="room in publicRooms" :key="room.id">
               <span>{{ room.name }} ({{ room.players.length }} jug.)</span>
               <button class="btn btn-small" @click="joinRoomById(room.id)" title="Unirse a esta sala">›</button>
             </li>
           </ul>
-          <p v-else>No hay salas públicas disponibles.</p>
+          <p v-else>No hi han missions publiques</p>
           <button class="btn btn-small" @click="fetchPublicRooms" title="Actualizar lista de salas">↻</button>
         </div>
 
         <div class="section-create">
-          <h3>Crear nueva sala</h3>
-          <button class="btn" @click="createRoom" title="Crear nueva sala">*</button>
+          <h3>Vols una propia?</h3>
+          <button class="btn" @click="createRoom" title="Crear nueva sala">Crear missió</button>
         </div>
-        <div class="user-actions" style="margin-top:12px">
+        
+        <div class="user-actions">
           <button class="btn" v-if="sessionStore.email" @click="goToPlayerStats" title="Ver estadísticas">📈</button>
-          <button class="btn" v-if="sessionStore.email" @click="goToProfile" style="margin-left:8px" title="Ir al perfil">👤</button>
-          <button class="btn logout-button" @click="logoutAndReset" style="margin-left:8px" title="Cerrar sesión">⏻</button>
+          <button class="btn" v-if="sessionStore.email" @click="goToProfile" title="Ir al perfil">👤</button>
+          <button class="btn logout-button" @click="logoutAndReset" title="Cerrar sesión">⏻</button>
         </div>
       </div>
     </div>
@@ -47,7 +48,7 @@
  * - Permite al usuario unirse a una sala directamente desde la lista de salas públicas.
  * - Redirige al usuario a la vista `RoomSettings` para crear una nueva sala.
  * - Gestiona el cierre de sesión (logout), limpiando todo el estado local (stores de Pinia, sessionStorage)
- *   y notificando al backend para que también limpie el estado del jugador.
+ * y notificando al backend para que también limpie el estado del jugador.
  */
 import { ref, onMounted } from 'vue';
 import { storeToRefs } from 'pinia';

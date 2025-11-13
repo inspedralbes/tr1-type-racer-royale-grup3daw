@@ -1,6 +1,7 @@
 <script setup>
     // Importaciones de Vue para la reactividad y gestión del ciclo de vida del componente.
-    import { ref, computed, onMounted, watch, onUnmounted } from 'vue';
+    // === MODIFICADO === (Añadido 'nextTick')
+    import { ref, computed, onMounted, watch, onUnmounted, nextTick } from 'vue';
     // Importación de Pinia para desestructurar propiedades reactivas de los stores.
     import { storeToRefs } from 'pinia';
     import { useRouter } from 'vue-router';
@@ -35,6 +36,28 @@
     const playerName = computed(() => props.playerName || nombreJugador.value || '');
     const currentGameMode = computed(() => props.gameMode);
 
+    // Jugadores ordenados para la clasificación
+    const jugadoresOrdenats = computed(() => {
+       return [...jugadoresStore.value].sort((a, b) => b.score - a.score);
+    });
+
+    // === AÑADIDO === (Computed para la nave, copiado de CuentaAtrasSimple)
+    const playerShipSrc = computed(() => {
+       try {
+           const nameToFind = playerName.value;
+           const player = jugadoresStore.value.find(j => j.name === nameToFind) || {};
+           const avatar = player.avatar || 'nave';
+           const color = player.color || 'Azul';
+           if (avatar === 'noImage') {
+               return new URL('../../img/noImage.png', import.meta.url).href;
+           }
+           const filename = `${avatar}${color}.png`;
+           return new URL(`../../img/${filename}`, import.meta.url).href;
+       } catch (e) {
+           return null;
+       }
+    });
+
     // Definición de puntos por dificultad de palabra.
     const POINTS_PER_DIFFICULTY = {
         facil: 5,
@@ -42,6 +65,8 @@
         dificil: 15,
     };
     const PENALTY_PER_ERROR = 1;
+    // === AÑADIDO ===
+    const PENALTY_PER_TIMEOUT = 10; // Penalización por tiempo agotado
 
     // Declaración de eventos que este componente puede emitir.
     const emits = defineEmits(['done']);
@@ -56,6 +81,15 @@
         completedWords: 0, // Contador de palabras completadas para power-ups
     });
 
+    // === AÑADIDO === (Refs para animación y audio)
+    const meteorWordEl = ref(null);
+    const shipShotEl = ref(null);
+    const isShooting = ref(false);
+    const shotStyle = ref({});
+    const isMeteorBroken = ref(false);
+    let audioDisparo = null;
+    let audioExplosion = null; // === AÑADIDO PARA SONIDO EXPLOSIÓN ===
+
     const timeLeft = ref(props.roomState?.time ?? 0);
     const score = computed(() => {
         const nameToFind = playerName.value;
@@ -66,6 +100,7 @@
     const gameEnded = ref(false);
 
     onMounted(async () => {
+      // Modificado para 'powerUps', pero mantenemos la lógica de montaje.
       await communicationManager.updatePlayerPage('powerUps');
       console.log('PowerUps.vue mounted. roomState:', props.roomState);
       communicationManager.onReceivePowerUp(handlePowerUp);
@@ -78,23 +113,39 @@
         }
     });
 
-    // === BLOQUE DE FUNCIONES MOVIDO ARRIBA ===
-    // Se mueven las declaraciones de funciones antes de los `watch` que las utilizan
-    // para evitar errores de "Cannot access before initialization".
+    watch([() => props.words, () => props.roomState?.isPlaying], ([newWords, newIsPlaying]) => {
+      console.log('PowerUps.vue watch triggered. props.wordsLoaded:', props.wordsLoaded, 'newWords:', newWords, 'newIsPlaying:', newIsPlaying, 'gameEnded:', gameEnded.value);
+      if (props.wordsLoaded && newWords && newIsPlaying && !gameEnded.value) {
+        console.log('Words loaded and game is playing. Initializing game.');
+        initializeGame();
+      } else {
+        console.log('Conditions not met for initializeGame in PowerUps.vue.');
+      }
+    }, { immediate: true, deep: true });
+
+    // === AÑADIDO === (Watch para reiniciar la animación del meteorito)
+    watch(() => estatDelJoc.value.indexParaulaActiva, async () => {
+       await nextTick(); // Espera a que el DOM se actualice (cambie la palabra)
+       if (meteorWordEl.value) {
+           
+           // 1. Resetea el estado de 'roto' para el nuevo meteorito
+           isMeteorBroken.value = false; 
+            
+           // 2. QUITA la clase de animación de caída
+           meteorWordEl.value.classList.remove('fall-animation');
+
+           // 3. FUERZA al navegador a recalcular el estilo (reflow)
+           void meteorWordEl.value.offsetWidth; 
+
+           // 4. AÑADE la clase de nuevo
+           meteorWordEl.value.classList.add('fall-animation');
+       }
+    });
 
     function initializeGame() {
-        switch (currentGameMode.value) {
-            case 'powerUps':
-                initializeWords(props.words);
-                startGameTimer();
-                break;
-            default:
-                console.warn('Modo de juego desconocido en PowerUps.vue:', currentGameMode.value);
-                // Fallback a la inicialización por defecto
-                initializeWords(props.words);
-                startGameTimer();
-                break;
-        }
+        // La lógica de 'powerUps' ya está aquí, así que solo llamamos a las funciones.
+        initializeWords(props.words);
+        startGameTimer();
     }
 
     const initializeTimer = () => {
@@ -213,6 +264,7 @@
         return lletra === entrada ? 'lletra-correcta' : 'lletra-incorrecta';
     };
 
+    // === MODIFICADO === (Función 'validarProgres' actualizada)
     async function validarProgres() {
         const entrada = estatDelJoc.value.textEntrat.toLowerCase();
         estatDelJoc.value.textEntrat = entrada;
@@ -223,7 +275,7 @@
 
         const paraula = paraulaActiva.value;
 
-        // Guard clause to prevent errors if the word isn't loaded yet
+        // Guard clause
         if (!paraula) {
             return;
         }
@@ -246,41 +298,142 @@
         };
         
         if (entrada === paraula.text){
-            estatDelJoc.value.completedWords++; // Increment before calculating score
-            
-            let pointsForWord = POINTS_PER_DIFFICULTY[paraula.difficulty];
-            const isPowerUpTurn = estatDelJoc.value.completedWords > 0 && estatDelJoc.value.completedWords % 5 === 0;
-            const noErrorsInWord = paraula.errors === 0;
+            // === AÑADIDO === (Disparo y explosión)
+            await triggerShot();
+            isMeteorBroken.value = true;
 
-            if (isPowerUpTurn && noErrorsInWord) {
-                pointsForWord *= 2; // Double the points
-                activatePowerUp(); // Activate the penalty for others
-                notificationStore.pushNotification({
-                    type: 'success',
-                    message: `¡Power-up por palabra perfecta! Puntuación x2.`
+            // === AÑADIDO === (Retraso para mostrar la explosión)
+            setTimeout(async () => {
+                // Lógica de PowerUps (ya estaba aquí)
+                estatDelJoc.value.completedWords++;
+                
+                let pointsForWord = POINTS_PER_DIFFICULTY[paraula.difficulty];
+                const isPowerUpTurn = estatDelJoc.value.completedWords > 0 && estatDelJoc.value.completedWords % 5 === 0;
+                const noErrorsInWord = paraula.errors === 0;
+
+                if (isPowerUpTurn && noErrorsInWord) {
+                    pointsForWord *= 2; // Double the points
+                    activatePowerUp(); // Llama a la función para activar el power-up
+                    notificationStore.pushNotification({
+                        type: 'success',
+                        message: `¡Power-up por palabra perfecta! Puntuación x2.`
+                    });
+                }
+
+                try {
+                    const newScore = score.value + pointsForWord;
+                    await communicationManager.updateScore(playerName.value, newScore, roomStore.roomId);
+                } catch (e) {
+                    console.warn('Error updating score on word completion:', e);
+                }
+                
+                estatDelJoc.value.stats.push({
+                    paraula: paraula.originalText,
+                    errors: paraula.errors
                 });
-            }
+                paraula.estat = 'completada';
+                estatDelJoc.value.indexParaulaActiva++;
+                estatDelJoc.value.textEntrat = '';
 
-            try {
-                const newScore = score.value + pointsForWord;
-                await communicationManager.updateScore(playerName.value, newScore, roomStore.roomId);
-            } catch (e) {
-                console.warn('Error updating score on word completion:', e);
-            }
-            
-            estatDelJoc.value.stats.push({
-                paraula: paraula.originalText,
-                errors: paraula.errors
-            });
-            paraula.estat = 'completada';
-            estatDelJoc.value.indexParaulaActiva++;
-            estatDelJoc.value.textEntrat = '';
-
-            if (estatDelJoc.value.indexParaulaActiva >= estatDelJoc.value.paraules.length) {
-                initializeWords(props.words);
-            }
+                if (estatDelJoc.value.indexParaulaActiva >= estatDelJoc.value.paraules.length) {
+                    initializeWords(props.words); // Recarga simple de palabras
+                }
+            }, 300); // 300ms de retraso
         };
     };
+
+    // === AÑADIDO === (Función de disparo)
+    async function triggerShot() {
+       if (!meteorWordEl.value) {
+           console.warn("No se puede disparar, el meteorito (h1) no está montado.");
+           return;
+       }
+       if (!audioDisparo) {
+           audioDisparo = new Audio('/src/sound/disparo.mp3');
+           audioDisparo.volume = 1.0;
+       }
+       try {
+           audioDisparo.currentTime = 0;
+           await audioDisparo.play();
+       } catch (e) {
+           console.warn("No se pudo reproducir el sonido de disparo:", e);
+       }
+
+       isShooting.value = true;
+       await nextTick();
+
+       const shipEl = document.querySelector('.player-ship');
+       if (!shipEl) {
+            isShooting.value = false;
+            return;
+       }
+       const shipRect = shipEl.getBoundingClientRect();
+       
+       const shipX = shipRect.left + shipRect.width / 2;
+       const shipY = shipRect.top;
+
+       shotStyle.value = {
+           'left': `${shipX}px`,
+           'top': `${shipY}px`,
+       };
+
+       setTimeout(() => {
+           isShooting.value = false;
+           shotStyle.value = {};
+       }, 500);
+    }
+
+    // === MODIFICADO PARA SONIDO EXPLOSIÓN ===
+    async function handleAnimationEnd(event) {
+       
+       // 1. Filtra para que SOLO reaccione a la animación 'fallDown'
+       if (event.animationName !== 'fallDown') {
+           return;
+       }
+       
+       // 2. Si el jugador ya acertó (y rompió el meteorito), no hagas nada.
+       if (isMeteorBroken.value) {
+           return;
+       }
+
+       console.log("¡Tiempo agotado para la palabra! Penalización.");
+
+       // 3. Reproducir sonido de explosión
+       if (!audioExplosion) {
+           // *** ¡¡CAMBIA ESTA RUTA POR LA DE TU SONIDO!! ***
+           audioExplosion = new Audio('/src/sound/meteoritoDestruido.mp3'); 
+           audioExplosion.volume = 1.0; // Ajusta el volumen si lo necesitas
+       }
+       try {
+           audioExplosion.currentTime = 0;
+           await audioExplosion.play();
+       } catch (e) {
+           console.warn("No se pudo reproducir el sonido de explosión:", e);
+       }
+
+       // 4. Activa la explosión visual (Antes era el paso 3)
+       isMeteorBroken.value = true;
+
+       // 5. Aplica la penalización de 10 puntos (Antes era el paso 4)
+       try {
+           const newScore = Math.max(0, score.value - PENALTY_PER_TIMEOUT);
+           await communicationManager.updateScore(playerName.value, newScore, roomStore.roomId);
+       } catch (e) {
+           console.warn('Error applying penalty score for meteor end:', e);
+       }
+       
+       // 6. Pasa a la siguiente palabra (Antes era el paso 5)
+       setTimeout(() => {
+           estatDelJoc.value.indexParaulaActiva++;
+           estatDelJoc.value.textEntrat = '';
+   
+           // Lógica para recargar palabras si se acaban
+           if (estatDelJoc.value.indexParaulaActiva >= estatDelJoc.value.paraules.length) {
+               // Usamos la función de inicialización que ya existe en PowerUps.vue
+               initializeWords(props.words);
+           }
+       }, 300); // 300ms de retraso
+    }
 
     async function activatePowerUp() {
         try {
@@ -357,12 +510,19 @@
                 <main class="joc" v-if="estatDelJoc.paraules.length > 0">
                     <div class="game-content-wrapper">
                         <div class="paraula-actual">
-                            <h1>
+                            
+                            <h1 ref="meteorWordEl" 
+                                :class="['fall-animation', { 'broken-animation': isMeteorBroken }]"
+                                @animationend="handleAnimationEnd($event)">
                                 <span v-for="(lletra, index) in paraulaActiva.text" :key="index" :class="obtenirClasseLletra(lletra, index)">
                                     {{ lletra }}
                                 </span>
                             </h1>
+
                             <input type="text" v-model="estatDelJoc.textEntrat" @input="validarProgres" autofocus />
+                            
+                            <img v-if="playerShipSrc" :src="playerShipSrc" alt="Nave seleccionada" class="player-ship" />
+                            <div v-if="isShooting" ref="shipShotEl" class="ship-shot" :style="shotStyle"></div>
                         </div>
 
                         <div class="puntuacions">
@@ -386,7 +546,7 @@
                         <strong>{{ jugador.name }}</strong> - {{ jugador.score }} punts - {{ jugador.wpm ? jugador.wpm.toFixed(2) : 0 }} WPM
                     </li>
                 </ul>
-                <button class="btn" @click="backToLobby">Volver al Lobby</button>
+                <button classs="btn" @click="backToLobby">Volver al Lobby</button>
             </div>
         </div>
     </div>
