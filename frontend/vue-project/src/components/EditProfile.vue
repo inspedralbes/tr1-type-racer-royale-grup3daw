@@ -1,10 +1,10 @@
 <template>
   <div class="profile-background">
     <div class="centra-console-panel">
-      <div class="profile-container hologram">
+      <div class="profile-container hologram hologram-entrance">
         <h2>Editar perfil</h2>
         <button class="back-button" @click="goBack">←</button>
-        <div v-if="loading">Cargando...</div>
+        <div v-if="loading">Carregant...</div>
 
         <div v-else>
           <div>
@@ -13,26 +13,26 @@
           </div>
 
           <div>
-            <label>Nombre: </label>
+            <label>Nom: </label>
             <input v-model="form.username" type="text" maxlength="24" />
           </div>
 
           <div>
-            <label>Nueva contraseña (opcional)</label>
+            <label>Nova contrasenya (opcional)</label>
             <input v-model="form.password" type="password" />
           </div>
 
           <div>
-            <label>Color de avatar: </label>
+            <label>Color de l'avatar: </label>
             <select v-model="form.color">
-              <option v-for="c in colors" :key="c" :value="c">{{ c }}</option>
+              <option v-for="c in colors" :key="c.value" :value="c.value">{{ c.text }}</option>
             </select>
           </div>
 
 
           <div>
-            <button @click="saveProfile">Guardar</button>
-            <button @click="confirmDelete">Borrar cuenta</button>
+            <button @click="saveProfile">Desar</button>
+            <button @click="confirmDelete">Esborrar compte</button>
           </div>
         </div>
       </div>
@@ -56,7 +56,12 @@ const notificationStore = useNotificationStore()
 
 const loading = ref(true)
 
-const colors = ['Azul', 'Roja', 'Verde', 'Amarilla']
+const colors = [
+  { text: 'Blau', value: 'Azul' },
+  { text: 'Vermell', value: 'Roja' },
+  { text: 'Verd', value: 'Verde' },
+  { text: 'Groc', value: 'Amarilla' }
+]
 
 const goBack = () => {
   router.back() 
@@ -100,7 +105,7 @@ onMounted(async () => {
   } catch (e) {
     // getCurrentUser will show notification if error; if 404 redirect to login
     if (e.response && e.response.status === 404) {
-      notificationStore.pushNotification({ type: 'error', message: 'No se encontró el perfil. Por favor inicia sesión.' })
+      notificationStore.pushNotification({ type: 'error', message: 'No s\'ha trobat el perfil. Si us plau, inicia sessió.' })
       session.clearSession()
       communicationManager.disconnect()
       router.push('/login')
@@ -128,26 +133,26 @@ const saveProfile = async () => {
     if (form.value.username) {
       session.setPlayerName(form.value.username)
     }
-    notificationStore.pushNotification({ type: 'success', message: 'Perfil actualizado correctamente.' })
+    notificationStore.pushNotification({ type: 'success', message: 'Perfil actualitzat correctament.' })
     // Clear password field
     form.value.password = ''
   } catch (e) {
     // error notifications are handled by communicationManager interceptor
-    console.error('Error updating profile', e)
+    console.error('Error en actualitzar el perfil', e)
   }
 }
 
 const confirmDelete = async () => {
-  if (!confirm('¿Estás seguro de que quieres eliminar tu cuenta? Esta acción es irreversible.')) return
+  if (!confirm('Estàs segur que vols eliminar el teu compte? Aquesta acció és irreversible.')) return
   try {
     await communicationManager.deleteAccount()
-    notificationStore.pushNotification({ type: 'success', message: 'Cuenta eliminada correctamente.' })
+    notificationStore.pushNotification({ type: 'success', message: 'Compte eliminat correctament.' })
     // Clear local session and disconnect
     session.clearSession()
     communicationManager.disconnect()
     router.push('/login')
   } catch (e) {
-    console.error('Error deleting account', e)
+    console.error('Error en esborrar el compte', e)
   }
 }
 </script>

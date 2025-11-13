@@ -36,7 +36,7 @@ onMounted(async () => {
 const login = async () => {
   if (email.value.trim() === '' || password.value.trim() === '') {
     const notificationStore = useNotificationStore();
-    notificationStore.pushNotification({ type: 'error', message: 'Por favor, introduce tu email y contraseña.' });
+    notificationStore.pushNotification({ type: 'error', message: 'Per favor, introdueix el teu email i contrasenya.' });
     return
   }
 
@@ -50,7 +50,7 @@ const login = async () => {
     await communicationManager.waitUntilConnected(); // Ensure socket is connected
     router.push('/game/select-room');
   } catch (error) {
-    console.error('Error al iniciar sessió:', error);
+    console.error('Error en iniciar la sessió:', error);
     // La notificació d'error ja és gestionada per l'interceptor de communicationManager
   }
 }
@@ -70,14 +70,14 @@ const startLogin = () => {
 
       <!-- Welcome Screen -->
       <div v-if="!showLogin" 
-           class="login-container hologram welcome-screen" 
+           class="login-container hologram welcome-screen hologram-entrance" 
            @click="startLogin">
         <h1 class="welcome-title">space typers</h1>
         <p class="welcome-prompt flicker">fes clic per a continuar</p>
       </div>
 
       <!-- Login Form (Original content) -->
-      <div v-if="showLogin" class="login-container hologram">
+      <div v-if="showLogin" class="login-container hologram hologram-entrance">
         <h2>Inici de sessió</h2>
         <input
           v-model="email"

@@ -1,36 +1,36 @@
 <template>
   <div class="selection-background">
     <div class="centra-console-panel">
-      <div class="selection hologram">
+      <div class="selection hologram hologram-entrance">
         <div class="section-joinID">
-          <h3>Unirse a una missio existent</h3>
+          <h3>Unir-se a una missió existent</h3>
           <div>
             <input type="text" v-model="joinRoomId" placeholder="ID de la missió" @keyup.enter="joinRoom" />
-            <button class="btn btn-small" @click="joinRoom" title="Unirse a la sala por ID">›</button>
+            <button class="btn btn-small" @click="joinRoom" title="Unir-se a la sala per ID">›</button>
           </div>
         </div>
 
         <div class="section-joinPublic">
-          <h3>Missions Publiques</h3>
+          <h3>Missions Públiques</h3>
           <ul class="roomList" v-if="publicRooms.length">
             <li class="room" v-for="room in publicRooms" :key="room.id">
               <span>{{ room.name }} ({{ room.players.length }} jug.)</span>
-              <button class="btn btn-small" @click="joinRoomById(room.id)" title="Unirse a esta sala">›</button>
+              <button class="btn btn-small" @click="joinRoomById(room.id)" title="Unir-se a aquesta sala">›</button>
             </li>
           </ul>
-          <p v-else>No hi han missions publiques</p>
-          <button class="btn btn-small" @click="fetchPublicRooms" title="Actualizar lista de salas">↻</button>
+          <p v-else>No hi ha missions públiques</p>
+          <button class="btn btn-small" @click="fetchPublicRooms" title="Actualitzar llista de sales">↻</button>
         </div>
 
         <div class="section-create">
-          <h3>Vols una propia?</h3>
-          <button class="btn" @click="createRoom" title="Crear nueva sala">Crear missió</button>
+          <h3>Vols una pròpia?</h3>
+          <button class="btn" @click="createRoom" title="Crear nova sala">Crear missió</button>
         </div>
         
         <div class="user-actions">
-          <button class="btn" v-if="sessionStore.email" @click="goToPlayerStats" title="Ver estadísticas">📈</button>
-          <button class="btn" v-if="sessionStore.email" @click="goToProfile" title="Ir al perfil">👤</button>
-          <button class="btn logout-button" @click="logoutAndReset" title="Cerrar sesión">⏻</button>
+          <button class="btn" v-if="sessionStore.email" @click="goToPlayerStats" title="Veure estadístiques">📈</button>
+          <button class="btn" v-if="sessionStore.email" @click="goToProfile" title="Anar al perfil">👤</button>
+          <button class="btn logout-button" @click="logoutAndReset" title="Tancar sessió">⏻</button>
         </div>
       </div>
     </div>
@@ -86,9 +86,9 @@ const fetchPublicRooms = async () => {
     const response = await communicationManager.getPublicRoomsList();
     publicRoomsStore.setRooms(response.data);
   } catch (error) {
-    console.error('Error al obtener salas públicas:', error);
+    console.error('Error en obtenir les sales públiques:', error);
     const notificationStore = useNotificationStore();
-    notificationStore.pushNotification({ type: 'error', message: 'Error al obtener salas públicas.' });
+    notificationStore.pushNotification({ type: 'error', message: 'Error en obtenir les sales públiques.' });
   }
 };
 
@@ -105,9 +105,6 @@ const joinRoom = () => {
  */
 const joinRoomById = (roomId) => {
   communicationManager.joinRoom(roomId);
-  roomStore.setRoomId(roomId); // Añadido para que la navegación funcione
-  sessionStore.setRoomId(roomId);
-  sessionStore.setEtapa('lobby');
 };
 
 /**

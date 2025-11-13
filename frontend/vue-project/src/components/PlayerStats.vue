@@ -1,61 +1,61 @@
 <template>
   <div class="stats-background">
     <div class="centra-console-panel">
-      <div class="stats-container hologram">
-        <button class="back-button" @click="goBack">Volver</button>
-        <h2>Estadísticas de Jugadores</h2>
+      <div class="stats-container hologram hologram-entrance">
+        <button class="back-button" @click="goBack">Tornar</button>
+        <h2>Estadístiques de Jugadors</h2>
         
-        <div v-if="loading">Cargando estadísticas...</div>
-        <div v-else-if="error" class="error-message">Error al cargar estadísticas: {{ error }}</div>
+        <div v-if="loading">Carregant estadístiques...</div>
+        <div v-else-if="error" class="error-message">Error en carregar les estadístiques: {{ error }}</div>
         
         <div v-else class="stats-content">
           <div class="game-mode-tabs">
-            <button @click="selectedGameMode = 'cuentaAtrasSimple'" :class="{ active: selectedGameMode === 'cuentaAtrasSimple' }">Cuenta Atrás</button>
-            <button @click="selectedGameMode = 'powerUps'" :class="{ active: selectedGameMode === 'powerUps' }">Power-Ups</button>
-            <button @click="selectedGameMode = 'MuerteSubita'" :class="{ active: selectedGameMode === 'MuerteSubita' }">Muerte Súbita</button>
+            <button @click="selectedGameMode = 'cuentaAtrasSimple'" :class="{ active: selectedGameMode === 'cuentaAtrasSimple' }">Compte Enrere</button>
+            <button @click="selectedGameMode = 'powerUps'" :class="{ active: selectedGameMode === 'powerUps' }">Potenciadors</button>
+            <button @click="selectedGameMode = 'MuerteSubita'" :class="{ active: selectedGameMode === 'MuerteSubita' }">Mort Súbita</button>
           </div>
 
           <div class="stats-display">
             <!-- Cuenta Atrás Simple -->
             <div v-if="selectedGameMode === 'cuentaAtrasSimple'">
-              <h3>Top Jugadores - Cuenta Atrás</h3>
+              <h3>Top Jugadors - Compte Enrere</h3>
               <ul class="stats-list">
                 <li v-for="stat in statsCuentaAtras" :key="stat._id">
                   <h4>{{ stat._id }}</h4>
-                  <p>Partidas Jugadas: {{ stat.totalGames }}</p>
-                  <p>Puntuación Media: {{ stat.avgScore ? stat.avgScore.toFixed(2) : 0 }}</p>
-                  <p>WPM Media: {{ stat.avgWpm ? stat.avgWpm.toFixed(2) : 0 }}</p>
+                  <p>Partides Jugades: {{ stat.totalGames }}</p>
+                  <p>Puntuació Mitjana: {{ stat.avgScore ? stat.avgScore.toFixed(2) : 0 }}</p>
+                  <p>WPM Mitjà: {{ stat.avgWpm ? stat.avgWpm.toFixed(2) : 0 }}</p>
                 </li>
               </ul>
-              <p v-if="!statsCuentaAtras.length">No hay estadísticas disponibles para este modo de juego.</p>
+              <p v-if="!statsCuentaAtras.length">No hi ha estadístiques disponibles per a aquest mode de joc.</p>
             </div>
 
             <!-- Power-Ups -->
             <div v-if="selectedGameMode === 'powerUps'">
-              <h3>Top Jugadores - Power-Ups</h3>
+              <h3>Top Jugadors - Potenciadors</h3>
               <ul class="stats-list">
                 <li v-for="stat in statsPowerUps" :key="stat._id">
                   <h4>{{ stat._id }}</h4>
-                  <p>Partidas Jugadas: {{ stat.totalGames }}</p>
-                  <p>Puntuación Media: {{ stat.avgScore ? stat.avgScore.toFixed(2) : 0 }}</p>
-                  <p>WPM Media: {{ stat.avgWpm ? stat.avgWpm.toFixed(2) : 0 }}</p>
+                  <p>Partides Jugades: {{ stat.totalGames }}</p>
+                  <p>Puntuació Mitjana: {{ stat.avgScore ? stat.avgScore.toFixed(2) : 0 }}</p>
+                  <p>WPM Mitjà: {{ stat.avgWpm ? stat.avgWpm.toFixed(2) : 0 }}</p>
                 </li>
               </ul>
-               <p v-if="!statsPowerUps.length">No hay estadísticas disponibles para este modo de juego.</p>
+               <p v-if="!statsPowerUps.length">No hi ha estadístiques disponibles per a aquest mode de joc.</p>
             </div>
 
             <!-- Muerte Súbita -->
             <div v-if="selectedGameMode === 'MuerteSubita'">
-              <h3>Top Jugadores - Muerte Súbita</h3>
+              <h3>Top Jugadors - Mort Súbita</h3>
               <ul class="stats-list">
                 <li v-for="stat in statsMuerteSubita" :key="stat._id">
                   <h4>{{ stat._id }}</h4>
-                  <p>Partidas Jugadas: {{ stat.totalGames }}</p>
-                  <p>Supervivencia Media: {{ stat.avgSurvivalTime ? stat.avgSurvivalTime.toFixed(2) : 0 }}s</p>
-                  <p>WPM Media: {{ stat.avgWpm ? stat.avgWpm.toFixed(2) : 0 }}</p>
+                  <p>Partides Jugades: {{ stat.totalGames }}</p>
+                  <p>Supervivència Mitjana: {{ stat.avgSurvivalTime ? stat.avgSurvivalTime.toFixed(2) : 0 }}s</p>
+                  <p>WPM Mitjà: {{ stat.avgWpm ? stat.avgWpm.toFixed(2) : 0 }}</p>
                 </li>
               </ul>
-               <p v-if="!statsMuerteSubita.length">No hay estadísticas disponibles para este modo de juego.</p>
+               <p v-if="!statsMuerteSubita.length">No hi ha estadístiques disponibles per a aquest mode de joc.</p>
             </div>
           </div>
         </div>
@@ -97,7 +97,7 @@ onMounted(async () => {
 
   } catch (err) {
     error.value = err.message;
-    console.error('Error fetching player stats:', err);
+    console.error('Error en obtenir les estadístiques dels jugadors:', err);
   } finally {
     loading.value = false;
   }

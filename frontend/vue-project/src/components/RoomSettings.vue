@@ -1,8 +1,8 @@
 <template>
   <div class="login-background">
     <div class="centra-console-panel">
-      <div class="login-container hologram room-settings-container">
-        <h2>Configuración de la Sala</h2>
+      <div class="login-container hologram room-settings-container hologram-entrance">
+        <h2>Configuració de la Sala</h2>
         <form @submit.prevent="saveSettings">
           
           <div class="form-group" v-if="room.id">
@@ -10,11 +10,11 @@
             <input type="text" id="roomId" :value="room.id" disabled>
           </div>
           <div class="form-group">
-            <label for="roomName">Nombre de la Sala:</label>
+            <label for="roomName">Nom de la Sala:</label>
             <input type="text" id="roomName" v-model="room.name" :disabled="!!room.id" required>
           </div>
           <div class="form-group">
-            <label for="isPublic">Visibilidad:</label>
+            <label for="isPublic">Visibilitat:</label>
             
             <div class="custom-select" :class="{ 'open': isPublicOpen }" ref="publicSelectRef">
               <button type="button" class="select-trigger" @click.stop="togglePublic">
@@ -28,7 +28,7 @@
             
           </div>
           <div class="form-group">
-            <label for="gameMode">Modo de Juego:</label>
+            <label for="gameMode">Mode de Joc:</label>
             
             <div class="custom-select" :class="{ 'open': isGameModeOpen }" ref="gameModeSelectRef">
               <button type="button" class="select-trigger" @click.stop="toggleGameMode">
@@ -49,7 +49,7 @@
           </div>
           
           <div class="form-group" v-if="room.gameMode !== 'MuerteSubita'">
-            <label for="gameTime">Tiempo (segundos):</label>
+            <label for="gameTime">Temps (segons):</label>
             <div class="custom-number-input">
               <button type="button" @click="decrementTime" class="btn-time-adjust" :disabled="room.time <= 30">-</button>
               <span class="time-display">{{ room.time }}s</span>
@@ -58,7 +58,7 @@
           </div>
           
           <div class="hologram-button-group">
-            <button class="btn" type="submit">Guardar</button>
+            <button class="btn" type="submit">Desar</button>
           </div>
         </form>
       </div>
@@ -100,15 +100,15 @@ const goToProfile = () => {
 
 // ---- Define Game Modes as an array ----
 const gameModes = [
-  { value: 'cuentaAtrasSimple', name: 'Cuenta Atrás Simple' },
-  { value: 'powerUps', name: 'Power-Ups' },
-  { value: 'MuerteSubita', name: 'Muerte Súbita' }
+  { value: 'cuentaAtrasSimple', name: 'Compte Enrere Simple' },
+  { value: 'powerUps', name: 'Potenciadors' },
+  { value: 'MuerteSubita', name: 'Mort Súbita' }
 ];
 
 // `room` es una referencia reactiva que contiene los datos del formulario.
 // Se inicializa con valores por defecto, usando el nombre del jugador para el nombre de la sala.
 const room = ref({
-  name: sessionStore.playerName ? `${sessionStore.playerName}'s Room` : 'Mi Sala',
+  name: sessionStore.playerName ? `Sala de ${sessionStore.playerName}` : 'La meva sala',
   isPublic: true,
   gameMode: '', // Stays empty to trigger validation
   time: 60,
@@ -147,10 +147,10 @@ onUnmounted(() => {
 // ---- Helper function to get the display name ----
 const getGameModeName = (modeValue) => {
   if (!modeValue) {
-    return '-- Elige un modo de juego --';
+    return '-- Tria un mode de joc --';
   }
   const mode = gameModes.find(m => m.value === modeValue);
-  return mode ? mode.name : '-- Elige un modo de juego --';
+  return mode ? mode.name : '-- Tria un mode de joc --';
 };
 
 // ---- Handlers for custom dropdowns ----
@@ -200,7 +200,7 @@ const saveSettings = async () => {
   try {
     // Validación: el campo 'gameMode' es obligatorio para crear/actualizar la sala
     if (!room.value.gameMode) {
-      validationError.value = 'Debes elegir un modo de juego antes de guardar la sala.';
+      validationError.value = 'Has de triar un mode de joc abans de desar la sala.';
       return;
     }
     validationError.value = '';
@@ -211,7 +211,7 @@ const saveSettings = async () => {
       roomStore.setRoom(response.data); // Actualiza el store con los nuevos datos.
       try {
         const notificationStore = useNotificationStore();
-        notificationStore.pushNotification({ type: 'success', message: 'Configuración de sala actualizada.' });
+        notificationStore.pushNotification({ type: 'success', message: 'Configuració de la sala actualitzada.' });
       } catch (e) {}
       sessionStore.setEtapa('lobby'); // Establece la etapa a 'lobby'
     } else {
@@ -230,9 +230,9 @@ const saveSettings = async () => {
       sessionStore.setEtapa('lobby'); // Establece la etapa a 'lobby'
     }
   } catch (error) {
-    console.error('Error al guardar la configuración de la sala:', error);
+    console.error('Error en desar la configuració de la sala:', error);
     const notificationStore = useNotificationStore();
-    notificationStore.pushNotification({ type: 'error', message: 'Error al guardar la configuración.' });
+    notificationStore.pushNotification({ type: 'error', message: 'Error en desar la configuració.' });
   }
 };
 </script>

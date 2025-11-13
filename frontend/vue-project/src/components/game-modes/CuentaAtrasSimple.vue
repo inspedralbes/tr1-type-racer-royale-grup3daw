@@ -97,7 +97,7 @@
        }
    });
 
-   const initializeTimer = () => {
+   function initializeTimer() {
        const now = Date.now();
        const startTime = props.roomState?.gameStartTime;
        if (!startTime) {
@@ -108,9 +108,9 @@
        const elapsedMs = now - startTime;
        const remainingMs = totalDurationMs - elapsedMs;
        timeLeft.value = Math.max(0, Math.floor(remainingMs / 1000));
-   };
+   }
   
-   const startGameTimer = () => {
+   function startGameTimer() {
        if (gameInterval) clearInterval(gameInterval);
        initializeTimer();
   
@@ -122,7 +122,7 @@
                finishGame();
            }
        }, 1000);
-   };
+   }
   
    function initializeGame() {
        initializeWords(props.words);
@@ -131,10 +131,10 @@
   
    function initializeWords(wordsData) {
        if (!wordsData) {
-           console.error("initializeWords: wordsData es nulo o indefinido.");
+           console.error("initializeWords: wordsData és nul o indefinit.");
            try {
                const notificationStore = useNotificationStore();
-               notificationStore.pushNotification({ type: 'error', message: 'No se han podido cargar las palabras para la partida.' });
+               notificationStore.pushNotification({ type: 'error', message: 'No s\'han pogut carregar les paraules per a la partida.' });
            } catch (e) { }
            estatDelJoc.value.paraules = [];
            return;
@@ -179,11 +179,11 @@
            try {
                await communicationManager.sendGameStats(gameStats);
            } catch (error) {
-               console.error("Error sending game stats:", error);
+               console.error("Error en enviar les estadístiques del joc:", error);
                const notificationStore = useNotificationStore();
                notificationStore.pushNotification({
                    type: 'error',
-                   message: 'No se pudieron guardar las estadísticas de la partida.',
+                   message: 'No s\'han pogut desar les estadístiques de la partida.',
                });
            }
        }
@@ -250,7 +250,7 @@
                    const newScore = Math.max(0, score.value - PENALTY_PER_ERROR);
                    await communicationManager.updateScore(playerName.value, newScore, roomStore.roomId);
                } catch (e) {
-                   console.warn('Error applying penalty score:', e);
+                   console.warn('Error en aplicar la penalització de puntuació:', e);
                }
            };
        };
@@ -264,7 +264,7 @@
                    const newScore = score.value + POINTS_PER_DIFFICULTY[paraula.difficulty];
                    await communicationManager.updateScore(playerName.value, newScore, roomStore.roomId);
                } catch (e) {
-                   console.warn('Error updating score on word completion:', e);
+                   console.warn('Error en actualitzar la puntuació en completar la paraula:', e);
                }
       
                estatDelJoc.value.stats.push({
@@ -298,7 +298,7 @@
 
    async function triggerShot() {
        if (!meteorWordEl.value) {
-           console.warn("No se puede disparar, el meteorito (h1) no está montado.");
+           console.warn("No es pot disparar, el meteorit (h1) no està muntat.");
            return;
        }
        if (!audioDisparo) {
@@ -309,7 +309,7 @@
            audioDisparo.currentTime = 0;
            await audioDisparo.play();
        } catch (e) {
-           console.warn("No se pudo reproducir el sonido de disparo:", e);
+           console.warn("No s'ha pogut reproduir el so de tret:", e);
        }
 
        isShooting.value = true;
@@ -347,7 +347,7 @@
            return;
        }
 
-       console.log("¡Tiempo agotado para la palabra! Penalización.");
+       console.log("Temps esgotat per a la paraula! Penalització.");
 
        // === AÑADIDO: Lógica de sonido de explosión ===
        if (!audioExplosion) {
@@ -359,7 +359,7 @@
            audioExplosion.currentTime = 0;
            await audioExplosion.play();
        } catch (e) {
-           console.warn("No se pudo reproducir el sonido de explosión:", e);
+           console.warn("No s'ha pogut reproduir el so d'explosió:", e);
        }
        // === FIN DEL BLOQUE AÑADIDO ===
 
@@ -371,7 +371,7 @@
            const newScore = Math.max(0, score.value - PENALTY_PER_TIMEOUT);
            await communicationManager.updateScore(playerName.value, newScore, roomStore.roomId);
        } catch (e) {
-           console.warn('Error applying penalty score for meteor end:', e);
+           console.warn('Error en aplicar la penalització de puntuació per al final del meteorit:', e);
        }
        
        // 5. Pasa a la siguiente palabra (con un retraso para ver la explosión)
@@ -448,7 +448,7 @@
                            </h1>
                            
                            <input type="text" v-model="estatDelJoc.textEntrat" @input="validarProgres" autofocus />
-                           <img v-if="playerShipSrc" :src="playerShipSrc" alt="Nave seleccionada" class="player-ship" />
+                           <img v-if="playerShipSrc" :src="playerShipSrc" alt="Nau seleccionada" class="player-ship" />
                            
                            <div v-if="isShooting" ref="shipShotEl" class="ship-shot" :style="shotStyle"></div>
                        </div>

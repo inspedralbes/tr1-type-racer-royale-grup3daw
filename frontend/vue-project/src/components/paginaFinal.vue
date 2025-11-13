@@ -35,9 +35,9 @@ onMounted(async () => {
         score: playerResult.puntuacion,
         wpm: playerResult.wpm,
       });
-      console.log('Estadísticas del juego guardadas para', playerResult.nombre);
+      console.log('Estadístiques del joc desades per a', playerResult.nombre);
     } catch (error) {
-      console.error('Error al guardar las estadísticas del juego:', error);
+      console.error('Error en desar les estadístiques del joc:', error);
     }
   }
 });
@@ -63,13 +63,14 @@ function volverAJugar() {
       Muestra el título y una lista ordenada (`ol`) con el ranking de jugadores.
       El `v-for` itera sobre la propiedad computada `ranking`.
     -->
-    <h1>Ranking Final</h1>
+    <h1>Rànquing Final</h1>
     
     <ol>
       <li
-        class ="ranking" 
-        v-for="(jugador, index) in ranking" 
+        class="ranking"
+        v-for="(jugador, index) in ranking"
         :key="jugador.nombre"
+        :class="{ 'muerte-subita-ranking': jugador.wpm === undefined }"
       >
         <span>
           <span v-if="index === 0"></span>
@@ -78,9 +79,14 @@ function volverAJugar() {
           <span v-else>#{{ index + 1 }}</span>
         </span>
         
-        <span>{{ jugador.nombre }}&nbsp;</span>
-        <span >{{ jugador.puntuacion }} Puntos</span>
-        <span v-if="jugador.wpm"> ({{ jugador.wpm.toFixed(2) }} WPM)</span>
+        <template v-if="jugador.wpm === undefined">
+            <span>{{ jugador.nombre }}</span>
+        </template>
+        <template v-else>
+            <span>{{ jugador.nombre }}&nbsp;</span>
+            <span >{{ jugador.puntuacion }} Punts</span>
+            <span v-if="jugador.wpm"> ({{ jugador.wpm.toFixed(2) }} WPM)</span>
+        </template>
       </li>
     </ol>
 
@@ -91,4 +97,10 @@ function volverAJugar() {
 </template>
 
 <style src="../styles/stylePantallaFinal.css">
+</style>
+<style>
+.muerte-subita-ranking {
+  text-align: center;
+  justify-content: center;
+}
 </style>

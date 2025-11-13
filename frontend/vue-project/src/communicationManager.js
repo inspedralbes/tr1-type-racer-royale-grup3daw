@@ -139,7 +139,7 @@ export function setupSocketListeners(router) {
       const publicRoomsStore = usePublicRoomsStore();
 
       // Limpia el sessionStorage y resetea los stores
-      sessionStore.clearSession(); // Corregido: La función en stores/session.js se llama clearSession.
+      sessionStore.resetState(); // Corregido: La función en stores/session.js se llama resetState.
       gameStore.resetState();
       roomStore.resetState();
       publicRoomsStore.resetState();
@@ -240,7 +240,7 @@ export const communicationManager = {
       socket.emit('explicit-logout', token);
     }
     // Limpia la sesión localmente después de notificar al backend.
-    sessionStore.clearSession();
+    sessionStore.resetState();
   },
 
   // Desconecta el socket y elimina cualquier auth pendiente (no notifica al servidor).

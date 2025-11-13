@@ -26,7 +26,7 @@ onMounted(async () => {
 const loginAsGuest = async () => {
   if (nom.value.trim() === '') {
     const notificationStore = useNotificationStore();
-    notificationStore.pushNotification({ type: 'error', message: 'Por favor, introduce un nombre para continuar.' });
+    notificationStore.pushNotification({ type: 'error', message: 'Per favor, introdueix un nom per continuar.' });
     return
   }
 
@@ -40,7 +40,7 @@ const loginAsGuest = async () => {
     await communicationManager.waitUntilConnected(); // Ensure socket is connected
     router.push('/game/select-room');
   } catch (error) {
-    console.error('Error al iniciar sessió:', error);
+    console.error('Error en iniciar la sessió:', error);
     // La notificació d'error ja és gestionada per l'interceptor de communicationManager
   }
 }
@@ -49,8 +49,8 @@ const loginAsGuest = async () => {
 <template>
   <div class="login-background">
     <div class="centra-console-panel">
-      <div class="login-container hologram">
-        <h2>Entrar como Invitado</h2>
+      <div class="login-container hologram hologram-entrance">
+        <h2>Entrar com a Convidat</h2>
         <input
           maxlength="12"
           v-model="nom"

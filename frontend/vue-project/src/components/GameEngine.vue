@@ -115,9 +115,9 @@ const navigateByEtapa = (currentEtapa) => {
           }
         } catch (error) {
           // Captura de errores generales durante el proceso de reconexión.
-          console.error('Error al reconectar la sesión:', error);
+          console.error('Error en reconnectar la sessió:', error);
           const notificationStore = useNotificationStore();
-          notificationStore.pushNotification({ type: 'error', message: 'Error al reconectar la sesión: ' + (error.message || '') });
+          notificationStore.pushNotification({ type: 'error', message: 'Error en reconnectar la sessió: ' + (error.message || '') });
           sessionStore.resetState();
           gameStore.resetState();
           roomStore.resetState();
@@ -155,10 +155,10 @@ async function fetchWordsForGame() {
       gameStore.setWordsLoaded(false);
     }
   } catch (error) {
-    console.error('Error al obtener las palabras:', error)
+    console.error('Error en obtenir les paraules:', error)
     try {
       const notificationStore = useNotificationStore();
-      notificationStore.pushNotification({ type: 'error', message: 'Error al obtener las palabras del servidor.' });
+      notificationStore.pushNotification({ type: 'error', message: 'Error en obtenir les paraules del servidor.' });
     } catch (e) {}
     gameStore.setWordsLoaded(false); // Ensure loading state is false on error
   }

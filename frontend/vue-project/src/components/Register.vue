@@ -2,7 +2,7 @@
 <template>
   <div class="login-background">
     <div class="centra-console-panel">
-      <div class="login-container hologram">
+      <div class="login-container hologram hologram-entrance">
         <h2>Registre</h2>
         <input
           v-model="username"
@@ -51,7 +51,7 @@ const register = async () => {
   try {
     await communicationManager.register(username.value, email.value, password.value);
     const notificationStore = useNotificationStore();
-    notificationStore.pushNotification({ type: 'success', message: 'Registre exitós. Si us plau, revisa el teu correu per a verificar el teu compte.' });
+    notificationStore.pushNotification({ type: 'success', message: 'Registre exitós.' });
     router.push('/login');
   } catch (error) {
     // L'interceptor d'errors de communicationManager ja hauria mostrat una notificació

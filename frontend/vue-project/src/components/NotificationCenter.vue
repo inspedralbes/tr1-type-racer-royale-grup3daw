@@ -11,7 +11,7 @@
   <div v-if="errorNotifications.length > 0" class="error-modal-perspective-wrapper">
     <div :class="['notification', 'error']" :key="errorNotifications[0].id">
       <div class="notification-content">
-        <h3 class="error-title">Error Crítico</h3>
+        <h3 class="error-title">Error Crític</h3>
         <div class="message">{{ errorNotifications[0].message }}</div>
         <div class="hologram-button-group">
           <button class="btn" @click="dismissError">OK</button>

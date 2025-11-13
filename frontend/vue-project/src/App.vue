@@ -10,7 +10,7 @@
 <script setup>
 import { onMounted } from 'vue';
 import { useRouter } from 'vue-router';
-import { communicationManager, setupSocketListeners } from './communicationManager.js';
+import { communicationManager } from './communicationManager.js';
 import { useSessionStore } from './stores/session.js';
 import { useGameStore } from './stores/game';
 import { useRoomStore } from './stores/room';
@@ -29,7 +29,6 @@ onMounted(async () => {
   // La responsabilidad principal de App.vue es configurar los listeners globales del socket.
   // La lógica de reconexión y gestión de sesión se ha centralizado en GameEngine.vue
   // para evitar conflictos y lógica duplicada.
-  setupSocketListeners(router);
 });
 </script>
 

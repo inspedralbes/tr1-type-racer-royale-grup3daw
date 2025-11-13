@@ -62,8 +62,6 @@ div.selection.hologram{
   gap: 1.5rem; 
   align-items: start; 
   
-  /* Animación de crecimiento de la caja (dura 0.8s) */
-  animation: hologramGrow 0.8s ease-out forwards;
 }
 
 /* El resto de tu CSS (inputs, botones, etc.) 
@@ -252,52 +250,4 @@ div.section-create .btn {
   background-color: #00FF41 !important; 
   color: #000000 !important;
   box-shadow: 0 0 15px #00FF41 !important; 
-}
-
-/* * ---------------------------------------------
- * KEYFRAMES (Animación de la caja)
- * ---------------------------------------------
- */
-@keyframes hologramGrow {
-  from {
-    height: 0; 
-    opacity: 0; /* La caja (y su contenido) empiezan transparentes */
-    transform: translateX(-50%) rotateX(-25deg);
-  }
-  to {
-    height: 50vh; 
-    opacity: 0.9; /* La caja (y su contenido) terminan visibles */
-    transform: translateX(-50%) rotateX(-25deg);
-  }
-}
-
-/* * ---------------------------------------------
- * ¡NUEVO! - Ocultar contenido y animarlo con retraso
- * ---------------------------------------------
- */
-div.selection.hologram > * {
-  /* 1. Oculta todo el contenido (h2, div, etc.) al inicio */
-  opacity: 0; 
-  
-  /* 2. Aplica la nueva animación 'fadeInContent' */
-  animation: fadeInContent 0.5s ease-out forwards;
-  
-  /* 3. ¡IMPORTANTE! Espera 0.8s ANTES de empezar a aparecer 
-     (porque 'hologramGrow' dura 0.8s) */
-  animation-delay: 0.8s; 
-}
-
-/* * ---------------------------------------------
- * ¡NUEVO! - Keyframes para que aparezca el contenido
- * ---------------------------------------------
- */
-@keyframes fadeInContent {
-  from {
-    opacity: 0;
-  }
-  to {
-    /* El contenido se vuelve visible (100% opaco) */
-    /* (Se verá 0.9 opaco en total, porque el padre tiene opacity: 0.9) */
-    opacity: 1; 
-  }
 }
