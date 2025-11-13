@@ -65,6 +65,9 @@ const updateRoom = (roomId, settings) => {
   if (settings.time) {
     room.time = settings.time;
   }
+  if (settings.eliminatedPlayers !== undefined) {
+    room.eliminatedPlayers = settings.eliminatedPlayers;
+  }
 
   return { room };
 };
@@ -361,6 +364,21 @@ const updatePlayerScore = (roomId, playerName, newScore) => {
   return player;
 };
 
+const findPlayerInRoomByName = (roomId, playerName) => {
+  const room = getRoom(roomId);
+  if (!room) {
+    return null;
+  }
+  return room.players.find(p => p.name === playerName);
+};
+
+const eliminatePlayerInRoom = (roomId, playerName) => {
+  const room = getRoom(roomId);
+  if (room && !room.eliminatedPlayers.includes(playerName)) {
+    room.eliminatedPlayers.push(playerName);
+  }
+};
+
 module.exports = {
   createRoom,
   getRoom,
@@ -385,4 +403,6 @@ module.exports = {
   removeRegisteredPlayer,
   removeRegisteredPlayerBySocketId, // Exportar la nueva función
   registeredPlayers, // Export registeredPlayers
+  findPlayerInRoomByName,
+  eliminatePlayerInRoom,
 };

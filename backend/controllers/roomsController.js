@@ -158,8 +158,8 @@ exports.startGame = (req, res) => {
   // Si el modo de juego es Muerte Súbita, inicia el bucle de juego específico.
   console.log(`[startGame] Comprobando modo de juego: ${result.room.gameMode}`);
   if (result.room.gameMode === 'MuerteSubita') {
-    const { startMuerteSubitaGame } = require('./socketManager'); // Importación local para evitar dependencia circular
-    startMuerteSubitaGame(roomId, req.app.get('io'));
+    const startMuerteSubitaGame = req.app.get('startMuerteSubitaGame');
+    startMuerteSubitaGame(roomId);
   }
 
   // Una vez iniciada la partida, resetea el estado de "listo" de todos los jugadores

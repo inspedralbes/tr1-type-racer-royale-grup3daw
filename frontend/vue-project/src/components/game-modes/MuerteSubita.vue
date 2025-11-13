@@ -1,5 +1,5 @@
 <script setup>
-   import { ref, computed, onMounted, watch, nextTick } from 'vue';
+   import { ref, computed, onMounted, watch, onUnmounted, nextTick } from 'vue';
    import { storeToRefs } from 'pinia';
    import { useRouter } from 'vue-router';
    import { communicationManager } from '../../communicationManager';
@@ -11,26 +11,24 @@
    const props = defineProps({
        words: { type: Object, default: null },
        wordsLoaded: { type: Boolean, default: false },
-       playerName: { type: String, default: '' },
+       playerName: { type: String, default: '' }, // Nombre del jugador local
        jugadores: { type: Array, default: () => [] },
-       roomState: { type: Object, default: () => ({ time: 0, isPlaying: false, gameStartTime: null }) },
+       roomState: { type: Object, default: () => ({ isPlaying: false, eliminatedPlayers: [] }) },
        gameMode: { type: String, required: true },
    });
   
    const gameStore = useGameStore();
    const roomStore = useRoomStore();
    const sessionStore = useSessionStore();
+   const notificationStore = useNotificationStore();
    const router = useRouter();
   
-   const { jugadores: jugadoresStore, remainingTime } = storeToRefs(roomStore);
+   const { jugadores: jugadoresStore } = storeToRefs(roomStore);
    const { nombreJugador } = storeToRefs(gameStore);
   
    const playerName = computed(() => props.playerName || nombreJugador.value || '');
+   const isEliminated = computed(() => props.roomState?.eliminatedPlayers?.includes(playerName.value) ?? false);
    const currentGameMode = computed(() => props.gameMode);
-  
-   const jugadoresOrdenats = computed(() => {
-       return [...jugadoresStore.value].sort((a, b) => b.score - a.score);
-   });
   
    const POINTS_PER_DIFFICULTY = {
        facil: 5,
@@ -45,23 +43,14 @@
        dificil: 5,
    };
    const TIME_PENALTY_PER_ERROR = 1; // Segundos que se restan por cada error
+   const POINTS_PENALTY_PER_ERROR = 1; // Puntos que se restan por cada error
   
-   const emits = defineEmits(['done']);
-  
-   const estatDelJoc = ref({
-       paraules: [],
-       indexParaulaActiva: 0,
-       textEntrat: '',
-       stats: [],
-       errorTotal: 0,
-   });
+   const estatDelJoc = ref({ paraules: [], indexParaulaActiva: 0, textEntrat: '', stats: [], errorTotal: 0 });
   
    const meteorWordEl = ref(null);
-   const shipShotEl = ref(null);
-   const isShooting = ref(false);
-   const shotStyle = ref({});
+   const isMeteorBroken = ref(false);
+   let audioExplosion = null;
 
-   const isEliminated = ref(false); // Nuevo estado para saber si el jugador local ha sido eliminado
    const timeLeft = ref(INITIAL_TIME); // El tiempo ahora es local para el jugador
    const score = computed(() => {
        const nameToFind = playerName.value;
@@ -69,12 +58,35 @@
        return player ? player.score : 0;
    });
    let gameInterval = null;
-   const gameEnded = ref(false);
+   const gameEnded = ref(false); // Estado para controlar si el juego ha terminado.
   
    onMounted(async () => {
-       await communicationManager.updatePlayerPage('muerteSubita');
+       await communicationManager.updatePlayerPage('MuerteSubita');
        console.log('MuerteSubita.vue mounted. roomState:', props.roomState);
        console.log('MuerteSubita.vue mounted. props.wordsLoaded:', props.wordsLoaded);
+   });
+
+   onUnmounted(() => {
+       if (gameInterval) clearInterval(gameInterval);
+   });
+
+   const playerShipSrc = computed(() => {
+       try {
+           const player = jugadoresStore.value.find(j => j.name === playerName.value) || {};
+           const avatar = player.avatar || 'nave';
+           const color = player.color || 'Azul';
+           if (avatar === 'noImage') {
+               return new URL('../../img/noImage.png', import.meta.url).href;
+           }
+           const filename = `${avatar}${color}.png`;
+           return new URL(`../../img/${filename}`, import.meta.url).href;
+       } catch (e) {
+           // Fallback image
+           // console.error("Error loading player ship image:", e);
+           // return new URL('../../img/noImage.png', import.meta.url).href;
+           // Returning null to not display anything if there's an error
+           return null;
+       }
    });
   
    function initializeGame() {
@@ -99,8 +111,9 @@
            if (timeLeft.value <= 0) {
                 clearInterval(gameInterval);
                 gameInterval = null;
-                isEliminated.value = true;
-                communicationManager.sendPlayerEliminated(roomStore.roomId);
+                notificationStore.pushNotification({ type: 'error', message: '¡Has sido eliminado!' });
+                // Notificar al backend que este jugador ha sido eliminado
+                communicationManager.sendPlayerEliminated(roomStore.roomId, playerName.value);
            }
        }, 1000);
    };
@@ -138,33 +151,30 @@
        estatDelJoc.value.indexParaulaActiva = 0;
        estatDelJoc.value.textEntrat = '';
    };
-
+   
    watch([() => props.words, () => props.roomState?.isPlaying], ([newWords, newIsPlaying]) => {
        console.log('MuerteSubita.vue watch triggered. props.wordsLoaded:', props.wordsLoaded, 'newWords:', newWords, 'newIsPlaying:', newIsPlaying, 'gameEnded:', gameEnded.value);
        if (props.wordsLoaded && newWords && newIsPlaying && !gameEnded.value) {
            console.log('Words loaded and game is playing. Initializing game.');
            initializeGame();
        } else {
-           console.log('Conditions not met for initializeGame in MuerteSubita.vue.');
+           console.log('Conditions not met for initializeGame.');
        }
    }, { immediate: true, deep: true });
   
    watch(() => estatDelJoc.value.indexParaulaActiva, async () => {
        await nextTick();
        if (meteorWordEl.value) {
+           isMeteorBroken.value = false;
            meteorWordEl.value.classList.remove('fall-animation');
            void meteorWordEl.value.offsetWidth;
            meteorWordEl.value.classList.add('fall-animation');
        }
    });
 
-   // Observador para detectar el fin de la partida (cuando solo queda 1 jugador)
-   watch(jugadoresStore, (newJugadores) => {
-       if (!props.roomState?.isPlaying || gameEnded.value) return;
-
-       const playersAlive = newJugadores.filter(p => !p.isEliminated);
-
-       if (playersAlive.length <= 1 && newJugadores.length > 1) {
+   watch(() => props.roomState.eliminatedPlayers, (eliminated) => {
+       const totalPlayers = jugadoresStore.value?.length ?? 0;
+       if (totalPlayers > 1 && eliminated && eliminated.length >= totalPlayers - 1) {
            console.log('Solo queda un jugador o menos. Finalizando partida.');
            // Si el juego no ha terminado localmente, lo finalizamos.
            if (!gameEnded.value) {
@@ -174,59 +184,28 @@
    }, { deep: true });
   
    async function finishGame(){
+       if (gameEnded.value) return; // Evitar que se llame múltiples veces
        if(gameInterval){
            clearInterval(gameInterval);
            gameInterval = null;
        }
        gameEnded.value = true;
   
-       const totalTypedChars = estatDelJoc.value.stats.reduce((acc, word) => acc + word.paraula.length, 0);
-       const gameDurationInMinutes = props.roomState.time / 60;
-       const wpm = gameDurationInMinutes > 0 ? (totalTypedChars / 5) / gameDurationInMinutes : 0;
+       const finalRanking = [];
+       const eliminated = props.roomState.eliminatedPlayers;
+       const survivor = jugadoresStore.value.find(p => !eliminated.includes(p.name));
+
+       // El superviviente (ganador) es el primero en el ranking.
+       if (survivor) finalRanking.push({ nombre: survivor.name, puntuacion: jugadoresStore.value.length });
+
+       // Los eliminados se añaden en orden inverso de eliminación (el último eliminado es el segundo, etc.)
+       for (let i = eliminated.length - 1; i >= 0; i--) finalRanking.push({ nombre: eliminated[i], puntuacion: eliminated.length - i });
   
-       const gameStats = {
-           playerName: playerName.value,
-           words: estatDelJoc.value.stats,
-           score: score.value,
-           gameMode: currentGameMode.value,
-           errors: estatDelJoc.value.errorTotal,
-           wpm: wpm,
-       };
-  
-       if (sessionStore.email) {
-           try {
-               await communicationManager.sendGameStats(gameStats);
-           } catch (error) {
-               console.error("Error sending game stats:", error);
-               const notificationStore = useNotificationStore();
-               notificationStore.pushNotification({
-                   type: 'error',
-                   message: 'No se pudieron guardar las estadísticas de la partida.',
-               });
-           }
-       }
-  
-       switch (currentGameMode.value) {
-           case 'muerteSubita':
-               const finalScores = jugadoresStore.value.map(p => ({
-                   nombre: p.name,
-                   puntuacion: p.score,
-                   wpm: p.wpm,
-               }));
-               gameStore.setFinalResults(finalScores);
-               sessionStore.setEtapa('done');
-               break;
-           default:
-               console.warn('Modo de juego desconocido al finalizar:', currentGameMode.value);
-               const defaultFinalScores = jugadoresStore.value.map(p => ({
-                   nombre: p.name,
-                   puntuacion: p.score,
-                   wpm: p.wpm
-               }));
-               gameStore.setFinalResults(defaultFinalScores);
-               sessionStore.setEtapa('done');
-       }
-   }
+       // Se establecen los resultados finales en el store del juego.
+       gameStore.setFinalResults(finalRanking);
+       // Se cambia la etapa a 'done', lo que hará que GameEngine redirija a todos a la pantalla final.
+       sessionStore.setEtapa('done');
+   };
 
    const paraulaActiva = computed(() => {
        return estatDelJoc.value.paraules[estatDelJoc.value.indexParaulaActiva];
@@ -237,8 +216,10 @@
        if (!entrada) return '';
        return lletra === entrada ? 'lletra-correcta' : 'lletra-incorrecta';
    };
-
+   
    async function validarProgres() {
+       if (isEliminated.value) return; // Si el jugador ya está eliminado, no procesar entrada
+
        const entrada = estatDelJoc.value.textEntrat.toLowerCase();
        estatDelJoc.value.textEntrat = entrada;
 
@@ -246,23 +227,26 @@
        if (!paraula) return;
 
        // Lógica de Muerte Súbita: un error resta tiempo.
-       for (let i = 0; i < entrada.length; i++) {
-           paraula._errors = paraula._errors || [];
-           // Si el tiempo llega a 0 mientras escribe, detenemos el proceso.
-           if (timeLeft.value <= 0) {
-               if (!isEliminated.value) isEliminated.value = true;
-               return;
-           }
-
+       for (let i = 0; i < entrada.length; i++) { // Iterar sobre la entrada del usuario
+           paraula._errors = paraula._errors || []; // Inicializar array de errores por letra
            if (entrada[i] !== paraula.text[i] && !paraula._errors[i]) {
                estatDelJoc.value.errorTotal++;
                paraula.errors++;
                paraula._errors[i] = true;
                timeLeft.value = Math.max(0, timeLeft.value - TIME_PENALTY_PER_ERROR);
+
+               // RESTAR PUNTOS POR ERROR
+               try {
+                   const newScore = Math.max(0, score.value - POINTS_PENALTY_PER_ERROR);
+                   await communicationManager.updateScore(playerName.value, newScore, roomStore.roomId);
+               } catch (e) {
+                   console.warn('Error updating score on error:', e);
+               }
            }
        }
 
        // Si la palabra se completa correctamente.
+       // Usamos un setTimeout para que la palabra se muestre como correcta brevemente antes de cambiar.
        if (entrada === paraula.text) {
            // Añadir puntos por la palabra correcta
            try {
@@ -273,26 +257,23 @@
            }
            // Añadir tiempo extra según la dificultad
            timeLeft.value += TIME_BONUS_PER_DIFFICULTY[paraula.difficulty];
+           
+           setTimeout(() => {
+               estatDelJoc.value.stats.push({
+                   paraula: paraula.text,
+                   errors: 0 // En muerte súbita, si se completa no hay errores.
+               });
+               paraula.estat = 'completada';
+               estatDelJoc.value.indexParaulaActiva++;
+               estatDelJoc.value.textEntrat = '';
 
-           estatDelJoc.value.stats.push({
-               paraula: paraula.text,
-               errors: 0 // En muerte súbita, si se completa no hay errores.
-           });
-           paraula.estat = 'completada';
-           estatDelJoc.value.indexParaulaActiva++;
-           estatDelJoc.value.textEntrat = '';
-
-           // Si se acaban las palabras, se barajan de nuevo.
-           if (estatDelJoc.value.indexParaulaActiva >= estatDelJoc.value.paraules.length) {
-               initializeWords(props.words);
-           }
+               // Si se acaban las palabras, se barajan de nuevo.
+               if (estatDelJoc.value.indexParaulaActiva >= estatDelJoc.value.paraules.length) {
+                   initializeWords(props.words);
+               }
+           }, 100);
        }
    }
-
-   const backToLobby = () => {
-       console.log('Navigating to lobby');
-       sessionStore.setEtapa('lobby');
-   };
 
 </script>
 
@@ -300,44 +281,64 @@
    <div class="main-background">
        <div class="game-container">
            <h2>Muerte Súbita</h2>
-           <p class="game-subtitle">¡Mantén tu tiempo por encima de cero!</p>
 
-           <div v-if="isEliminated && !gameEnded">
-               <div class="game-info">
-                   <h2 class="eliminated-message">Has sido eliminado</h2>
-                   <p>Esperando a que termine la partida...</p>
+           <div v-if="!gameEnded">
+               <!-- Pantalla de eliminado para el jugador local -->
+               <div v-if="isEliminated" class="eliminated-screen game-info">
+                   <h2 class="eliminated-message">Te has quedado sin tiempo</h2>
+                   <p>Esperando al resto de jugadores...</p>
                </div>
-           </div>
-           <div v-else-if="!gameEnded">
-               <div class="game-info">
-                   <p>Tiempo: {{ timeLeft }}s</p>
-                   <p>Puntuació: {{ score }}</p>
-               </div>
-               <main class="joc" v-if="estatDelJoc.paraules.length > 0">
-                   <div class="paraula-actual">
-                       <h1 ref="meteorWordEl">
+
+               <!-- Interfaz de juego para jugadores activos -->
+               <main class="joc" v-else-if="estatDelJoc.paraules.length > 0">
+                    <div class="game-info">
+                        <p>Tiempo: {{ timeLeft }}s</p>
+                        <p>Puntuación: {{ score }}</p>
+                    </div>
+                   <div class="game-content-wrapper">
+                       <div class="paraula-actual">
+                           <h1 ref="meteorWordEl"
+                               :class="['fall-animation', { 'broken-animation': isMeteorBroken }]"
+                               >
                            <span v-for="(lletra, index) in paraulaActiva.text" :key="index" :class="obtenirClasseLletra(lletra, index)">
                                {{ lletra }}
                            </span>
-                       </h1>
-                       <input type="text" v-model="estatDelJoc.textEntrat" @input="validarProgres" autofocus />
+                           </h1>
+                           <input type="text" v-model="estatDelJoc.textEntrat" @input="validarProgres" autofocus :disabled="isEliminated" />
+                           <img v-if="playerShipSrc" :src="playerShipSrc" alt="Nave seleccionada" class="player-ship" />
+                       </div>
+
+                       <div class="puntuacions">
+                           <h2>Jugadores Vivos</h2>
+                           <ul id="llista-jugadors">
+                               <li v-for="jugador in jugadoresStore.filter(j => !roomState.eliminatedPlayers?.includes(j.name))" :key="jugador.name">
+                                   <strong>{{ jugador.name }}</strong>
+                               </li>
+                           </ul>
+                       </div>
                    </div>
                </main>
            </div>
 
            <div v-else class="game-end-screen">
                <h2>¡Juego Terminado!</h2>
-               <p>Tu puntuación final: {{ score }}</p>
-               <h3>Clasificación Final</h3>
-               <ul id="llista-jugadors-final">
-                   <li v-for="jugador in jugadoresOrdenats" :key="jugador.name">
-                       <strong>{{ jugador.name }}</strong> - {{ jugador.score }} punts
-                   </li>
-               </ul>
-               <button class="btn" @click="backToLobby">Volver al Lobby</button>
            </div>
        </div>
    </div>
 </template>
 
-<style src="../../styles/stylesCuentaAtrasSimple.css"></style>
+<style>
+.eliminated-screen {
+    text-align: center;
+    margin-top: 50px;
+}
+.eliminated-screen h1 {
+    color: #ff4141;
+    text-shadow: 0 0 10px #ff4141;
+}
+
+.eliminated-message {
+    color: #ff4141;
+    text-shadow: 0 0 10px #ff4141;
+}
+</style>

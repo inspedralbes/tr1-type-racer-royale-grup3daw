@@ -1,5 +1,19 @@
 /**
  * Fichero: socketManager.js
+ * 
+ * --- MODIFICACIONES PARA MUERTE SÚBITA ---
+ * 1.  **`startMuerteSubitaGame`**: Nueva función exportada que se encarga de la lógica del modo de juego.
+ *     - Inicializa el estado `eliminatedPlayers` en la sala.
+ *     - Emite el estado actualizado a los clientes.
+ * 
+ * 2.  **`eliminatePlayerInRoom`**: Nueva función en `stateManager` (que se debe crear) para marcar a un jugador como eliminado.
+ * 
+ * 3.  **Listener `player-eliminated`**: Este evento, recibido desde el cliente, ahora usa `stateManager.eliminatePlayerInRoom`
+ *     para actualizar el estado del juego y notifica a todos los jugadores.
+ * 
+ * 4.  **`broadcastRoomState`**: Se modifica para incluir la nueva propiedad `eliminatedPlayers` en el estado que se envía a los clientes.
+ * --- FIN DE MODIFICACIONES ---
+ * 
  * Descripción: Gestiona toda la lógica de comunicación en tiempo real a través de Socket.IO.
  * Se encarga de:
  * - Inicializar los listeners para eventos de conexión de nuevos clientes.
@@ -64,6 +78,7 @@ const initializeSockets = (app) => {
         gameStartTime: room.gameStartTime,
         time: room.time,
         gameMode: room.gameMode,
+        eliminatedPlayers: room.eliminatedPlayers || [], // Incluir jugadores eliminados
       });
     }
   };
@@ -79,6 +94,20 @@ const initializeSockets = (app) => {
   app.set('broadcastPlayerList', broadcastPlayerList);
   app.set('broadcastRoomState', broadcastRoomState);
   app.set('broadcastPublicRoomList', broadcastPublicRoomList);
+
+  // Función para iniciar la lógica del juego Muerte Súbita
+  const startMuerteSubitaGame = (roomId) => {
+    const room = stateManager.getRoom(roomId);
+    if (room) {
+      console.log(`[startMuerteSubitaGame] Iniciando lógica para la sala ${roomId}`);
+      // Inicializa la lista de jugadores eliminados
+      stateManager.updateRoom(roomId, { eliminatedPlayers: [] });
+      broadcastRoomState(roomId);
+    }
+  };
+
+  // Exporta la función para que pueda ser usada en roomsController
+  app.set('startMuerteSubitaGame', startMuerteSubitaGame);
 
   io.on('connection', (socket) => {
     // Listener para cuando un nuevo cliente se conecta.
@@ -155,14 +184,14 @@ const initializeSockets = (app) => {
     // === AÑADIDO PARA MUERTE SÚBITA ===
     // Listener para cuando un jugador es eliminado en el modo Muerte Súbita.
     socket.on('player-eliminated', async (data) => {
-      const { roomId } = data;
-      const player = stateManager.findPlayerBySocketId(roomId, socket.id);
+      const { roomId, playerName } = data;
+      const player = stateManager.findPlayerInRoomByName(roomId, playerName);
       if (player) {
         console.log(`Jugador ${player.name} eliminado en la sala ${roomId}`);
         // Marca al jugador como eliminado en el estado del servidor.
-        stateManager.eliminatePlayerInRoom(roomId, socket.id);
+        stateManager.eliminatePlayerInRoom(roomId, playerName);
         // Notifica a todos en la sala para que la UI se actualice.
-        await broadcastPlayerList(roomId);
+        broadcastRoomState(roomId); // Envía el nuevo estado con el jugador eliminado
       }
     });
 

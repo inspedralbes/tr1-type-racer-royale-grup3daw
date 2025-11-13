@@ -376,8 +376,8 @@ export const communicationManager = {
   },
 
   // Notifica al servidor que el jugador ha sido eliminado en Muerte Súbita
-  sendPlayerEliminated(roomId) {
-    socket.emit('player-eliminated', { roomId });
+  sendPlayerEliminated(roomId, playerName) {
+    socket.emit('player-eliminated', { roomId, playerName });
   },
 
   // --- Power-Up Methods (Socket.IO) ---

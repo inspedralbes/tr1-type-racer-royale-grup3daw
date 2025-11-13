@@ -36,6 +36,11 @@ const { nombreJugador, words, wordsLoaded } = storeToRefs(gameStore);
 const { jugadores, roomState } = storeToRefs(roomStore);
 
 const currentGameModeComponent = computed(() => {
+  // Si no hay un modo de juego definido, no intentes cargar ningún componente.
+  // Esto previene el error "Cannot read properties of null (reading 'component')"
+  // durante transiciones o cuando el estado no está completamente sincronizado.
+  if (!props.gameMode) return null;
+
   switch (props.gameMode) {
     case 'cuentaAtrasSimple':
       return defineAsyncComponent(() => import('./game-modes/CuentaAtrasSimple.vue'));
