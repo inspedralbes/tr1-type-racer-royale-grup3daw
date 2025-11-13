@@ -122,10 +122,12 @@ div.section-joinID {
   text-align: left;
 }
 
+/* --- CAMBIO: Apila el input y el botón --- */
 div.section-joinID > div {
   display: flex;
   width: 100%;
-  align-items: center;
+  flex-direction: column; /* Apila verticalmente */
+  align-items: flex-start;  /* Alinea a la izquierda */
 }
 
 
@@ -144,9 +146,10 @@ div.section-create {
   text-align: right; 
 }
 
+/* --- CAMBIO: Ajusta el botón del ID --- */
 div.section-joinID > div > .btn {
-  width: auto;
-  margin-left: 10px;
+  width: 80%; /* Mismo ancho que el input */
+  margin-left: 0; /* Quita el margen que tenía */
 }
 
 div.section-joinPublic > .btn,
@@ -159,18 +162,21 @@ div.section-create .btn {
   text-align: center;
 }
 
+/* --- CAMBIO: Reorganiza la fila inferior de botones --- */
 .selection.hologram > div:last-of-type {
   grid-column: 1 / -1; 
   text-align: center;
 
   display: flex;
   justify-content: center;
-  gap: 150px; 
+  
+  margin-top: 12px; /* Añadido desde el style en línea */
+  gap: 20px; /* Reducido desde 150px */
 }
 
+/* --- CAMBIO: Resetea márgenes de los botones inferiores --- */
 .selection.hologram > div:last-of-type .btn {
-  margin-left: 1px;
-  margin-right: 10px;
+  margin: 0; /* Resetea márgenes para que 'gap' funcione */
 }
 
 .roomList {
