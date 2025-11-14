@@ -1,217 +1,216 @@
 <template>
-  <div class="player-stats-container">
-    <button class="back-button" @click="goBack">←</button>
-    <h2>Estadísticas de Jugadores</h2>
-    <div v-if="loading">Cargando estadísticas...</div>
-    <div v-else-if="error">Error al cargar estadísticas: {{ error }}</div>
-    <div v-else>
-      <!-- Gráfico de Ranking General -->
-      <div class="chart-container">
-        <h3>Ranking por Puntuación Media</h3>
-        <div id="chart"></div>
-      </div>
+  <div class="stats-background">
+    <div class="centra-console-panel">
+      <div class="stats-container hologram hologram-entrance">
+        <button class="back-button" @click="goBack">Tornar</button>
+        <h2>Estadístiques de Jugadors</h2>
+        
+        <div v-if="loading">Carregant estadístiques...</div>
+        <div v-else-if="error" class="error-message">Error en carregar les estadístiques: {{ error }}</div>
+        
+        <div v-else class="stats-content">
+          <div class="game-mode-tabs">
+            <button @click="selectedGameMode = 'cuentaAtrasSimple'" :class="{ active: selectedGameMode === 'cuentaAtrasSimple' }">Compte Enrere</button>
+            <button @click="selectedGameMode = 'powerUps'" :class="{ active: selectedGameMode === 'powerUps' }">Potenciadors</button>
+            <button @click="selectedGameMode = 'MuerteSubita'" :class="{ active: selectedGameMode === 'MuerteSubita' }">Mort Súbita</button>
+          </div>
 
-      <!-- Gráfico de Evolución Personal (Bollinger Bands) -->
-      <div class="chart-container">
-        <h3>Evolución de WPM de {{ sessionStore.playerName }}</h3>
-        <div id="bollinger-chart"></div>
-        <p v-if="scoreHistory.length < 2">No hay suficientes datos para mostrar la evolución.</p>
-      </div>
+          <div class="stats-display">
+            <!-- Cuenta Atrás Simple -->
+            <div v-if="selectedGameMode === 'cuentaAtrasSimple'">
+              <h3>Top Jugadors - Compte Enrere</h3>
+              <ul class="stats-list">
+                <li v-for="stat in statsCuentaAtras" :key="stat._id">
+                  <h4>{{ stat._id }}</h4>
+                  <p>Partides Jugades: {{ stat.totalGames }}</p>
+                  <p>Puntuació Mitjana: {{ stat.avgScore ? stat.avgScore.toFixed(2) : 0 }}</p>
+                  <p>WPM Mitjà: {{ stat.avgWpm ? stat.avgWpm.toFixed(2) : 0 }}</p>
+                </li>
+              </ul>
+              <p v-if="!statsCuentaAtras.length">No hi ha estadístiques disponibles per a aquest mode de joc.</p>
+            </div>
 
-      <!-- Lista de Estadísticas (opcional, se puede mantener o quitar) -->
-      <ul class="stats-list">
-        <li v-for="stat in playerStats" :key="stat._id">
-          <h3>{{ stat._id }}</h3>
-          <p>Partidas Jugadas: {{ stat.totalGames }}</p>
-          <p>Puntuación Media: {{ stat.avgScore.toFixed(2) }}</p>
-          <p>WPM Media: {{ stat.avgWpm.toFixed(2) }}</p>
-          <p>Mejor Puntuación: {{ stat.maxScore }}</p>
-          <p>Mejor WPM: {{ stat.maxWpm }}</p>
-        </li>
-      </ul>
+            <!-- Power-Ups -->
+            <div v-if="selectedGameMode === 'powerUps'">
+              <h3>Top Jugadors - Potenciadors</h3>
+              <ul class="stats-list">
+                <li v-for="stat in statsPowerUps" :key="stat._id">
+                  <h4>{{ stat._id }}</h4>
+                  <p>Partides Jugades: {{ stat.totalGames }}</p>
+                  <p>Puntuació Mitjana: {{ stat.avgScore ? stat.avgScore.toFixed(2) : 0 }}</p>
+                  <p>WPM Mitjà: {{ stat.avgWpm ? stat.avgWpm.toFixed(2) : 0 }}</p>
+                </li>
+              </ul>
+               <p v-if="!statsPowerUps.length">No hi ha estadístiques disponibles per a aquest mode de joc.</p>
+            </div>
+
+            <!-- Muerte Súbita -->
+            <div v-if="selectedGameMode === 'MuerteSubita'">
+              <h3>Top Jugadors - Mort Súbita</h3>
+              <ul class="stats-list">
+                <li v-for="stat in statsMuerteSubita" :key="stat._id">
+                  <h4>{{ stat._id }}</h4>
+                  <p>Partides Jugades: {{ stat.totalGames }}</p>
+                  <p>Supervivència Mitjana: {{ stat.avgSurvivalTime ? stat.avgSurvivalTime.toFixed(2) : 0 }}s</p>
+                  <p>WPM Mitjà: {{ stat.avgWpm ? stat.avgWpm.toFixed(2) : 0 }}</p>
+                </li>
+              </ul>
+               <p v-if="!statsMuerteSubita.length">No hi ha estadístiques disponibles per a aquest mode de joc.</p>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue';
+import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
-import { useGameStore } from '../stores/game';
-import { useSessionStore } from '../stores/session';
 import { communicationManager } from '../communicationManager';
-import * as d3 from 'd3';
 
 const router = useRouter();
-const gameStore = useGameStore();
-const sessionStore = useSessionStore();
-const playerStats = ref([]);
-const scoreHistory = ref([]);
 const loading = ref(true);
 const error = ref(null);
+
+const selectedGameMode = ref('cuentaAtrasSimple');
+const statsCuentaAtras = ref([]);
+const statsPowerUps = ref([]);
+const statsMuerteSubita = ref([]);
 
 const goBack = () => {
   router.back();
 };
 
-const drawChart = () => {
-  d3.select("#chart").selectAll("*").remove();
-  if (playerStats.value.length === 0) return;
-
-  // Simplified chart for debugging
-  const svg = d3.select("#chart").append("svg")
-    .attr("width", 500)
-    .attr("height", 100)
-    .style("background-color", "lightgray");
-
-  svg.append("rect")
-    .attr("x", 10)
-    .attr("y", 10)
-    .attr("width", 80)
-    .attr("height", 80)
-    .attr("fill", "red");
-    
-  svg.append("text")
-    .attr("x", 100)
-    .attr("y", 50)
-    .text("Test Chart - If you see this, SVG is working.")
-    .attr("fill", "black");
-};
-
-const drawBollingerBandsChart = (data) => {
-  d3.select("#bollinger-chart").selectAll("*").remove();
-  if (data.length < 2) return;
-
-  const margin = { top: 40, right: 30, bottom: 70, left: 60 };
-  const width = 960 - margin.left - margin.right;
-  const height = 500 - margin.top - margin.bottom;
-
-  const svg = d3.select("#bollinger-chart").append("svg")
-    .attr("width", "100%")
-    .attr("height", height + margin.top + margin.bottom)
-    .attr("viewBox", `0 0 ${width + margin.left + margin.right} ${height + margin.top + margin.bottom}`)
-    .attr("preserveAspectRatio", "xMidYMid meet")
-    .append("g")
-    .attr("transform", `translate(${margin.left},${margin.top})`);
-
-  const parsedData = data.map(d => ({
-    date: new Date(d.createdAt),
-    wpm: +d.wpm
-  }));
-
-  const n = 20; // Period for moving average and stdev
-  const k = 2; // Standard deviation multiplier
-
-  const bollingerData = [];
-  for (let i = 0; i < parsedData.length; i++) {
-    const slice = parsedData.slice(Math.max(0, i - n + 1), i + 1);
-    const mean = d3.mean(slice, d => d.wpm);
-    const stdDev = d3.deviation(slice, d => d.wpm);
-    bollingerData.push({
-      date: parsedData[i].date,
-      wpm: parsedData[i].wpm,
-      mean: mean,
-      upper: mean + k * stdDev,
-      lower: mean - k * stdDev
-    });
-  }
-
-  const x = d3.scaleTime().range([0, width]).domain(d3.extent(bollingerData, d => d.date));
-  const y = d3.scaleLinear().range([height, 0]).domain([0, d3.max(bollingerData, d => Math.max(d.wpm, d.upper)) * 1.1 || 100]);
-
-  svg.append("g").attr("transform", `translate(0,${height})`).call(d3.axisBottom(x).ticks(5))
-    .selectAll("text").style("fill", "#ffffff");
-
-  svg.append("g").call(d3.axisLeft(y)).selectAll("text").style("fill", "#ffffff");
-  
-  svg.append("text").attr("transform", "rotate(-90)").attr("y", 0 - margin.left).attr("x", 0 - (height / 2))
-    .attr("dy", "1em").style("text-anchor", "middle").style("fill", "#ffffff").text("WPM");
-
-  const line = (yValue) => d3.line().x(d => x(d.date)).y(d => y(d[yValue]));
-
-  svg.append("path").datum(bollingerData).attr("class", "line wpm-line").attr("d", line('wpm'));
-  svg.append("path").datum(bollingerData.slice(n - 1)).attr("class", "line mean-line").attr("d", line('mean'));
-  svg.append("path").datum(bollingerData.slice(n - 1)).attr("class", "line upper-band").attr("d", line('upper'));
-  svg.append("path").datum(bollingerData.slice(n - 1)).attr("class", "line lower-band").attr("d", line('lower'));
-};
-
-
 onMounted(async () => {
-  // Create tooltip element once
-  d3.select("body").append("div").attr("class", "tooltip").style("opacity", 0);
-
   try {
-    // Fetch general stats
-    const statsResponse = await communicationManager.getPlayerStats();
-    playerStats.value = statsResponse.data;
-    drawChart();
+    // Fetch stats for all game modes
+    const [cuentaAtrasRes, powerUpsRes, muerteSubitaRes] = await Promise.all([
+      communicationManager.getPlayerStats('cuentaAtrasSimple'),
+      communicationManager.getPlayerStats('powerUps'),
+      communicationManager.getPlayerStats('MuerteSubita'),
+    ]);
 
-    // Fetch personal score history
-    const playerName = sessionStore.playerName;
-    if (playerName) {
-      const historyResponse = await communicationManager.getPlayerScoreHistory(playerName);
-      scoreHistory.value = historyResponse.data;
-      drawBollingerBandsChart(scoreHistory.value);
-    }
+    statsCuentaAtras.value = cuentaAtrasRes.data;
+    statsPowerUps.value = powerUpsRes.data;
+    statsMuerteSubita.value = muerteSubitaRes.data;
+
   } catch (err) {
     error.value = err.message;
-    console.error('Error fetching stats:', err);
+    console.error('Error en obtenir les estadístiques dels jugadors:', err);
   } finally {
     loading.value = false;
   }
 });
-
-onUnmounted(() => {
-  d3.select(".tooltip").remove();
-});
 </script>
 
-<!-- Global styles for D3 elements appended to the body or for general line styles -->
-<style>
-.tooltip {
-  position: absolute;
-  background-color: #3a3f47;
-  color: #ffffff;
-  padding: 10px;
-  border-radius: 5px;
-  pointer-events: none;
-  opacity: 0;
-}
-.line {
-  fill: none;
-  stroke-width: 2px;
-}
-.wpm-line {
-  stroke: #61dafb; /* Azul */
-}
-.mean-line {
-  stroke: #ffab00; /* Naranja */
-  stroke-dasharray: 5,5;
-}
-.upper-band, .lower-band {
-  stroke: #e91e63; /* Rosa */
-  stroke-dasharray: 2,2;
-}
-</style>
-
 <style scoped>
-.player-stats-container {
-  padding: 20px;
+@import '../styles/styleStats.css';
+
+
+
+
+.stats-content {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.game-mode-tabs {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.game-mode-tabs button {
+  padding: 10px 20px;
+  background-color: #2a3a5b;
   color: #ffffff;
+  border: 1px solid #4f6a9e;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s, box-shadow 0.3s;
 }
-.chart-container {
-  margin-bottom: 40px;
-  background-color: #2c2f36;
-  padding: 20px;
-  border-radius: 8px;
+
+.game-mode-tabs button:hover {
+  background-color: #3a4a6b;
+  box-shadow: 0 0 10px #61dafb;
 }
+
+.game-mode-tabs button.active {
+  background-color: #61dafb;
+  color: #1a2238;
+  font-weight: bold;
+  box-shadow: 0 0 15px #61dafb;
+}
+
+.stats-display h3 {
+  color: #61dafb;
+  text-align: center;
+  margin-bottom: 15px;
+}
+
+/* --- BLOQUE MODIFICADO --- */
 .stats-list {
   list-style: none;
-  padding: 0;
+  padding-left: 0; /* Modificado de 'padding: 0' */
+  gap: 15px;
+
+  /* 1. Cambiado de 'grid' a 'flex' para una lista vertical */
+  display: flex;
+  flex-direction: column;
+
+  /* 2. Añadido para habilitar el scroll */
+  max-height: 350px; /* ¡¡Ajusta esta altura máxima como necesites!! */
+  overflow-y: auto; /* Muestra el scroll vertical solo si es necesario */
+  padding-right: 10px; /* Espacio para que la barra de scroll no tape el contenido */
 }
+/* --- FIN DEL BLOQUE MODIFICADO --- */
+
 .stats-list li {
-  background-color: #3a3f47;
+  background-color: rgba(13, 32, 78, 0.8);
   padding: 15px;
-  margin-bottom: 10px;
-  border-radius: 5px;
+  border-radius: 8px;
+  border: 1px solid #4f6a9e;
 }
+
+.stats-list h4 {
+  margin: 0 0 10px 0;
+  color: #ffc107;
+  text-align: center;
+}
+
+.stats-list p {
+  margin: 5px 0;
+  color: #e0e0e0;
+}
+
+.error-message {
+  color: #ff4141;
+  text-align: center;
+}
+
+/* --- BLOQUE AÑADIDO (Opcional): Estilo para la barra de scroll --- */
+/* (Funciona en navegadores WebKit como Chrome, Edge, Safari) */
+.stats-list::-webkit-scrollbar {
+  width: 8px; /* Ancho de la barra */
+}
+
+.stats-list::-webkit-scrollbar-track {
+  background: rgba(13, 32, 78, 0.5); /* Fondo de la pista */
+  border-radius: 4px;
+}
+
+.stats-list::-webkit-scrollbar-thumb {
+  background: #61dafb; /* Color de la barra deslizante */
+  border-radius: 4px;
+  border: 1px solid #2a3a5b;
+}
+
+.stats-list::-webkit-scrollbar-thumb:hover {
+  background: #ffffff; /* Color al pasar el ratón */
+}
+/* --- FIN DEL BLOQUE AÑADIDO --- */
+
 </style>

@@ -36,13 +36,18 @@ const { nombreJugador, words, wordsLoaded } = storeToRefs(gameStore);
 const { jugadores, roomState } = storeToRefs(roomStore);
 
 const currentGameModeComponent = computed(() => {
+  // Si no hay un modo de juego definido, no intentes cargar ningún componente.
+  // Esto previene el error "Cannot read properties of null (reading 'component')"
+  // durante transiciones o cuando el estado no está completamente sincronizado.
+  if (!props.gameMode) return null;
+
   switch (props.gameMode) {
     case 'cuentaAtrasSimple':
       return defineAsyncComponent(() => import('./game-modes/CuentaAtrasSimple.vue'));
-    case 'modoJuego2':
-      return defineAsyncComponent(() => import('./game-modes/ModoJuego2.vue'));
-    case 'modoJuego3':
-      return defineAsyncComponent(() => import('./game-modes/ModoJuego3.vue'));
+    case 'powerUps':
+      return defineAsyncComponent(() => import('./game-modes/PowerUps.vue'));
+    case 'MuerteSubita':
+      return defineAsyncComponent(() => import('./game-modes/MuerteSubita.vue'));
     default:
       // Fallback to CuentaAtrasSimple or a default error component
       console.warn(`Unknown game mode: ${props.gameMode}. Falling back to CuentaAtrasSimple.`);
@@ -55,4 +60,4 @@ const onGameOver = (results) => {
 };
 </script>
 
-<style src="../styles/stylesJoc.css"></style>
+<style src="../styles/stylesCuentaAtrasSimple.css"></style>

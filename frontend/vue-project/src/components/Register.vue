@@ -1,27 +1,27 @@
 
 <template>
-  <div class="main-background">
-    <div class="themed-container">
-      <h2>Registre</h2>
-      <input
-        v-model="username"
-        type="text"
-        placeholder="Nom d'usuari"
-      />
-      <input
-        v-model="email"
-        type="email"
-        placeholder="Email"
-      />
-      <input
-        v-model="password"
-        type="password"
-        placeholder="Contrasenya"
-      />
-      <button class="btn" @click="register">Registrar-se</button>
-      <p>O</p>
-      <button class="btn" @click="goToGuestLogin()">Entrar com a convidat</button>
-      <p>Ja tens un compte? <router-link to="/login">Inicia sessió</router-link></p>
+  <div class="login-background">
+    <div class="centra-console-panel">
+      <div class="login-container hologram hologram-entrance">
+        <h2>Registre</h2>
+        <input
+          v-model="username"
+          type="text"
+          placeholder="Nom d'usuari"
+        />
+        <input
+          v-model="email"
+          type="email"
+          placeholder="Email"
+        />
+        <input
+          v-model="password"
+          type="password"
+          placeholder="Contrasenya"
+        />
+        <button class="btn" @click="register">Registrar-se</button>
+        <p>Ja tens un compte? <router-link to="/login">Inicia sessió</router-link></p>
+      </div>
     </div>
   </div>
 </template>
@@ -51,7 +51,7 @@ const register = async () => {
   try {
     await communicationManager.register(username.value, email.value, password.value);
     const notificationStore = useNotificationStore();
-    notificationStore.pushNotification({ type: 'success', message: 'Registre exitós. Si us plau, revisa el teu correu per a verificar el teu compte.' });
+    notificationStore.pushNotification({ type: 'success', message: 'Registre exitós.' });
     router.push('/login');
   } catch (error) {
     // L'interceptor d'errors de communicationManager ja hauria mostrat una notificació
@@ -64,4 +64,4 @@ const goToGuestLogin = () => {
 }
 </script>
 
-<style src="../styles/styleLogin.css"></style>
+<style src="../styles/styleAuth.css"></style>

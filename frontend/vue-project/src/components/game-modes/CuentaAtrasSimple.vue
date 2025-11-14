@@ -1,349 +1,414 @@
 <script setup>
-    // Importaciones de Vue para la reactividad y gestión del ciclo de vida del componente.
-    import { ref, computed, onMounted, watch, onUnmounted } from 'vue';
-    // Importación de Pinia para desestructurar propiedades reactivas de los stores.
-    import { storeToRefs } from 'pinia';
-        import { useRouter } from 'vue-router';
-import { communicationManager } from '../../communicationManager';
-        // Importación de los stores de Pinia para la gestión del estado global de la aplicación.
-        import { useGameStore } from '../../stores/game';
-        import { useNotificationStore } from '../../stores/notification';
-        import { useRoomStore } from '../../stores/room';
-        import { useSessionStore } from '../../stores/session';
-    
-                // Definición de props para el componente (hacer opcionales y dar valores por defecto
-                // para evitar errores si el padre no las pasa inmediatamente).
-                const props = defineProps({
-                    words: { type: Object, default: null },
-                    wordsLoaded: { type: Boolean, default: false },
-                    playerName: { type: String, default: '' },
-                    jugadores: { type: Array, default: () => [] },
-                    roomState: { type: Object, default: () => ({ time: 0, isPlaying: false, gameStartTime: null }) },
-                    gameMode: { type: String, required: true },
-                });
-    
-        // Inicialización de los stores.
-        const gameStore = useGameStore();
-        const roomStore = useRoomStore();
-        const sessionStore = useSessionStore();
-        const router = useRouter();
-    
-    // Desestructuración de propiedades reactivas de los stores.
-    const { jugadores: jugadoresStore, remainingTime } = storeToRefs(roomStore);
-    const { nombreJugador } = storeToRefs(gameStore);
+   import { ref, computed, onMounted, watch, nextTick } from 'vue';
+   import { storeToRefs } from 'pinia';
+   import { useRouter } from 'vue-router';
+   import { communicationManager } from '../../communicationManager';
+   import { useGameStore } from '../../stores/game';
+   import { useNotificationStore } from '../../stores/notification';
+   import { useRoomStore } from '../../stores/room';
+   import { useSessionStore } from '../../stores/session';
+  
+   const props = defineProps({
+       words: { type: Object, default: null },
+       wordsLoaded: { type: Boolean, default: false },
+       playerName: { type: String, default: '' },
+       jugadores: { type: Array, default: () => [] },
+       roomState: { type: Object, default: () => ({ time: 0, isPlaying: false, gameStartTime: null }) },
+       gameMode: { type: String, required: true },
+   });
 
-    // Computed playerName to prefer prop but fall back to store value if prop missing
-    const playerName = computed(() => props.playerName || nombreJugador.value || '');
+   let audioDisparo = null;
+   let audioExplosion = null; // === AÑADIDO PARA SONIDO EXPLOSIÓN ===
 
-    const currentGameMode = computed(() => props.gameMode);
+   const gameStore = useGameStore();
+   const roomStore = useRoomStore();
+   const sessionStore = useSessionStore();
+   const router = useRouter();
+  
+   const { jugadores: jugadoresStore, remainingTime } = storeToRefs(roomStore);
+   const { nombreJugador } = storeToRefs(gameStore);
+  
+   const playerName = computed(() => props.playerName || nombreJugador.value || '');
+   const currentGameMode = computed(() => props.gameMode);
+  
+   const jugadoresOrdenats = computed(() => {
+       // === MODIFICACIÓN VISTA ANTERIORMENTE (Añadido log de depuración) ===
+       // console.log('DATOS DE JUGADORES EN EL STORE:', JSON.stringify(jugadoresStore.value, null, 2));
+       return [...jugadoresStore.value].sort((a, b) => b.score - a.score);
+   });
+  
+   const POINTS_PER_DIFFICULTY = {
+       facil: 5,
+       normal: 10,
+       dificil: 15,
+   };
+   const PENALTY_PER_ERROR = 1;
+   const PENALTY_PER_TIMEOUT = 10; 
 
-    // Definición de puntos por dificultad de palabra.
-    const POINTS_PER_DIFFICULTY = {
-        facil: 5,
-        normal: 10,
-        dificil: 15,
-    };
-    const PENALTY_PER_ERROR = 1; // Puntos que se restan por cada error detectado
+   const emits = defineEmits(['done']);
+  
+   const estatDelJoc = ref({
+       paraules: [],
+       indexParaulaActiva: 0,
+       textEntrat: '',
+       stats: [],
+       errorTotal: 0,
+   });
+  
+   const meteorWordEl = ref(null);
+   const shipShotEl = ref(null);
+   const isShooting = ref(false);
+   const shotStyle = ref({});
+   
+   const isMeteorBroken = ref(false);
 
-    // No limit on words: use the full word list and keep recycling when exhausted.
+   const timeLeft = ref(props.roomState?.time ?? 0);
+   const score = computed(() => {
+       const nameToFind = playerName.value;
+       const player = jugadoresStore.value.find(j => j.name === nameToFind);
+       return player ? player.score : 0;
+   });
+   let gameInterval = null;
+   const gameEnded = ref(false);
+  
+   onMounted(async () => {
+       await communicationManager.updatePlayerPage('cuentaAtrasSimple');
+       console.log('CuentaAtrasSimple.vue mounted. roomState:', props.roomState);
+       console.log('CuentaAtrasSimple.vue mounted. props.wordsLoaded:', props.wordsLoaded);
+   });
+  
+   watch([() => props.words, () => props.roomState?.isPlaying], ([newWords, newIsPlaying]) => {
+       console.log('CuentaAtrasSimple.vue watch triggered. props.wordsLoaded:', props.wordsLoaded, 'newWords:', newWords, 'newIsPlaying:', newIsPlaying, 'gameEnded:', gameEnded.value);
+       if (props.wordsLoaded && newWords && newIsPlaying && !gameEnded.value) {
+           console.log('Words loaded and game is playing. Initializing game.');
+           initializeGame();
+       } else {
+           console.log('Conditions not met for initializeGame.');
+       }
+   }, { immediate: true, deep: true });
+  
+   watch(() => estatDelJoc.value.indexParaulaActiva, async () => {
+       await nextTick(); 
+       if (meteorWordEl.value) {
+           isMeteorBroken.value = false; 
+           meteorWordEl.value.classList.remove('fall-animation');
+           void meteorWordEl.value.offsetWidth; 
+           meteorWordEl.value.classList.add('fall-animation');
+       }
+   });
 
-    // Declaración de eventos que este componente puede emitir.
-    const emits = defineEmits(['done']);
-    
-    // Estado reactivo local para la gestión del juego.
-    const estatDelJoc = ref({
-        paraules: [], // Array de palabras para el juego.
-        indexParaulaActiva: 0, // Índice de la palabra actual.
-        textEntrat: '', // Texto introducido por el usuario.
-        stats: [], // Estadísticas de palabras completadas.
-        errorTotal: 0, // Contador total de errores.
-    });
+   function initializeTimer() {
+       const now = Date.now();
+       const startTime = props.roomState?.gameStartTime;
+       if (!startTime) {
+           timeLeft.value = props.roomState?.time ?? 0;
+           return;
+       }
+       const totalDurationMs = (props.roomState?.time ?? 0) * 1000;
+       const elapsedMs = now - startTime;
+       const remainingMs = totalDurationMs - elapsedMs;
+       timeLeft.value = Math.max(0, Math.floor(remainingMs / 1000));
+   }
+  
+   function startGameTimer() {
+       if (gameInterval) clearInterval(gameInterval);
+       initializeTimer();
+  
+       gameInterval = setInterval(() => {
+           timeLeft.value--;
+           if (timeLeft.value <= 0) {
+               clearInterval(gameInterval);
+               gameInterval = null;
+               finishGame();
+           }
+       }, 1000);
+   }
+  
+   function initializeGame() {
+       initializeWords(props.words);
+       startGameTimer();
+   }
+  
+   function initializeWords(wordsData) {
+       if (!wordsData) {
+           console.error("initializeWords: wordsData és nul o indefinit.");
+           try {
+               const notificationStore = useNotificationStore();
+               notificationStore.pushNotification({ type: 'error', message: 'No s\'han pogut carregar les paraules per a la partida.' });
+           } catch (e) { }
+           estatDelJoc.value.paraules = [];
+           return;
+       }
+  
+       let allWords = [];
+       if (wordsData.facil) allWords = allWords.concat(wordsData.facil.map(word => ({ text: word, difficulty: 'facil' })));
+       if (wordsData.normal) allWords = allWords.concat(wordsData.normal.map(word => ({ text: word, difficulty: 'normal' })));
+       if (wordsData.dificil) allWords = allWords.concat(wordsData.dificil.map(word => ({ text: word, difficulty: 'dificil' })));
+  
+       for (let i = allWords.length - 1; i > 0; i--) {
+           const j = Math.floor(Math.random() * (i + 1));
+           [allWords[i], allWords[j]] = [allWords[j], allWords[i]];
+       }
+  
+       estatDelJoc.value.paraules = allWords.map(p => ({ ...p, errors: 0, estat: 'pendent' }));
+       estatDelJoc.value.indexParaulaActiva = 0;
+       estatDelJoc.value.textEntrat = '';
+   }
+  
+   async function finishGame(){
+       if(gameInterval){
+           clearInterval(gameInterval);
+           gameInterval = null;
+       }
+       gameEnded.value = true;
+       
+       const totalTypedChars = estatDelJoc.value.stats.reduce((acc, word) => acc + word.paraula.length, 0);
+       const gameDurationInMinutes = props.roomState.time / 60;
+       const wpm = gameDurationInMinutes > 0 ? (totalTypedChars / 5) / gameDurationInMinutes : 0;
+  
+       const gameStats = {
+           playerName: playerName.value,
+           words: estatDelJoc.value.stats,
+           score: score.value,
+           gameMode: currentGameMode.value,
+           errors: estatDelJoc.value.errorTotal,
+           wpm: wpm,
+       };
+  
+       if (sessionStore.email) {
+           try {
+               await communicationManager.sendGameStats(gameStats);
+           } catch (error) {
+               console.error("Error en enviar les estadístiques del joc:", error);
+               const notificationStore = useNotificationStore();
+               notificationStore.pushNotification({
+                   type: 'error',
+                   message: 'No s\'han pogut desar les estadístiques de la partida.',
+               });
+           }
+       }
+  
+       const finalScores = jugadoresStore.value.map(p => ({
+           nombre: p.name,
+           puntuacion: p.score,
+           wpm: p.wpm,
+       }));
+       gameStore.setFinalResults(finalScores);
+       sessionStore.setEtapa('done');
+   }
+  
+   const paraulaActiva = computed(() => {
+       return estatDelJoc.value.paraules[estatDelJoc.value.indexParaulaActiva];
+   });
+  
+   const playerShipSrc = computed(() => {
+       try {
+           const nameToFind = playerName.value;
+           const player = jugadoresStore.value.find(j => j.name === nameToFind) || {};
+           const avatar = player.avatar || 'nave';
+           const color = player.color || 'Azul';
+           if (avatar === 'noImage') {
+               return new URL('../../img/noImage.png', import.meta.url).href;
+           }
+           const filename = `${avatar}${color}.png`;
+           return new URL(`../../img/${filename}`, import.meta.url).href;
+       } catch (e) {
+           return null;
+       }
+   });
+  
+   let temps = 0;
+   function cronometro() {
+       temps = Date.now();
+   }
+  
+   function obtenirClasseLletra(lletra, index) {
+       const entrada = estatDelJoc.value.textEntrat[index];
+       if (!entrada) return '';
+       return lletra === entrada ? 'lletra-correcta' : 'lletra-incorrecta';
+   };
+  
+   async function validarProgres() {
+       const entrada = estatDelJoc.value.textEntrat.toLowerCase();
+       estatDelJoc.value.textEntrat = entrada;
+  
+       if (entrada.length === 1 && temps === 0){
+           cronometro();
+       };
+  
+       const paraula = paraulaActiva.value;
+  
+       for (let i = 0; i < entrada.length; i++){
+           paraula._errors = paraula._errors || [];
+  
+           if(entrada[i] !== paraula.text[i] && !paraula._errors[i]){
+               paraula.errors++;
+               estatDelJoc.value.errorTotal++;
+               paraula._errors[i] = true;
+  
+               try {
+                   const newScore = Math.max(0, score.value - PENALTY_PER_ERROR);
+                   await communicationManager.updateScore(playerName.value, newScore, roomStore.roomId);
+               } catch (e) {
+                   console.warn('Error en aplicar la penalització de puntuació:', e);
+               }
+           };
+       };
+  
+       if (entrada === paraula.text){
+           await triggerShot();
+           isMeteorBroken.value = true;
+           
+           setTimeout(async () => {
+               try {
+                   const newScore = score.value + POINTS_PER_DIFFICULTY[paraula.difficulty];
+                   await communicationManager.updateScore(playerName.value, newScore, roomStore.roomId);
+               } catch (e) {
+                   console.warn('Error en actualitzar la puntuació en completar la paraula:', e);
+               }
+      
+               estatDelJoc.value.stats.push({
+                   paraula: paraula.text,
+                   errors: paraula.errors
+               });            
+               paraula.estat = 'completada';
+               estatDelJoc.value.indexParaulaActiva++;
+               estatDelJoc.value.textEntrat = '';
+      
+               if (estatDelJoc.value.indexParaulaActiva >= estatDelJoc.value.paraules.length) {
+                   const wordsDataLocal = props.words;
+                   if (wordsDataLocal) {
+                       let allWords = [];
+                       if (wordsDataLocal.facil) allWords = allWords.concat(wordsDataLocal.facil.map(word => ({ text: word, difficulty: 'facil' })));
+                       if (wordsDataLocal.normal) allWords = allWords.concat(wordsDataLocal.normal.map(word => ({ text: word, difficulty: 'normal' })));
+                       if (wordsDataLocal.dificil) allWords = allWords.concat(wordsDataLocal.dificil.map(word => ({ text: word, difficulty: 'dificil' })));
+                       for (let i = allWords.length - 1; i > 0; i--) {
+                           const j = Math.floor(Math.random() * (i + 1));
+                           [allWords[i], allWords[j]] = [allWords[j], allWords[i]];
+                       }
+                       estatDelJoc.value.paraules = allWords.map(p => ({ ...p, errors: 0, estat: 'pendent' }));
+                       estatDelJoc.value.indexParaulaActiva = 0;
+                   } else {
+                       finishGame();
+                   }
+               }
+           }, 300); 
+       };
+   };
 
-    // Tiempo restante para el juego, inicializado con el tiempo de la sala.
-    const timeLeft = ref(props.roomState?.time ?? 0);
-    // Puntuación del jugador actual, computada a partir del store de la sala.
-    const score = computed(() => {
-        const nameToFind = playerName.value;
-        const player = jugadoresStore.value.find(j => j.name === nameToFind);
-        return player ? player.score : 0;
-    });
-    let gameInterval = null; // Variable para almacenar el ID del intervalo del juego.
-    const gameEnded = ref(false); // Estado para controlar si el juego ha terminado.
+   async function triggerShot() {
+       if (!meteorWordEl.value) {
+           console.warn("No es pot disparar, el meteorit (h1) no està muntat.");
+           return;
+       }
+       if (!audioDisparo) {
+           audioDisparo = new Audio('/src/sound/disparo.mp3');
+           audioDisparo.volume = 1.0;
+       }
+       try {
+           audioDisparo.currentTime = 0;
+           await audioDisparo.play();
+       } catch (e) {
+           console.warn("No s'ha pogut reproduir el so de tret:", e);
+       }
 
-    // Hook `onMounted` que se ejecuta cuando el componente ha sido montado.
-    onMounted(async () => {
-      await communicationManager.updatePlayerPage('cuentaAtrasSimple');
-      console.log('CuentaAtrasSimple.vue mounted. roomState:', props.roomState);
-      console.log('CuentaAtrasSimple.vue mounted. props.wordsLoaded:', props.wordsLoaded); // Add this line
-    });
+       isShooting.value = true;
+       await nextTick();
 
-        // Observa cuando las palabras están cargadas y el juego está activo para inicializar.
-        watch([() => props.words, () => props.roomState?.isPlaying], ([newWords, newIsPlaying]) => {
-      console.log('CuentaAtrasSimple.vue watch triggered. props.wordsLoaded:', props.wordsLoaded, 'newWords:', newWords, 'newIsPlaying:', newIsPlaying, 'gameEnded:', gameEnded.value);
-      if (props.wordsLoaded && newWords && newIsPlaying && !gameEnded.value) {
-        console.log('Words loaded and game is playing. Initializing game.');
-        initializeGame();
-      } else {
-        console.log('Conditions not met for initializeGame.');
-      }
-    }, { immediate: true, deep: true });
-
-    /**
-     * @description Inicializa el juego, cargando las palabras y comenzando el temporizador.
-     */
-    function initializeGame() {
-        switch (currentGameMode.value) {
-            case 'cuentaAtrasSimple':
-                initializeWords(props.words);
-                startGameTimer();
-                break;
-            case 'modoJuego2':
-                // Lógica de inicialización para el modo de juego 2
-                console.log('Initializing Modo de Juego 2');
-                break;
-            case 'modoJuego3':
-                // Lógica de inicialización para el modo de juego 3
-                console.log('Initializing Modo de Juego 3');
-                break;
-            default:
-                console.warn('Modo de juego desconocido:', currentGameMode.value);
-                initializeWords(props.words);
-                startGameTimer();
-        }
-    }
-
-    /**
-     * @description Sincroniza el temporizador del juego con el tiempo restante real.
-     */
-    const initializeTimer = () => {
-        const now = Date.now();
-        const startTime = props.roomState?.gameStartTime;
-        if (!startTime) {
-            timeLeft.value = props.roomState?.time ?? 0;
+       const shipEl = document.querySelector('.player-ship');
+       if (!shipEl) {
+            isShooting.value = false;
             return;
-        }
-        const totalDurationMs = (props.roomState?.time ?? 0) * 1000;
-        const elapsedMs = now - startTime;
-        const remainingMs = totalDurationMs - elapsedMs;
-        timeLeft.value = Math.max(0, Math.floor(remainingMs / 1000));
-    };
+       }
+       const shipRect = shipEl.getBoundingClientRect();
+       
+       const shipX = shipRect.left + shipRect.width / 2;
+       const shipY = shipRect.top;
 
-    /**
-     * @description Inicia el temporizador del juego, actualizando `timeLeft` cada segundo.
-     * Cuando el tiempo llega a cero, finaliza el juego.
-     */
-    const startGameTimer = () => {
-        if (gameInterval) clearInterval(gameInterval); // Limpiar cualquier intervalo anterior.
-        initializeTimer(); // Sincronizar tiempo al iniciar.
+       shotStyle.value = {
+           'left': `${shipX}px`,
+           'top': `${shipY}px`,
+       };
 
-        gameInterval = setInterval(() => {
-            timeLeft.value--;
-            if (timeLeft.value <= 0) {
-                // Al expirar el tiempo, terminar partida y notificar al padre.
-                clearInterval(gameInterval);
-                gameInterval = null;
-                finishGame();
-            }
-        }, 1000);
-    };
+       setTimeout(() => {
+           isShooting.value = false;
+           shotStyle.value = {};
+       }, 500);
+   }
 
-    /**
-     * @description Inicializa las palabras para el juego, mezclándolas y seleccionando un número fijo.
-     * @param {Object} wordsData - Objeto que contiene arrays de palabras por dificultad (facil, normal, dificil).
-     */
-    const initializeWords = (wordsData) => {
-        if (!wordsData) {
-            console.error("initializeWords: wordsData es nulo o indefinido.");
-            try {
-                const notificationStore = useNotificationStore();
-                notificationStore.pushNotification({ type: 'error', message: 'No se han podido cargar las palabras para la partida.' });
-            } catch (e) {
-                // ignore if store not available
-            }
-            estatDelJoc.value.paraules = [];
-            return;
-        }
+   // === MODIFICADO: AÑADIDO SONIDO DE EXPLOSIÓN ===
+   async function handleAnimationEnd(event) {
+       
+       if (event.animationName !== 'fallDown') {
+           return;
+       }
+       
+       if (isMeteorBroken.value) {
+           return;
+       }
 
-        let allWords = [];
-        // Concatena las palabras de cada dificultad con su etiqueta.
-        if (wordsData.facil) {
-            allWords = allWords.concat(wordsData.facil.map(word => ({ text: word, difficulty: 'facil' })));
-        }
-        if (wordsData.normal) {
-            allWords = allWords.concat(wordsData.normal.map(word => ({ text: word, difficulty: 'normal' })));
-        }
-        if (wordsData.dificil) {
-            allWords = allWords.concat(wordsData.dificil.map(word => ({ text: word, difficulty: 'dificil' })));
-        }
+       console.log("Temps esgotat per a la paraula! Penalització.");
 
-        // Mezcla las palabras aleatoriamente.
-        for (let i = allWords.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [allWords[i], allWords[j]] = [allWords[j], allWords[i]];
-        }
+       // === AÑADIDO: Lógica de sonido de explosión ===
+       if (!audioExplosion) {
+           // *** ¡¡ASEGÚRATE DE QUE ESTA RUTA ES CORRECTA!! ***
+           audioExplosion = new Audio('/src/sound/meteoritoDestruido.mp3'); 
+           audioExplosion.volume = 1.0; 
+       }
+       try {
+           audioExplosion.currentTime = 0;
+           await audioExplosion.play();
+       } catch (e) {
+           console.warn("No s'ha pogut reproduir el so d'explosió:", e);
+       }
+       // === FIN DEL BLOQUE AÑADIDO ===
 
-        // Usa TODAS las palabras disponibles; no hay límite fijo por juego.
-        estatDelJoc.value.paraules = allWords.map(p => ({ ...p, errors: 0, estat: 'pendent' }));
-        estatDelJoc.value.indexParaulaActiva = 0;
-        estatDelJoc.value.textEntrat = ''; // Limpia el campo de entrada.
-    };
+       // 3. Activa la explosión visual
+       isMeteorBroken.value = true;
 
-    /**
-     * @description Finaliza el juego, detiene el temporizador y emite los resultados.
-     */
-    function finishGame(){
-        if(gameInterval){
-            clearInterval(gameInterval);
-            gameInterval = null;
-        }
-        gameEnded.value = true;
+       // 4. Aplica la penalización de 10 puntos
+       try {
+           const newScore = Math.max(0, score.value - PENALTY_PER_TIMEOUT);
+           await communicationManager.updateScore(playerName.value, newScore, roomStore.roomId);
+       } catch (e) {
+           console.warn('Error en aplicar la penalització de puntuació per al final del meteorit:', e);
+       }
+       
+       // 5. Pasa a la siguiente palabra (con un retraso para ver la explosión)
+       setTimeout(() => {
+           estatDelJoc.value.indexParaulaActiva++;
+           estatDelJoc.value.textEntrat = '';
+   
+           // Lógica para recargar palabras si se acaban
+           if (estatDelJoc.value.indexParaulaActiva >= estatDelJoc.value.paraules.length) {
+               const wordsDataLocal = props.words;
+               if (wordsDataLocal) {
+                   let allWords = [];
+                   if (wordsDataLocal.facil) allWords = allWords.concat(wordsDataLocal.facil.map(word => ({ text: word, difficulty: 'facil' })));
+                   if (wordsDataLocal.normal) allWords = allWords.concat(wordsDataLocal.normal.map(word => ({ text: word, difficulty: 'normal' })));
+                   if (wordsDataLocal.dificil) allWords = allWords.concat(wordsDataLocal.dificil.map(word => ({ text: word, difficulty: 'dificil' })));
+                   for (let i = allWords.length - 1; i > 0; i--) {
+                       const j = Math.floor(Math.random() * (i + 1));
+                       [allWords[i], allWords[j]] = [allWords[j], allWords[i]];
+                   }
+                   estatDelJoc.value.paraules = allWords.map(p => ({ ...p, errors: 0, estat: 'pendent' }));
+                   estatDelJoc.value.indexParaulaActiva = 0;
+               } else {
+                   finishGame();
+               }
+           }
+       }, 300); // 300ms de retraso
+   }
 
-        switch (currentGameMode.value) {
-            case 'cuentaAtrasSimple':
-                const finalScores = jugadores.value.map(p => ({
-                    nombre: p.name,
-                    puntuacion: p.score
-                }));
-                gameStore.setFinalResults(finalScores);
-                sessionStore.setEtapa('done');
-                break;
-            case 'modoJuego2':
-                // Lógica de finalización para el modo de juego 2
-                console.log('Finishing Modo de Juego 2');
-                sessionStore.setEtapa('done'); // O la etapa final que corresponda
-                break;
-            case 'modoJuego3':
-                // Lógica de finalización para el modo de juego 3
-                console.log('Finishing Modo de Juego 3');
-                sessionStore.setEtapa('done'); // O la etapa final que corresponda
-                break;
-            default:
-                console.warn('Modo de juego desconocido al finalizar:', currentGameMode.value);
-                const defaultFinalScores = jugadores.value.map(p => ({
-                    nombre: p.name,
-                    puntuacion: p.score
-                }));
-                gameStore.setFinalResults(defaultFinalScores);
-                sessionStore.setEtapa('done');
-        }
-    }
 
-    /**
-     * @description Propiedad computada que devuelve la palabra activa actual.
-     * @returns {Object} - La palabra actual con su texto, dificultad, errores y estado.
-     */
-    const paraulaActiva = computed(() => {
-        return estatDelJoc.value.paraules[estatDelJoc.value.indexParaulaActiva];
-    });
-
-    let temps = 0;
-    /**
-     * @description Inicia el cronómetro para medir el tiempo de escritura de una palabra.
-     */
-    function cronometro() {
-        temps = Date.now();
-    }
-
-    /**
-     * @description Obtiene la clase CSS para una letra individual, indicando si es correcta o incorrecta.
-     * @param {string} lletra - La letra a evaluar.
-     * @param {number} index - El índice de la letra dentro de la palabra.
-     * @returns {string} - Clase CSS ('lletra-correcta', 'lletra-incorrecta') o cadena vacía.
-     */
-    function obtenirClasseLletra(lletra, index) {
-        const entrada = estatDelJoc.value.textEntrat[index];
-        if (!entrada) return '';
-        return lletra === entrada ? 'lletra-correcta' : 'lletra-incorrecta';
-        };
-
-    /**
-     * @description Valida el progreso de escritura del usuario, actualiza errores y puntuación.
-     * Avanza a la siguiente palabra si la actual se completa correctamente.
-     */
-    async function validarProgres() {
-        const entrada = estatDelJoc.value.textEntrat.toLowerCase();
-        estatDelJoc.value.textEntrat = entrada;
-
-        // Inicia el cronómetro cuando el usuario empieza a escribir la primera letra.
-        if (entrada.length === 1 && temps === 0){
-            cronometro();
-        };
-
-        const paraula = paraulaActiva.value;
-
-        // Compara cada letra introducida con la palabra activa para detectar errores.
-        for (let i = 0; i < entrada.length; i++){
-            paraula._errors = paraula._errors || [];
-
-            if(entrada[i] !== paraula.text[i] && !paraula._errors[i]){
-                // Se detecta un nuevo error sobre la letra i: contabilizar y aplicar penalización
-                paraula.errors++;
-                estatDelJoc.value.errorTotal++;
-                paraula._errors[i] = true;
-
-                try {
-                    // Calculamos la nueva puntuación y la enviamos al servidor
-                    const newScore = Math.max(0, score.value - PENALTY_PER_ERROR);
-                    await communicationManager.updateScore(playerName.value, newScore, roomStore.roomId);
-                } catch (e) {
-                    console.warn('Error applying penalty score:', e);
-                }
-            };
-                };
-                // Si la palabra introducida coincide exactamente con la palabra activa.
-                if (entrada === paraula.text){
-                    // Actualiza la puntuación del jugador en el backend.
-                    try {
-                        const newScore = score.value + POINTS_PER_DIFFICULTY[paraula.difficulty];
-                        await communicationManager.updateScore(playerName.value, newScore, roomStore.roomId);
-                    } catch (e) {
-                        console.warn('Error updating score on word completion:', e);
-                    }
-                    // Registra las estadísticas de la palabra completada.
-                    estatDelJoc.value.stats.push({
-                        paraula: paraula.text,
-                        errors: paraula.errors
-                    });            paraula.estat = 'completada';
-            estatDelJoc.value.indexParaulaActiva++;
-            estatDelJoc.value.textEntrat = '';
-
-            // Si llegamos al final de la lista de palabras, simplemente remezclamos
-            // y continuamos para no imponer un límite por número de palabras.
-            if (estatDelJoc.value.indexParaulaActiva >= estatDelJoc.value.paraules.length) {
-                // Re-shuffle the current words set and restart index at 0 so the player
-                // can continue typing new words until the timer runs out.
-                const wordsDataLocal = props.words;
-                if (wordsDataLocal) {
-                    let allWords = [];
-                    if (wordsDataLocal.facil) allWords = allWords.concat(wordsDataLocal.facil.map(word => ({ text: word, difficulty: 'facil' })));
-                    if (wordsDataLocal.normal) allWords = allWords.concat(wordsDataLocal.normal.map(word => ({ text: word, difficulty: 'normal' })));
-                    if (wordsDataLocal.dificil) allWords = allWords.concat(wordsDataLocal.dificil.map(word => ({ text: word, difficulty: 'dificil' })));
-                    for (let i = allWords.length - 1; i > 0; i--) {
-                        const j = Math.floor(Math.random() * (i + 1));
-                        [allWords[i], allWords[j]] = [allWords[j], allWords[i]];
-                    }
-                    estatDelJoc.value.paraules = allWords.map(p => ({ ...p, errors: 0, estat: 'pendent' }));
-                    estatDelJoc.value.indexParaulaActiva = 0;
-                } else {
-                    // Si no hay datos de palabras, finalizamos por seguridad.
-                    finishGame();
-                }
-            }
-        };
-    };
-
-    // Si el tiempo restante es cero, finaliza el juego (redundante con el setInterval, pero como fallback).
-    if (timeLeft.value <= 0){
-        finishGame();
-    }
-
-    /**
-     * @description Navega de vuelta al lobby. Emite un evento 'done' al componente padre.
-     */
-    const backToLobby = () => {
-        console.log('Navigating to lobby');
-        sessionStore.setEtapa('lobby');
-    };
+   if (timeLeft.value <= 0){
+       finishGame();
+   }
+  
+   const backToLobby = () => {
+       console.log('Navigating to lobby');
+       sessionStore.setEtapa('lobby');
+   };
 </script>
 
 <template>
@@ -351,49 +416,49 @@ import { communicationManager } from '../../communicationManager';
         <div class="game-container">
     <h2>Compte enrere, {{ playerName }}!</h2>
 
-        <div v-if="!gameEnded">
-            <div class="game-info">
-                <p>Temps restant: {{ timeLeft }}s</p>
-                <p>Puntuació: {{ score }}</p>
-            </div>
-            <main class="joc" v-if="estatDelJoc.paraules.length > 0">
-                <div class="game-content-wrapper">
-                    <div class="paraula-actual">
-                        <h1>
-                            <span v-for="(lletra, index) in paraulaActiva.text" :key="index" :class="obtenirClasseLletra(lletra, index)">
-                                {{ lletra }}
-                            </span>
-                        </h1>
-                        <input type="text" v-model="estatDelJoc.textEntrat" @input="validarProgres" autofocus />
-                    </div>
+           <div v-if="!gameEnded">
+               <div class="game-info">
+                   <p>Temps restant: {{ timeLeft }}s</p>
+                   <p>Puntuació: {{ score }}</p>
+               </div>
 
-                    <div class="puntuacions">
-                                <h2>Classificació</h2>
-                        <ul id="llista-jugadors">
-                            <li v-for="jugador in jugadores" :key="jugador.name">
-                                <strong>{{ jugador.name }}</strong> - {{ jugador.score }} punts
-                            </li>
-                        </ul>
-                    </div>
-                </div>
-            </main>
-        </div>
 
-        <div v-else class="game-end-screen">
-            <h2>¡Juego Terminado!</h2>
-            <p>Tu puntuación final: {{ score }}</p>
-            <h3>Clasificación Final</h3>
-            <ul id="llista-jugadors-final">
-                <li v-for="jugador in jugadores" :key="jugador.name">
-                                <strong>{{ jugador.name }}</strong> - {{ jugador.score }} punts
-                            </li>
-                        </ul>
-            <button class="btn" @click="backToLobby">Volver al Lobby</button>
-        </div>
-    </div>
-    </div>
-    
+               <div class="puntuacions">
+                   <h2>Puntuacions</h2>
+                   <TransitionGroup tag="ul" id="llista-jugadors" name="list-ranking">
+                       <li v-for="jugador in jugadoresOrdenats" 
+                           :key="jugador.name"
+                           :data-ship-model="`${jugador.avatar || 'nave'}${jugador.color || 'Azul'}`"> 
+                           
+                           <span>{{ jugador.name }}</span>
+                           <strong>{{ jugador.score }}</strong>
+                       </li>
+                   </TransitionGroup>
+               </div>
+               <main class="joc" v-if="estatDelJoc.paraules.length > 0">
+                   <div class="game-content-wrapper">
+                       <div class="paraula-actual">
+                           
+                           <h1 ref="meteorWordEl" 
+                               :class="['fall-animation', { 'broken-animation': isMeteorBroken }]"
+                               @animationend="handleAnimationEnd($event)"> 
+                               <span v-for="(lletra, index) in paraulaActiva.text" :key="index" :class="obtenirClasseLletra(lletra, index)">
+                                   {{ lletra }}
+                               </span>
+                           </h1>
+                           
+                           <input type="text" v-model="estatDelJoc.textEntrat" @input="validarProgres" autofocus />
+                           <img v-if="playerShipSrc" :src="playerShipSrc" alt="Nau seleccionada" class="player-ship" />
+                           
+                           <div v-if="isShooting" ref="shipShotEl" class="ship-shot" :style="shotStyle"></div>
+                       </div>
+                   </div>
+               </main>
+
+
+           </div>
+       </div>
+   </div>
 </template>
 
-<!-- Importa los estilos específicos para el componente de juego. -->
 <style src="../../styles/stylesCuentaAtrasSimple.css"></style>

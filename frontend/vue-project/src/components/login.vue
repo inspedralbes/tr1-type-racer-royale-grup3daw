@@ -1,9 +1,8 @@
-
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { communicationManager } from '@/communicationManager'
-import { useSessionStore } from '@/stores/session';
+import { communicationManager } from '../communicationManager.js'
+import { useSessionStore } from '@/stores/session.js';
 import { useGameStore } from '@/stores/game';
 import { useNotificationStore } from '../stores/notification';
 
@@ -12,6 +11,9 @@ const password = ref('')
 const session = useSessionStore()
 const gameStore = useGameStore()
 const router = useRouter()
+
+// Controla si se muestra el login o la bienvenida
+const showLogin = ref(false)
 
 // Limpia los campos cuando el componente se monta. Se usa un setTimeout
 // para asegurar que se ejecute después de cualquier autocompletado del navegador.
@@ -34,21 +36,21 @@ onMounted(async () => {
 const login = async () => {
   if (email.value.trim() === '' || password.value.trim() === '') {
     const notificationStore = useNotificationStore();
-    notificationStore.pushNotification({ type: 'error', message: 'Por favor, introduce tu email y contraseña.' });
+    notificationStore.pushNotification({ type: 'error', message: 'Per favor, introdueix el teu email i contrasenya.' });
     return
   }
 
   try {
     const response = await communicationManager.login(email.value, password.value);
     const { token, username, email: userEmail } = response.data;
-    console.log('Login successful:', { token, username, email: userEmail });
+    // console.log('Login successful:', { token, username, email: userEmail });
     session.setSession(token, username, userEmail);
     gameStore.setNombreJugador(username);
     communicationManager.connect(); // Conecta el socket después del login
     await communicationManager.waitUntilConnected(); // Ensure socket is connected
     router.push('/game/select-room');
   } catch (error) {
-    console.error('Error al iniciar sessió:', error);
+    console.error('Error en iniciar la sessió:', error);
     // La notificació d'error ja és gestionada per l'interceptor de communicationManager
   }
 }
@@ -56,11 +58,26 @@ const login = async () => {
 const goToGuestLogin = () => {
   router.push('/guest-login');
 }
+
+// Función para mostrar el login al hacer clic
+const startLogin = () => {
+  showLogin.value = true;
+}
 </script>
 <template>
   <div class="login-background">
     <div class="centra-console-panel">
-      <div class="login-container hologram">
+
+      <!-- Welcome Screen -->
+      <div v-if="!showLogin" 
+           class="login-container hologram welcome-screen hologram-entrance" 
+           @click="startLogin">
+        <h1 class="welcome-title">space typers</h1>
+        <p class="welcome-prompt flicker">fes clic per a continuar</p>
+      </div>
+
+      <!-- Login Form (Original content) -->
+      <div v-if="showLogin" class="login-container hologram hologram-entrance">
         <h2>Inici de sessió</h2>
         <input
           v-model="email"
@@ -83,8 +100,9 @@ const goToGuestLogin = () => {
         </div>
         <p>No tens un compte? <router-link to="/register">Registra't</router-link></p>
       </div>
+
     </div>
   </div>
 </template>
 
-<style src="../styles/styleLogin.css"></style>
+<style src="../styles/styleAuth.css"></style>

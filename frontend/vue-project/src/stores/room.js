@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia';
-import { useSessionStore } from './session';
+import { useSessionStore } from './session.js';
 
 export const useRoomStore = defineStore('room', {
   state: () => ({

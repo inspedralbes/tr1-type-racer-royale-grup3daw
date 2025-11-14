@@ -109,6 +109,7 @@ export function setupSocketListeners(router) {
       token: p.token,
       disconnected: !!p.disconnected,
       avatar: p.avatar,
+      isEliminated: !!p.isEliminated, // Asegurar que la propiedad isEliminated exista
       color: p.color,
       isGuest: !!p.isGuest,
     }));
@@ -138,7 +139,7 @@ export function setupSocketListeners(router) {
       const publicRoomsStore = usePublicRoomsStore();
 
       // Limpia el sessionStorage y resetea los stores
-      sessionStore.clearSession(); // Corregido: La función en stores/session.js se llama clearSession.
+      sessionStore.resetState(); // Corregido: La función en stores/session.js se llama resetState.
       gameStore.resetState();
       roomStore.resetState();
       publicRoomsStore.resetState();
@@ -239,7 +240,7 @@ export const communicationManager = {
       socket.emit('explicit-logout', token);
     }
     // Limpia la sesión localmente después de notificar al backend.
-    sessionStore.clearSession();
+    sessionStore.resetState();
   },
 
   // Desconecta el socket y elimina cualquier auth pendiente (no notifica al servidor).
@@ -280,6 +281,10 @@ export const communicationManager = {
   // Obtiene el historial de WPM de un jugador.
   async getPlayerScoreHistory(playerName) {
     return apiClient.get(`/scores/history/${playerName}`);
+  },
+
+  async sendGameStats(stats) {
+    return apiClient.post('/stats/game', stats);
   },
 
   // --- Métodos de Salas (REST) ---
@@ -370,6 +375,25 @@ export const communicationManager = {
     socket.emit('set-ready', { roomId: roomStore.roomId, isReady });
   },
 
+  // Notifica al servidor que el jugador ha sido eliminado en Muerte Súbita
+  sendPlayerEliminated(roomId, playerName) {
+    socket.emit('player-eliminated', { roomId, playerName });
+  },
+
+  // --- Power-Up Methods (Socket.IO) ---
+
+  sendPowerUp(powerUpData) {
+    socket.emit('powerUp', powerUpData);
+  },
+
+  onReceivePowerUp(callback) {
+    socket.on('receivePowerUp', callback);
+  },
+
+  offReceivePowerUp(callback) {
+    socket.off('receivePowerUp', callback);
+  },
+
   // --- Métodos de Socket.IO ---
 
   // Emite el evento para unirse a una sala.
@@ -403,12 +427,15 @@ export const communicationManager = {
    * 3. Devuelve los datos del jugador recibidos del backend.
    */
   async connectAndRegister(username) {
-    // La conexión del socket y el envío del token ya se gestionan en el flujo de login/reconexión.
-    // Esta función ahora solo necesita establecer el nombre del jugador en el estado local.
-    const sessionStore = useSessionStore();
+    // 1. Asegura que el socket esté conectado.
+    this.connect();
+    await this.waitUntilConnected();
 
-    sessionStore.setPlayerName(username);
-    // No es necesario devolver nada, ya que el estado se gestiona a través de Pinia.
-    return { name: username };
+    // 2. Llama al endpoint de login/registro del backend.
+    // Usamos el método de login como invitado.
+    const response = await this.loginAsGuest(username);
+    
+    // 3. Devuelve los datos del jugador recibidos del backend.
+    return response.data;
   },
 };

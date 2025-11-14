@@ -1,32 +1,32 @@
 <template>
   <div class="lobby-background">
-    <div class="lobby-contenedor">
+    <div class="lobby-contenedor hologram hologram-entrance">
   <button class="back-button" @click="goBack">←</button>
-  <button class="btn" v-if="sessionStore.email" @click="goToProfile" style="margin-left:8px">Profile</button>
-      <h1>Lobby</h1>
+  <button class="btn" v-if="sessionStore.email" @click="goToProfile" style="margin-left:8px">Perfil</button>
+      <h1>Sala d'espera</h1>
       <h2>Benvingut, {{ nombreJugador }}!</h2>
       <ul class="lista-jugadores">
         <li v-for="(jugador) in jugadores" :key="jugador.name" style="display:flex;align-items:center;gap:8px">
           <img :src="getAvatarSrc(jugador)" alt="avatar" style="width:40px;height:40px;object-fit:contain;border-radius:4px" />
           <span>{{ jugador.name }} <span v-if="jugador.role === 'admin'">⭐</span></span>
-          <span v-if="jugador.disconnected"> (Desconectado)</span>
+          <span v-if="jugador.disconnected"> (Desconnectat)</span>
           <span v-else-if="jugador.role !== 'admin'"> 
-            <span v-if="jugador.isReady"> (Listo)</span><span v-else> (No listo)</span>
+            <span v-if="jugador.isReady"> (A punt)</span><span v-else> (No està a punt)</span>
           </span>
           <div class="lobby-button-group" v-if="isAdmin && jugador.name !== nombreJugador">
             <button class="btn btn-small" @click="removePlayer(jugador.socketId)">Eliminar</button>
-            <button class="btn btn-small" @click="makeHost(jugador.socketId)">Hacer Host</button>
+            <button class="btn btn-small" @click="makeHost(jugador.socketId)">Fer Amfitrió</button>
           </div>
         </li>
       </ul>
 
       <div class="lobby-button-group">
-        <button class="btn" v-if="!isAdmin" @click="toggleReady">{{ isPlayerReady ? 'No listo' : 'Listo' }}</button>
-        <button class="btn" v-if="isAdmin" @click="goToRoomSettings">Editar Sala</button>
-        <button class="btn" v-if="isAdmin" @click="iniciarJuego" :disabled="!isAdmin || !areAllPlayersReady">Començar Joc</button>
+        <button class="btn" v-if="!isAdmin" @click="toggleReady">{{ isPlayerReady ? 'No estic a punt' : 'Estic a punt' }}</button>
+        <button class="btn" v-if="isAdmin" @click="goToRoomSettings" :title="jugadores.length < 2 ? 'Es necessiten almenys 2 jugadors' : ''">Editar la sala</button>
+        <button class="btn" v-if="isAdmin" @click="iniciarJuego" :disabled="!isAdmin || !areAllPlayersReady || jugadores.length < 2" :title="jugadores.length < 2 ? 'Es necessiten almenys 2 jugadors per començar' : (!areAllPlayersReady ? 'No tots els jugadors estan a punt' : '')">Començar el joc</button>
       </div>
     </div>
-    <img class="naves" :src="naveActual" @click="cambiarNave" />
+
   </div>
 </template>
 
@@ -39,11 +39,11 @@ import { computed, onMounted, ref } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useRouter } from 'vue-router';
 // Importaciones de módulos de comunicación y stores personalizados.
-import { communicationManager, socket } from '../communicationManager'
+import { communicationManager, socket } from '../communicationManager.js'
 import { useNotificationStore } from '../stores/notification'
 import { useGameStore } from '../stores/game';
-import { useRoomStore } from '../stores/room';
-import { useSessionStore } from '../stores/session';
+import { useRoomStore } from '../stores/room.js';
+import { useSessionStore } from '../stores/session.js';
 import { usePublicRoomsStore } from '../stores/publicRooms';
 
 // removed decorative ship images (no longer shown in lobby)
@@ -94,7 +94,7 @@ const isPlayerReady = computed(() => {
  * @returns {boolean} - Verdadero si todos los jugadores están listos, falso en caso contrario.
  */
 const areAllPlayersReady = computed(() => {
-  return jugadores.value.length > 0 && jugadores.value.every(p => p.isReady && !p.disconnected);
+  return jugadores.value.length > 1 && jugadores.value.filter(p => p.role !== 'admin').every(p => p.isReady && !p.disconnected);
 });
 
 /**
@@ -149,14 +149,14 @@ const removePlayer = async (playerSocketId) => {
   if (isAdmin.value) {
     try {
       await communicationManager.removePlayer(roomStore.roomId, playerSocketId);
-      console.log(`Jugador con socketId ${playerSocketId} eliminado.`);
+      console.log(`Jugador amb socketId ${playerSocketId} eliminat.`);
     } catch (error) {
-      console.error('Error al eliminar jugador:', error);
+      console.error('Error en eliminar el jugador:', error);
       const notificationStore = useNotificationStore();
-      notificationStore.pushNotification({ type: 'error', message: error.response?.data?.message || 'Error al eliminar jugador.' });
+      notificationStore.pushNotification({ type: 'error', message: error.response?.data?.message || 'Error en eliminar el jugador.' });
     }
   } else {
-    console.warn('Solo el administrador puede eliminar jugadores.');
+    console.warn('Només l\'administrador pot eliminar jugadors.');
   }
 };
 
@@ -168,14 +168,14 @@ const makeHost = async (targetPlayerSocketId) => {
   if (isAdmin.value) {
     try {
       await communicationManager.makeHost(roomStore.roomId, targetPlayerSocketId);
-      console.log(`Jugador con socketId ${targetPlayerSocketId} es ahora el host.`);
+      console.log(`El jugador amb socketId ${targetPlayerSocketId} ara és l'amfitrió.`);
     } catch (error) {
-      console.error('Error al hacer host al jugador:', error);
+      console.error('Error en fer amfitrió al jugador:', error);
       const notificationStore = useNotificationStore();
-      notificationStore.pushNotification({ type: 'error', message: error.response?.data?.message || 'Error al hacer host al jugador.' });
+      notificationStore.pushNotification({ type: 'error', message: error.response?.data?.message || 'Error en fer amfitrió al jugador.' });
     }
   } else {
-    console.warn('Solo el administrador puede hacer host a otros jugadores.');
+    console.warn('Només l\'administrador pot fer amfitrió a altres jugadors.');
   }
 };
 
@@ -198,15 +198,14 @@ function iniciarJuego() {
     communicationManager.startGame(roomStore.roomId)
       .then(response => {
         console.log('Game started:', response.data);
-        sessionStore.setEtapa('game');
       })
       .catch(error => {
-        console.error('Error al iniciar el juego:', error);
+        console.error('Error en iniciar el joc:', error);
         const notificationStore = useNotificationStore();
-        notificationStore.pushNotification({ type: 'error', message: error.response?.data?.message || 'Error al iniciar el juego.' });
+        notificationStore.pushNotification({ type: 'error', message: error.response?.data?.message || 'Error en iniciar el joc.' });
       });
   } else {
-    console.warn('Solo el administrador puede iniciar el juego.');
+    console.warn('Només l\'administrador pot iniciar el joc.');
   }
 }
 

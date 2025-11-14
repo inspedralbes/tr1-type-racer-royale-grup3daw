@@ -3,27 +3,35 @@ import { defineStore } from 'pinia';
 
 export const useSessionStore = defineStore('session', {
   state: () => ({
-    token: sessionStorage.getItem('sessionToken') || null,
+    token: sessionStorage.getItem('token') || null,
     playerName: sessionStorage.getItem('playerName') || null,
     email: sessionStorage.getItem('email') || null,
     roomId: sessionStorage.getItem('roomId') || null,
     // La etapa actual del juego ('login', 'room-selection', 'lobby', 'game', 'final')
     // Persistimos la etapa en sessionStorage para poder restaurar la página después de reload
     etapa: sessionStorage.getItem('etapa') || 'login',
+    isGuest: sessionStorage.getItem('isGuest') === 'true' || false,
   }),
   actions: {
-    setSession(token, playerName, email) {
+    setSession(token, playerName, email, isGuest = false) {
       this.token = token;
       this.playerName = playerName;
       this.email = email;
-      sessionStorage.setItem('sessionToken', token);
+      this.isGuest = isGuest;
       sessionStorage.setItem('playerName', playerName);
-      sessionStorage.setItem('email', email);
+      // Guardar 'null' como una cadena vacía o eliminarlo si es null
+      if (email === null) {
+        sessionStorage.removeItem('email');
+      } else {
+        sessionStorage.setItem('email', email);
+      }
+      sessionStorage.setItem('isGuest', isGuest);
+      this.setToken(token); // Call setToken to handle sessionStorage
       console.log('Session data set:', { token, playerName, email });
     },
     setToken(token) {
       this.token = token;
-      sessionStorage.setItem('sessionToken', token);
+      sessionStorage.setItem('token', token);
     },
     setPlayerName(name) {
       this.playerName = name;
@@ -50,17 +58,15 @@ export const useSessionStore = defineStore('session', {
     /**
      * Limpia completamente la sesión, tanto en el sessionStorage como en el estado de Pinia.
      */
-    clearSession() {
-      this.token = null;
-      this.playerName = null;
-      this.email = null;
-      this.roomId = null;
-      this.etapa = 'login';
-      sessionStorage.removeItem('sessionToken');
+    resetState() {
+      sessionStorage.removeItem('token');
       sessionStorage.removeItem('playerName');
       sessionStorage.removeItem('email');
+      sessionStorage.removeItem('isGuest');
       sessionStorage.removeItem('roomId');
       sessionStorage.removeItem('etapa');
+      // Llama al método $reset() de Pinia para restaurar el estado inicial.
+      this.$reset();
     },
   },
 });

@@ -119,6 +119,23 @@ exports.updateRoom = (req, res) => {
  */
 exports.startGame = (req, res) => {
   const { roomId } = req.params;
+  const token = req.headers.authorization; // Obtener el token del jugador
+
+  const room = stateManager.getRoom(roomId);
+  if (!room) {
+    return res.status(404).json({ message: 'Sala no encontrada.' });
+  }
+
+  // Verificar si el jugador que hace la solicitud es el host
+  const playerInRoom = room.players.find(p => p.token === token);
+  if (!playerInRoom || playerInRoom.role !== 'admin') {
+    return res.status(403).json({ message: 'Solo el host puede iniciar la partida.' });
+  }
+
+  // Verifica si hay al menos dos jugadores en la sala.
+  if (room.players.length < 2) {
+    return res.status(403).json({ message: 'Se necesitan al menos 2 jugadores para empezar la partida.' });
+  }
 
   // Verifica si todos los jugadores en la sala están listos para iniciar la partida.
   if (!stateManager.areAllPlayersReady(roomId)) {
@@ -126,15 +143,30 @@ exports.startGame = (req, res) => {
   }
 
   // Inicia la partida a través del stateManager.
+  console.log(`[startGame] Iniciando partida para la sala ${roomId}. Modo de juego: ${room.gameMode}`);
   const result = stateManager.startGame(roomId);
 
   if (result.error) {
     return res.status(404).json({ message: result.error });
   }
 
-  // Notifica a los clientes de la sala que el juego ha comenzado y actualiza la lista de jugadores.
+  // Notifica a los clientes de la sala que el juego ha comenzado.
+  // Esto es lo que hace que el frontend cambie a la pantalla de juego.
   const broadcastRoomState = req.app.get('broadcastRoomState');
   broadcastRoomState(roomId);
+
+  // Si el modo de juego es Muerte Súbita, inicia el bucle de juego específico.
+  console.log(`[startGame] Comprobando modo de juego: ${result.room.gameMode}`);
+  if (result.room.gameMode === 'MuerteSubita') {
+    const startMuerteSubitaGame = req.app.get('startMuerteSubitaGame');
+    startMuerteSubitaGame(roomId);
+  }
+
+  // Una vez iniciada la partida, resetea el estado de "listo" de todos los jugadores
+  // para que en la siguiente ronda deban confirmar de nuevo.
+  stateManager.resetReadyStatusInRoom(roomId);
+
+  // Se emite la lista de jugadores de nuevo para reflejar el estado de "no listo" en el lobby para la siguiente ronda.
   const broadcastPlayerList = req.app.get('broadcastPlayerList');
   broadcastPlayerList(roomId);
 
