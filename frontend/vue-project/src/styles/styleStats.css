@@ -83,3 +83,20 @@ div.stats-container.hologram {
     font-size: 0.9em; 
     margin-bottom: 0; 
 }
+
+div.stats-container.hologram {
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: #00FF41 rgba(0, 255, 65, 0.1);
+}
+
+div.stats-container.hologram::-webkit-scrollbar {
+  width: 8px;
+}
+div.stats-container.hologram::-webkit-scrollbar-track {
+  background: rgba(0, 255, 65, 0.1);
+}
+div.stats-container.hologram::-webkit-scrollbar-thumb {
+  background-color: #00FF41;
+  border-radius: 4px;
+}

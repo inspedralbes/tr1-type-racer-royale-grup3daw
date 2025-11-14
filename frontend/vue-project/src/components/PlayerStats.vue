@@ -150,40 +150,40 @@ onMounted(async () => {
   text-align: center;
   margin-bottom: 15px;
 }
-
-/* --- BLOQUE MODIFICADO --- */
 .stats-list {
   list-style: none;
-  padding-left: 0; /* Modificado de 'padding: 0' */
-  gap: 15px;
-
-  /* 1. Cambiado de 'grid' a 'flex' para una lista vertical */
+  padding: 0;
+  gap: 20px;
   display: flex;
-  flex-direction: column;
-
-  /* 2. Añadido para habilitar el scroll */
-  max-height: 350px; /* ¡¡Ajusta esta altura máxima como necesites!! */
-  overflow-y: auto; /* Muestra el scroll vertical solo si es necesario */
-  padding-right: 10px; /* Espacio para que la barra de scroll no tape el contenido */
+  flex-direction: row;   
+  flex-wrap: wrap;        
+  justify-content: center;  
+  max-height: none;
+  overflow-y: visible;
+  padding-right: 0;
 }
-/* --- FIN DEL BLOQUE MODIFICADO --- */
 
 .stats-list li {
   background-color: rgba(13, 32, 78, 0.8);
-  padding: 15px;
+  padding: 15px 20px; 
   border-radius: 8px;
   border: 1px solid #4f6a9e;
+  width: 280px; 
+  box-sizing: border-box; 
 }
 
 .stats-list h4 {
   margin: 0 0 10px 0;
   color: #ffc107;
   text-align: center;
+  border-bottom: 1px solid #4f6a9e; 
+  padding-bottom: 5px;
 }
 
 .stats-list p {
   margin: 5px 0;
   color: #e0e0e0;
+  font-size: 0.9em;
 }
 
 .error-message {
@@ -191,26 +191,23 @@ onMounted(async () => {
   text-align: center;
 }
 
-/* --- BLOQUE AÑADIDO (Opcional): Estilo para la barra de scroll --- */
-/* (Funciona en navegadores WebKit como Chrome, Edge, Safari) */
 .stats-list::-webkit-scrollbar {
-  width: 8px; /* Ancho de la barra */
+  width: 8px;
 }
 
 .stats-list::-webkit-scrollbar-track {
-  background: rgba(13, 32, 78, 0.5); /* Fondo de la pista */
+  background: rgba(13, 32, 78, 0.5); 
   border-radius: 4px;
 }
 
 .stats-list::-webkit-scrollbar-thumb {
-  background: #61dafb; /* Color de la barra deslizante */
+  background: #61dafb; 
   border-radius: 4px;
   border: 1px solid #2a3a5b;
 }
 
 .stats-list::-webkit-scrollbar-thumb:hover {
-  background: #ffffff; /* Color al pasar el ratón */
+  background: #ffffff;
 }
-/* --- FIN DEL BLOQUE AÑADIDO --- */
 
 </style>
