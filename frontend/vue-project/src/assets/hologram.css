@@ -1,0 +1,30 @@
+.hologram-entrance {
+  transform-origin: bottom center;
+  animation: hologramGrow 0.8s ease-out forwards;
+}
+
+.hologram-entrance > * {
+  opacity: 0; 
+  animation: fadeInContent 0.5s ease-out forwards;
+  animation-delay: 0.8s; 
+}
+
+@keyframes hologramGrow {
+  from {
+    transform: scaleY(0) translateX(-50%) rotateX(-25deg);
+    opacity: 0;
+  }
+  to {
+    transform: scaleY(1) translateX(-50%) rotateX(-25deg);
+    opacity: 0.9;
+  }
+}
+
+@keyframes fadeInContent {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1; 
+  }
+}

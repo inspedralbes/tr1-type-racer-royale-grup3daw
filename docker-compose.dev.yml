@@ -1,0 +1,116 @@
+# Fichero: docker-compose.dev.yml
+# Descripción: Este fichero de Docker Compose está diseñado para configurar y ejecutar
+# el entorno de desarrollo de la aplicación. Define los servicios necesarios (frontend,
+# backend, bases de datos) y configura volúmenes para el hot-reloading, permitiendo
+# que los cambios en el código se reflejen automáticamente sin necesidad de reconstruir
+# las imágenes. También expone los puertos necesarios para el acceso durante el desarrollo.
+#
+# Para levantar este entorno, se debe usar el comando:
+# docker compose -f docker-compose.dev.yml up --build
+
+services:
+  # Servicio del frontend (Vue.js con Vite)
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    environment:
+      VITE_NODE_ENV: development
+    ports:
+      - "5173:5173" # Expone el puerto de desarrollo de Vite al host.
+    volumes:
+      - ./frontend/vue-project:/app # Monta el código fuente del proyecto para habilitar el hot-reloading.
+      - /app/node_modules # Usa un volumen anónimo para evitar que la carpeta node_modules local sobreescriba la del contenedor.
+    command: npm run dev # Comando para iniciar el servidor de desarrollo de Vite.
+    networks:
+      - app-network
+
+  # Servicio del backend (Node.js/Express)
+  backend:
+    build: ./backend
+    environment:
+      NODE_ENV: development
+      DB_HOST: mysql
+    ports:
+      - "3000:3000"
+    volumes:
+      # Monta el código fuente para hot-reloading con nodemon.
+      - ./backend:/usr/src/app
+      - /usr/src/app/node_modules # Evita sobreescribir node_modules del contenedor.
+    command: sh -c "npm run start:dev" # Inicia el servidor en modo desarrollo.
+    # El backend esperará a que las bases de datos estén listas antes de iniciar.
+    depends_on:
+      mongo:
+        condition: service_started
+      mysql:
+        condition: service_healthy
+    networks:
+      - app-network
+
+  # Servicio de la base de datos MongoDB
+  mongo:
+    image: mongo:latest
+    ports:
+      - "27017:27017" # Expone el puerto de MongoDB para conexión externa (ej. Mongo Compass).
+    volumes:
+      - mongo-data:/data/db # Persiste los datos de MongoDB en un volumen.
+    networks:
+      - app-network
+
+  # Servicio de la base de datos MySQL
+  mysql:
+    image: mysql:8.0
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: root_password
+      MYSQL_DATABASE: db_dev
+      MYSQL_USER: user_dev
+      MYSQL_PASSWORD: password_dev
+    volumes:
+      - mysql-data:/var/lib/mysql # Persiste los datos de MySQL en un volumen.
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p$$MYSQL_ROOT_PASSWORD"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - app-network
+
+  # Servicio Adminer para gestión de bases de datos
+  adminer:
+    image: adminer:latest
+    ports:
+      - "8080:8080"
+    environment:
+      ADMINER_DEFAULT_SERVER: mysql
+    depends_on:
+      - mysql
+    networks:
+      - app-network
+
+  # Servicio Mongo Express para gestión de la base de datos MongoDB
+  mongo-express:
+    image: mongo-express:latest
+    ports:
+      - "8081:8081"
+    environment:
+      - ME_CONFIG_MONGODB_SERVER=mongo
+      - ME_CONFIG_MONGODB_PORT=27017
+      - ME_CONFIG_MONGODB_ENABLE_ADMIN=true
+      - ME_CONFIG_BASICAUTH_USERNAME=""
+      - ME_CONFIG_BASICAUTH_PASSWORD=""
+    depends_on:
+      - mongo
+    networks:
+      - app-network
+
+# Definición de la red que usarán los servicios para comunicarse entre sí.
+networks:
+  app-network:
+    driver: bridge
+
+# Definición de los volúmenes para la persistencia de datos.
+volumes:
+  mongo-data:
+  mysql-data:

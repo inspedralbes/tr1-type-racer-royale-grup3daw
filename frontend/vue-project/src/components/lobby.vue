@@ -1,0 +1,213 @@
+<template>
+  <div class="lobby-background">
+    <div class="lobby-contenedor hologram hologram-entrance">
+  <button class="back-button" @click="goBack">←</button>
+  <button class="btn" v-if="sessionStore.email" @click="goToProfile" style="margin-left:8px">Perfil</button>
+      <h1>Sala d'espera</h1>
+      <h2>Benvingut, {{ nombreJugador }}!</h2>
+      <ul class="lista-jugadores">
+        <li v-for="(jugador) in jugadores" :key="jugador.name" style="display:flex;align-items:center;gap:8px">
+          <img :src="getAvatarSrc(jugador)" alt="avatar" style="width:40px;height:40px;object-fit:contain;border-radius:4px" />
+          <span>{{ jugador.name }} <span v-if="jugador.role === 'admin'">⭐</span></span>
+          <span v-if="jugador.disconnected"> (Desconnectat)</span>
+          <span v-else-if="jugador.role !== 'admin'"> 
+            <span v-if="jugador.isReady"> (A punt)</span><span v-else> (No està a punt)</span>
+          </span>
+          <div class="lobby-button-group" v-if="isAdmin && jugador.name !== nombreJugador">
+            <button class="btn btn-small" @click="removePlayer(jugador.socketId)">Eliminar</button>
+            <button class="btn btn-small" @click="makeHost(jugador.socketId)">Fer Amfitrió</button>
+          </div>
+        </li>
+      </ul>
+
+      <div class="lobby-button-group">
+        <button class="btn" v-if="!isAdmin" @click="toggleReady">{{ isPlayerReady ? 'No estic a punt' : 'Estic a punt' }}</button>
+        <button class="btn" v-if="isAdmin" @click="goToRoomSettings" :title="jugadores.length < 2 ? 'Es necessiten almenys 2 jugadors' : ''">Editar la sala</button>
+        <button class="btn" v-if="isAdmin" @click="iniciarJuego" :disabled="!isAdmin || !areAllPlayersReady || jugadores.length < 2" :title="jugadores.length < 2 ? 'Es necessiten almenys 2 jugadors per començar' : (!areAllPlayersReady ? 'No tots els jugadors estan a punt' : '')">Començar el joc</button>
+      </div>
+    </div>
+
+  </div>
+</template>
+
+<!-- Importa los estilos específicos para el componente Lobby. -->
+<style src="../styles/styleLobby.css"></style>
+
+<script setup>
+// Importaciones de Vue y Pinia para la gestión del estado y la reactividad.
+import { computed, onMounted, ref } from 'vue'
+import { storeToRefs } from 'pinia'
+import { useRouter } from 'vue-router';
+// Importaciones de módulos de comunicación y stores personalizados.
+import { communicationManager, socket } from '../communicationManager.js'
+import { useNotificationStore } from '../stores/notification'
+import { useGameStore } from '../stores/game';
+import { useRoomStore } from '../stores/room.js';
+import { useSessionStore } from '../stores/session.js';
+import { usePublicRoomsStore } from '../stores/publicRooms';
+
+// removed decorative ship images (no longer shown in lobby)
+
+// Inicialización de los stores.
+const gameStore = useGameStore();
+const roomStore = useRoomStore();
+const sessionStore = useSessionStore();
+const publicRoomsStore = usePublicRoomsStore();
+const router = useRouter();
+
+const goToProfile = () => {
+  router.push('/profile');
+}
+
+// decorative ship removed from lobby
+
+// Hook `onMounted` que se ejecuta cuando el componente ha sido montado.
+onMounted(async () => {
+  // Actualiza la página actual del jugador a 'lobby'.
+  await communicationManager.updatePlayerPage('lobby');
+});
+
+// Desestructura las propiedades reactivas de los stores.
+const { nombreJugador } = storeToRefs(gameStore);
+const { jugadores } = storeToRefs(roomStore);
+
+/**
+ * @description Propiedad computada que indica si el jugador actual es el administrador de la sala.
+ * @returns {boolean} - Verdadero si el jugador es administrador, falso en caso contrario.
+ */
+const isAdmin = computed(() => {
+  const player = jugadores.value.find(j => j.name === nombreJugador.value)
+  return player && player.role === 'admin'
+})
+
+/**
+ * @description Propiedad computada que indica si el jugador actual está listo.
+ * @returns {boolean} - Verdadero si el jugador está listo, falso en caso contrario.
+ */
+const isPlayerReady = computed(() => {
+  const player = jugadores.value.find(j => j.name === nombreJugador.value);
+  return player ? player.isReady : false;
+});
+
+/**
+ * @description Propiedad computada que indica si todos los jugadores (excepto el administrador) están listos.
+ * @returns {boolean} - Verdadero si todos los jugadores están listos, falso en caso contrario.
+ */
+const areAllPlayersReady = computed(() => {
+  return jugadores.value.length > 1 && jugadores.value.filter(p => p.role !== 'admin').every(p => p.isReady && !p.disconnected);
+});
+
+/**
+ * Devuelve la URL del avatar para un jugador. Si no tiene avatar/color definidos,
+ * devuelve una imagen por defecto (`noImage.png`).
+ */
+const getAvatarSrc = (player) => {
+  try {
+    // If the backend marked this player as guest (not logged-in), show no-image placeholder
+    if (player && player.isGuest) {
+      return new URL('../img/noImage.png', import.meta.url).href; // using noImage.png as placeholder
+    }
+
+    // Prefer player.avatar/player.color if present, fall back to defaults
+    const avatar = (player && player.avatar) ? player.avatar : 'nave';
+    const color = (player && player.color) ? player.color : 'Azul';
+
+  // If avatar explicitly set to 'noImage' use noImage.png as placeholder
+    if (avatar === 'noImage') {
+      return new URL('../img/noImage.png', import.meta.url).href;
+    }
+
+    // Build filename like naveAzul.png
+    const filename = `${avatar}${color}.png`;
+    return new URL(`../img/${filename}`, import.meta.url).href;
+  } catch (e) {
+    // Fallback image
+    return new URL('../img/noImage.png', import.meta.url).href;
+  }
+}
+
+function goToRoomSettings() {
+  sessionStore.setEtapa('room-settings');
+}
+
+/**
+ * @description Función para regresar a la pantalla de selección de sala.
+ * Emite un evento 'leave-room' al servidor y resetea el estado de la sala.
+ */
+const goBack = () => {
+  socket.emit('leave-room', roomStore.roomId);
+    roomStore.resetState();
+  sessionStore.setRoomId(null); // Clear roomId from sessionStore
+  sessionStore.setEtapa('room-selection');
+};
+
+/**
+ * @description Función para eliminar un jugador de la sala. Solo accesible para el administrador.
+ * @param {string} playerSocketId - El ID del socket del jugador a eliminar.
+ */
+const removePlayer = async (playerSocketId) => {
+  if (isAdmin.value) {
+    try {
+      await communicationManager.removePlayer(roomStore.roomId, playerSocketId);
+      console.log(`Jugador amb socketId ${playerSocketId} eliminat.`);
+    } catch (error) {
+      console.error('Error en eliminar el jugador:', error);
+      const notificationStore = useNotificationStore();
+      notificationStore.pushNotification({ type: 'error', message: error.response?.data?.message || 'Error en eliminar el jugador.' });
+    }
+  } else {
+    console.warn('Només l\'administrador pot eliminar jugadors.');
+  }
+};
+
+/**
+ * @description Función para transferir el rol de host a otro jugador. Solo accesible para el administrador.
+ * @param {string} targetPlayerSocketId - El ID del socket del jugador que se convertirá en host.
+ */
+const makeHost = async (targetPlayerSocketId) => {
+  if (isAdmin.value) {
+    try {
+      await communicationManager.makeHost(roomStore.roomId, targetPlayerSocketId);
+      console.log(`El jugador amb socketId ${targetPlayerSocketId} ara és l'amfitrió.`);
+    } catch (error) {
+      console.error('Error en fer amfitrió al jugador:', error);
+      const notificationStore = useNotificationStore();
+      notificationStore.pushNotification({ type: 'error', message: error.response?.data?.message || 'Error en fer amfitrió al jugador.' });
+    }
+  } else {
+    console.warn('Només l\'administrador pot fer amfitrió a altres jugadors.');
+  }
+};
+
+/**
+ * @description Función para cambiar el estado de 'listo' del jugador actual.
+ * No accesible para el administrador.
+ */
+const toggleReady = () => {
+  if (!isAdmin.value) {
+    console.log('Toggling ready status. Current isPlayerReady:', isPlayerReady.value, 'Sending:', !isPlayerReady.value);
+    communicationManager.sendReadyStatus(!isPlayerReady.value);
+  }
+};
+
+/**
+ * @description Función para iniciar el juego. Solo accesible para el administrador y si todos los jugadores están listos.
+ */
+function iniciarJuego() {
+  if (isAdmin.value) {
+    communicationManager.startGame(roomStore.roomId)
+      .then(response => {
+        console.log('Game started:', response.data);
+      })
+      .catch(error => {
+        console.error('Error en iniciar el joc:', error);
+        const notificationStore = useNotificationStore();
+        notificationStore.pushNotification({ type: 'error', message: error.response?.data?.message || 'Error en iniciar el joc.' });
+      });
+  } else {
+    console.warn('Només l\'administrador pot iniciar el joc.');
+  }
+}
+
+
+</script>

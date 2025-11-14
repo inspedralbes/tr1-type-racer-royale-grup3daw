@@ -1,0 +1,285 @@
+/* Base styles from styleAuth.css */
+html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+div.login-background { 
+    background-image: url('../img/estacion.png'); 
+    background-size: cover;
+    background-position: center;
+    height: 100vh;
+    width: 100vw; 
+    overflow: hidden;
+    position: relative; 
+}
+
+.centra-console-panel { 
+    overflow: visible;
+    position: absolute;
+    left: 50%;
+    top: 70%;
+    transform: translateX(-50%); 
+    bottom: 5vh; 
+    width: 60%; 
+    min-width: 500px;
+    height: 10%;
+    perspective: 1000px; 
+    perspective-origin: center top; 
+}
+
+/* Hologram panel styles from styleAuth.css */
+div.login-container.hologram { 
+  background-color: transparent; 
+  color: #00FF41; 
+  width: 100%; 
+  max-width: none;
+  height: auto; 
+  max-height: 60vh; 
+  overflow-y: auto; 
+  box-sizing: border-box; 
+  padding: 20px; 
+  text-align: center;
+  border: none; 
+  box-shadow: none; 
+  border-radius: 0;
+  position: absolute; 
+  bottom: 100%; 
+  left: 50%;
+  transform: translateX(-50%) rotateX(-25deg); 
+  transform-origin: center bottom; 
+  outline: 1px solid rgba(0, 255, 65, 0.6); 
+  outline-offset: 5px; 
+  filter: drop-shadow(0 0 15px rgba(0, 255, 65, 0.8)) 
+          drop-shadow(0 0 30px rgba(0, 255, 65, 0.4)); 
+  opacity: 0.9; 
+  background-image: linear-gradient(
+    rgba(0, 255, 65, 0.05) 1px, 
+    transparent 1px
+  ), linear-gradient(
+    90deg, rgba(0, 255, 65, 0.05) 1px, 
+    transparent 1px
+  );
+  background-size: 5px 5px; 
+}
+
+/* Text styles */
+.hologram p,
+.hologram h2 {
+    color: #00FF41;
+    text-shadow: 0 0 5px #00FF41;
+    margin-bottom: 20px; 
+    font-size: 1.2em; 
+}
+
+/* Styles for form layout */
+.hologram .form-group {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 90%;
+    margin: 15px auto; 
+    text-align: left;
+}
+
+/* Label styles */
+.hologram .form-group label {
+    flex: 0 0 auto; 
+    font-size: 1em; 
+    padding-right: 15px; 
+}
+
+/* Input styles */
+.hologram .form-group input[type="text"] {
+  flex-basis: 0; 
+  flex-grow: 1;  
+  width: 100%; 
+  background-color: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(0, 255, 65, 0.8);
+  color: #00FF41; 
+  padding: 8px; 
+  margin-bottom: 0; 
+  font-size: 1em; 
+  border-radius: 0;
+  text-shadow: 0 0 5px #00FF41;
+  font-family: inherit;
+}
+
+/* === Custom Select Styles === */
+
+/* 1. The main container */
+.hologram .custom-select {
+  flex-basis: 0; 
+  flex-grow: 1;  
+  width: 100%;
+  position: relative; 
+  font-family: inherit;
+}
+
+/* 2. The trigger button (looks like an input) */
+.hologram .select-trigger {
+  width: 100%;
+  background-color: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(0, 255, 65, 0.8);
+  color: #00FF41; 
+  padding: 8px; 
+  font-size: 1em; 
+  border-radius: 0;
+  text-shadow: 0 0 5px #00FF41;
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.1s;
+  background-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2010%205%27%20width%3D%2710%27%20height%3D%275%27%3E%3Cpath%20d%3D%27M0%200l5%205%205-5z%27%20fill%3D%27%2300FF41%27%2F%3E%3C%2Fsvg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center; 
+  background-size: 10px 5px; 
+  padding-right: 35px; 
+}
+
+/* 3. The list of options (hidden by default) */
+.hologram .select-options {
+  display: none; 
+  position: absolute;
+  top: 100%; 
+  left: 0;
+  right: 0;
+  background-color: rgba(0, 0, 0, 0.9); /* 90% opacity black */
+  border: 1px solid rgba(0, 255, 65, 0.8); 
+  z-index: 1000; 
+  max-height: 150px;
+  overflow-y: auto;
+}
+
+/* 4. Show the options when .open is added */
+.hologram .custom-select.open .select-options {
+  display: block;
+}
+
+/* 5. The individual option items */
+.hologram .select-option {
+  padding: 10px;
+  color: #00FF41;
+  cursor: pointer;
+  transition: all 0.1s;
+  border-bottom: 1px solid rgba(0, 255, 65, 0.2); 
+}
+
+/* 6. Hover effect for the options */
+.hologram .select-option:hover {
+  background-color: #00FF41;
+  color: #000;
+  text-shadow: none;
+}
+.hologram .select-option:last-child {
+  border-bottom: none;
+}
+
+/* === End of Custom Select Styles === */
+
+/* === NEW: Custom Number Input (Time) === */
+
+/* 1. The container (looks like an input) */
+.hologram .custom-number-input {
+  flex-basis: 0; 
+  flex-grow: 1;  
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background-color: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(0, 255, 65, 0.8);
+  border-radius: 0;
+}
+
+/* 2. The text display for the number */
+.hologram .time-display {
+  flex-grow: 1; /* Take up the middle space */
+  text-align: center;
+  color: #00FF41;
+  text-shadow: 0 0 5px #00FF41;
+  font-size: 1em;
+  padding: 8px 0; /* Match input padding */
+}
+
+/* 3. The +/- buttons */
+.hologram .btn-time-adjust {
+  background-color: transparent;
+  border: none;
+  color: #00FF41;
+  font-size: 1.5em; /* Make + and - larger */
+  font-weight: bold;
+  cursor: pointer;
+  padding: 0 15px; /* Give them a good click area */
+  transition: all 0.1s;
+  align-self: stretch; /* Make full height */
+}
+
+.hologram .btn-time-adjust:hover:not(:disabled) {
+  background-color: rgba(0, 255, 65, 0.2); /* Hologram-style hover */
+}
+
+/* 4. Disabled state for buttons */
+.hologram .btn-time-adjust:disabled {
+  color: rgba(0, 255, 65, 0.3);
+  cursor: not-allowed;
+}
+
+/* 5. Add subtle side borders to separate buttons */
+.hologram .btn-time-adjust:first-child {
+  border-right: 1px solid rgba(0, 255, 65, 0.5);
+}
+
+.hologram .btn-time-adjust:last-child {
+  border-left: 1px solid rgba(0, 255, 65, 0.5);
+}
+
+/* === End of Custom Number Input === */
+
+
+.hologram input::placeholder {
+    color: rgba(0, 255, 65, 0.5); 
+    text-shadow: none;
+}
+
+.hologram input:disabled {
+    background-color: rgba(0, 0, 0, 0.2);
+    color: rgba(0, 255, 65, 0.4);
+    border-style: dashed;
+    border-color: rgba(0, 255, 65, 0.4);
+}
+
+/* Button group from styleAuth.css */
+.hologram-button-group {
+    display: flex; 
+    justify-content: space-around;
+    align-items: center;
+    margin-top: 25px; 
+    margin-bottom: 5px; 
+}
+
+/* Button styles */
+.hologram .btn {
+  background-color: rgba(0, 0, 0, 0.3);
+  color: #00FF41;               
+  border: 2px solid #00FF41;    
+  padding: 10px 15px; 
+  border-radius: 0;
+  transition: all 0.1s;
+  font-size: 1em; 
+  margin-bottom: 0; 
+  width: auto;
+  min-width: 150px;
+  cursor: pointer;
+  font-family: inherit; 
+}
+
+.hologram .btn:hover {
+  background-color: #00FF41; 
+  color: #000000;
+  box-shadow: 0 0 15px #00FF41; 
+}
