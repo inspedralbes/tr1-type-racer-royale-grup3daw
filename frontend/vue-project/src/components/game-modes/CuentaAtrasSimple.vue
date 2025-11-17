@@ -302,7 +302,7 @@
            return;
        }
        if (!audioDisparo) {
-           audioDisparo = new Audio('/src/sound/disparo.mp3');
+           audioDisparo = new Audio(new URL('../../sound/disparo.mp3', import.meta.url).href);
            audioDisparo.volume = 1.0;
        }
        try {
@@ -352,7 +352,7 @@
        // === AÑADIDO: Lógica de sonido de explosión ===
        if (!audioExplosion) {
            // *** ¡¡ASEGÚRATE DE QUE ESTA RUTA ES CORRECTA!! ***
-           audioExplosion = new Audio('/src/sound/meteoritoDestruido.mp3'); 
+           audioExplosion = new Audio(new URL('../../sound/meteoritoDestruido.mp3', import.meta.url).href); 
            audioExplosion.volume = 1.0; 
        }
        try {

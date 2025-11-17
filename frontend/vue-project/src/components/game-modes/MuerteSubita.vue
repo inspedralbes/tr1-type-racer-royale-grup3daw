@@ -162,7 +162,7 @@
         }
         console.log("Temps esgotat! El meteorit ha impactat.");
         if (!audioExplosion) {
-            audioExplosion = new Audio('/src/sound/meteoritoDestruido.mp3');
+            audioExplosion = new Audio(new URL('../../sound/meteoritoDestruido.mp3', import.meta.url).href);
             audioExplosion.volume = 1.0;
         }
         try {
@@ -179,7 +179,7 @@
    async function triggerShot() {
        if (!meteorWordEl.value) return;
        if (!audioDisparo) {
-           audioDisparo = new Audio('/src/sound/disparo.mp3');
+           audioDisparo = new Audio(new URL('../../sound/disparo.mp3', import.meta.url).href);
            audioDisparo.volume = 1.0;
        }
        try {
