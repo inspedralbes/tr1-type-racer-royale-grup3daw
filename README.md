@@ -5,6 +5,7 @@
 ## 📜 Índice
 
 - [Sobre el Proyecto](#-sobre-el-proyecto)
+- [👥 Autores](#-autores)
 - [✨ Características](#-características)
 - [🛠️ Stack Tecnológico](#-stack-tecnológico)
 - [📂 Estructura del Proyecto](#-estructura-del-proyecto)
@@ -22,6 +23,16 @@
 El proyecto está completamente containerizado con Docker, lo que facilita enormemente su configuración y despliegue en diferentes entornos.
 
 _(Sugerencia: ¡Añade aquí algunas capturas de pantalla de tu aplicación!)_
+
+## 👥 Autores
+
+Este proyecto ha sido desarrollado por:
+
+- Pol Diaz
+- Pol Molina
+- Iker Lopez
+- Izan de La Cruz
+- Pol Donés
 
 ## ✨ Características
 
@@ -157,4 +168,7 @@ Este proyecto está distribuido bajo la Licencia MIT. Consulta el fichero `LICEN
 
 ## 📧 Contacto
 
-- **iizan.cruzz@gmail.com**
+- **a23izadelesp@inspedralbes.cat**
+
+---
+*README generado con la ayuda de Gemini.*
