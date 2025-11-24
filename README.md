@@ -170,5 +170,4 @@ Este proyecto está distribuido bajo la Licencia MIT. Consulta el fichero `LICEN
 
 - **a23izadelesp@inspedralbes.cat**
 
----
-*README generado con la ayuda de Gemini.*
+
