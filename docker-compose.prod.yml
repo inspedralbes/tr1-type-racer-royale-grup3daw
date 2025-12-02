@@ -9,7 +9,7 @@ services:
       ADMINER_USER: ${ADMINER_USER}
       ADMINER_PASSWORD: ${ADMINER_PASSWORD}
     ports:
-      - "80:80"
+      - "8082:80"
     # Nginx solo necesita que el backend esté iniciado para hacer proxy.
     # Ya no depende del servicio 'frontend' porque los ficheros se copian durante el build.
     depends_on:
