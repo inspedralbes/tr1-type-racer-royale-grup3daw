@@ -1,0 +1,144 @@
+<template>
+  <div class="selection-background">
+    <div class="centra-console-panel">
+      <div class="selection hologram hologram-entrance">
+        <div class="section-joinID">
+          <h3>Unir-se a una missió existent</h3>
+          <div>
+            <input type="text" v-model="joinRoomId" placeholder="ID de la missió" @keyup.enter="joinRoom" />
+            <button class="btn btn-small" @click="joinRoom" title="Unir-se a la sala per ID">›</button>
+          </div>
+        </div>
+
+        <div class="section-joinPublic">
+          <h3>Missions Públiques</h3>
+          <ul class="roomList" v-if="publicRooms.length">
+            <li class="room" v-for="room in publicRooms" :key="room.id">
+              <span>{{ room.name }} ({{ room.players.length }} jug.)</span>
+              <button class="btn btn-small" @click="joinRoomById(room.id)" title="Unir-se a aquesta sala">›</button>
+            </li>
+          </ul>
+          <p v-else>No hi ha missions públiques</p>
+          <button class="btn btn-small" @click="fetchPublicRooms" title="Actualitzar llista de sales">↻</button>
+        </div>
+
+        <div class="section-create">
+          <h3>Vols una pròpia?</h3>
+          <button class="btn" @click="createRoom" title="Crear nova sala">Crear missió</button>
+        </div>
+        
+        <div class="user-actions">
+          <button class="btn" v-if="sessionStore.email" @click="goToPlayerStats" title="Veure estadístiques">📈</button>
+          <button class="btn" v-if="sessionStore.email" @click="goToProfile" title="Anar al perfil">👤</button>
+          <button class="btn logout-button" @click="logoutAndReset" title="Tancar sessió">⏻</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script setup>
+/**
+ * Fichero: RoomSelection.vue
+ * Descripción: Este componente permite a los usuarios navegar, unirse o crear salas de juego.
+ *
+ * Funcionalidades:
+ * - Al montarse, obtiene y muestra una lista de las salas públicas disponibles.
+ * - Permite al usuario unirse a una sala específica por su ID.
+ * - Permite al usuario unirse a una sala directamente desde la lista de salas públicas.
+ * - Redirige al usuario a la vista `RoomSettings` para crear una nueva sala.
+ * - Gestiona el cierre de sesión (logout), limpiando todo el estado local (stores de Pinia, sessionStorage)
+ * y notificando al backend para que también limpie el estado del jugador.
+ */
+import { ref, onMounted } from 'vue';
+import { storeToRefs } from 'pinia';
+import { useGameStore } from '../stores/game';
+import { useRoomStore } from '../stores/room.js';
+import { useSessionStore } from '../stores/session.js';
+import { usePublicRoomsStore } from '../stores/publicRooms';
+import { communicationManager, socket } from '../communicationManager.js';
+import { useNotificationStore } from '../stores/notification';
+
+import { useRouter } from 'vue-router';
+
+// Inicialización de los stores de Pinia.
+const router = useRouter();
+const gameStore = useGameStore();
+const roomStore = useRoomStore();
+const sessionStore = useSessionStore();
+const publicRoomsStore = usePublicRoomsStore();
+
+// `joinRoomId` almacena el valor del campo de texto para unirse por ID.
+const joinRoomId = ref('');
+// `publicRooms` es una referencia reactiva a la lista de salas del store.
+const { rooms: publicRooms } = storeToRefs(publicRoomsStore);
+
+/**
+ * Hook `onMounted`: Se ejecuta al montar el componente y llama a la función
+ * para obtener la lista de salas públicas.
+ */
+onMounted(async () => {
+  fetchPublicRooms();
+});
+
+const fetchPublicRooms = async () => {
+  try {
+    const response = await communicationManager.getPublicRoomsList();
+    publicRoomsStore.setRooms(response.data);
+  } catch (error) {
+    console.error('Error en obtenir les sales públiques:', error);
+    const notificationStore = useNotificationStore();
+    notificationStore.pushNotification({ type: 'error', message: 'Error en obtenir les sales públiques.' });
+  }
+};
+
+const joinRoom = () => {
+  if (!joinRoomId.value) return;
+  joinRoomById(joinRoomId.value);
+};
+
+/**
+ * Lógica para unirse a una sala.
+ * - Llama a `communicationManager.joinRoom` para emitir el evento de socket.
+ * - Actualiza los stores de `roomStore` y `sessionStore` con el ID de la sala.
+ * - Navega al lobby de la sala.
+ */
+const joinRoomById = (roomId) => {
+  communicationManager.joinRoom(roomId);
+};
+
+/**
+ * Navega a la pantalla de configuración de sala para crear una nueva sala.
+ */
+const createRoom = () => {
+  sessionStore.setEtapa('room-settings');
+  router.push('/game/room-settings');
+};
+
+const goToPlayerStats = () => {
+  router.push('/stats');
+};
+
+const logoutAndReset = () => {
+  // Llama al método centralizado de logout que notifica al backend y limpia la sesión.
+  communicationManager.logout();
+
+  // Desconecta el socket después de emitir el evento de logout.
+  communicationManager.disconnect();
+  
+  // Resetea los stores de estado del juego y de las salas.
+  gameStore.resetState();
+  roomStore.resetState();
+  publicRoomsStore.resetState();
+
+  router.push('/login');
+};
+
+const goToProfile = () => {
+  router.push('/profile');
+}
+</script>
+
+<style src="../styles/styleRoomSelection.css">
+
+</style>

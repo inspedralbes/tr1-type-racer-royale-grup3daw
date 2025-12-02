@@ -1,0 +1,253 @@
+body {
+  font-family: 'PressStart2P', sans-serif;
+  background-repeat: no-repeat;
+  background-size: cover;
+  background-position: center;
+  margin: 0;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  position: relative; 
+}
+
+div.selection-background{
+  position: absolute;
+  top: 0;
+  left: 0;
+  background-image: url(../img/estacion.png);
+  width: 100vw;
+  height: 100vh;
+  background-repeat: no-repeat;
+  background-size: cover;
+  background-position: center;
+}
+
+div.selection.hologram{
+  background-color: transparent; 
+  color: #00FF41; 
+  width: 100%; 
+  max-width: none;
+  height: 50vh; 
+  max-height: 500px; 
+  overflow-y: none; 
+  box-sizing: border-box; 
+  padding: 20px; 
+  border: none; 
+  box-shadow: none; 
+  border-radius: 0;
+  position: absolute; 
+  
+  /* Tu posición (sigue estando fuera de la pantalla por arriba) */
+  bottom: 100%; 
+  
+  left: 50%;
+  transform: translateX(-50%) rotateX(-25deg); 
+  transform-origin: center bottom; 
+  outline: 1px solid rgba(0, 255, 65, 0.6); 
+  outline-offset: 5px; 
+  filter: drop-shadow(0 0 15px rgba(0, 255, 65, 0.8)) 
+          drop-shadow(0 0 30px rgba(0, 255, 65, 0.4)); 
+  opacity: 0.9; 
+  background-image: linear-gradient(
+    rgba(0, 255, 65, 0.05) 1px, 
+    transparent 1px
+  ), linear-gradient(
+    90deg, rgba(0, 255, 65, 0.05) 1px, 
+    transparent 1px
+  );
+  background-size: 5px 5px; 
+
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr; 
+  gap: 1.5rem; 
+  align-items: start; 
+  
+}
+
+/* El resto de tu CSS (inputs, botones, etc.) 
+  ... (va aquí) ...
+*/
+
+.hologram p,
+.hologram h2,
+.hologram h3 {
+    color: #00FF41;
+    text-shadow: 0 0 5px #00FF41;
+    margin-bottom: 15px;
+    font-size: 1.2em;
+}
+
+.hologram input[type="text"] {
+  width: 80%;
+  background-color: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(0, 255, 65, 0.8);
+  color: #00FF41; 
+  padding: 8px; 
+  margin-bottom: 10px; 
+  font-size: 1em;
+  border-radius: 0;
+  text-shadow: 0 0 5px #00FF41; 
+}
+
+.hologram input::placeholder {
+    color: rgba(0, 255, 65, 0.5); 
+    text-shadow: none;
+}
+
+.hologram .btn {
+  background-color: rgba(0, 0, 0, 0.3);
+  color: #00FF41;               
+  border: 2px solid #00FF41;    
+  padding: 8px 10px; 
+  border-radius: 0;
+  transition: all 0.1s;
+  font-size: 1em;
+  margin-bottom: 0; 
+  width: 15%;
+  margin-right:10px ; 
+}
+
+.hologram .btn:hover {
+  background-color: #00FF41; 
+  color: #000000;
+  box-shadow: 0 0 15px #00FF41; 
+}
+
+div.section-joinID {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start; 
+  text-align: left;
+}
+
+/* --- CAMBIO: Apila el input y el botón --- */
+div.section-joinID > div {
+  display: flex;
+  width: 100%;
+  flex-direction: column; /* Apila verticalmente */
+  align-items: flex-start;  /* Alinea a la izquierda */
+}
+
+
+div.section-joinPublic {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+
+div.section-create {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end; 
+  text-align: right; 
+}
+
+/* --- CAMBIO: Ajusta el botón del ID --- */
+div.section-joinID > div > .btn {
+  width: 80%; /* Mismo ancho que el input */
+  margin-left: 0; /* Quita el margen que tenía */
+}
+
+div.section-joinPublic > .btn,
+div.section-create .btn {
+  width: auto; 
+}
+
+.selection.hologram > h2 {
+  grid-column: 1 / -1; 
+  text-align: center;
+}
+
+/* --- CAMBIO: Reorganiza la fila inferior de botones --- */
+.selection.hologram > div:last-of-type {
+  grid-column: 1 / -1; 
+  text-align: center;
+
+  display: flex;
+  justify-content: center;
+  
+  margin-top: 12px; /* Añadido desde el style en línea */
+  gap: 20px; /* Reducido desde 150px */
+}
+
+/* --- CAMBIO: Resetea márgenes de los botones inferiores --- */
+.selection.hologram > div:last-of-type .btn {
+  margin: 0; /* Resetea márgenes para que 'gap' funcione */
+}
+
+.roomList {
+  list-style: none; 
+  padding: 5px; 
+  margin: 0 0 10px 0; 
+  max-height: 110px; 
+  overflow-y: auto;  
+  width: 100%; 
+  box-sizing: border-box;
+  border: 1px solid rgba(0, 255, 65, 0.2);
+  background: rgba(0, 0, 0, 0.1);
+  text-align: left; 
+}
+
+.roomList .room {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 10px;
+  font-size: 0.8em; 
+  border-bottom: 1px solid rgba(0, 255, 65, 0.2);
+}
+.roomList .room:last-child {
+  border-bottom: none;
+}
+
+.roomList .room .btn-small {
+  width: 1%;
+  padding: 10px 8px; 
+  font-size: 1em;
+  margin-left: 20px; 
+  flex-shrink: 0; 
+}
+
+.roomList::-webkit-scrollbar {
+  width: 8px;
+}
+
+.roomList::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.3);
+}
+
+.roomList::-webkit-scrollbar-thumb {
+  background-color: #00FF41;
+  border: 1px solid rgba(0, 255, 65, 0.8);
+}
+
+.roomList::-webkit-scrollbar-thumb:hover {
+  background-color: #5eff8b;
+}
+
+.btn-profile-top {
+ position: absolute !important; 
+  top: 15px !important;
+  right: 15px !important;
+  left: auto !important; 
+  margin: 0 !important; 
+  width: 10% !important;
+  font-family: 'PressStart2P', sans-serif;
+  font-size: 0.55em !important; 
+  padding: 5px 7px !important; 
+  background-color: rgba(0, 20, 0, 0.6) !important; 
+  border: 1px solid rgba(0, 255, 65, 0.5) !important; 
+  color: #00FF41 !important;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  z-index: 20;
+  cursor: pointer;
+}
+
+.btn-profile-top:hover {
+  background-color: #00FF41 !important; 
+  color: #000000 !important;
+  box-shadow: 0 0 15px #00FF41 !important; 
+}

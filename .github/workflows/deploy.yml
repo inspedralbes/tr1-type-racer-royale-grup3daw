@@ -1,0 +1,72 @@
+name: Deploy to Production
+
+on:
+  push:
+    branches:
+      - main 
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Deploy to server
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            # Define project path and repo URL
+            PROJECT_PATH="/var/www/html/tr1-type-racer-royale-grup3daw"
+            REPO_URL="https://github.com/${{ github.repository }}.git"
+            BRANCH="main"
+
+            # Clone repo if it doesn't exist
+            if [ ! -d "$PROJECT_PATH" ]; then
+              echo "Cloning repository..."
+              cd /var/www/html/
+              git clone $REPO_URL
+            fi
+
+            # Navigate to project directory
+            cd $PROJECT_PATH
+
+            # Ensure clean working directory before checkout
+            git reset --hard
+            git clean -fd
+
+            # Pull latest changes
+            git checkout $BRANCH
+            git pull origin $BRANCH
+
+            # Create .env file from GitHub Secrets
+            echo "Creating .env file..."
+            echo "NODE_ENV=${{ secrets.NODE_ENV }}" > .env
+            echo "FRONTEND_URL=${{ secrets.FRONTEND_URL }}" >> .env
+            echo "MYSQL_ROOT_PASSWORD=${{ secrets.MYSQL_ROOT_PASSWORD }}" >> .env
+            echo "MYSQL_PASSWORD=${{ secrets.MYSQL_PASSWORD }}" >> .env
+            echo "MYSQL_DATABASE=${{ secrets.MYSQL_DATABASE }}" >> .env
+            echo "MYSQL_USER=${{ secrets.MYSQL_USER }}" >> .env
+            # Las variables MONGO_ROOT_* son necesarias para la autenticación de MongoDB
+            echo "MONGO_ROOT_USER=${{ secrets.MONGO_ROOT_USER }}" >> .env
+            echo "MONGO_ROOT_PASSWORD=${{ secrets.MONGO_ROOT_PASSWORD }}" >> .env
+            echo "MONGO_URI=mongodb://${{ secrets.MONGO_ROOT_USER }}:${{ secrets.MONGO_ROOT_PASSWORD }}@mongo:27017/" >> .env
+            # Credenciales para Adminer (autenticación básica en Nginx)
+            echo "ADMINER_USER=${{ secrets.ADMINER_USER }}" >> .env
+            echo "ADMINER_PASSWORD=${{ secrets.ADMINER_PASSWORD }}" >> .env
+            # Las variables VITE_* son cruciales para el build del frontend
+            echo "VITE_NODE_ENV=${{ secrets.NODE_ENV }}" >> .env
+            echo "VITE_API_URL=${{ secrets.FRONTEND_URL }}" >> .env
+            echo "VITE_SOCKET_URL=${{ secrets.FRONTEND_URL }}" >> .env
+            # JWT secret used by the backend for signing tokens
+            echo "JWT_SECRET=${{ secrets.JWT_SECRET }}" >> .env
+
+            # Run docker-compose
+            echo "Starting docker-compose..."
+            # Actualiza los servicios: reconstruye las imágenes que han cambiado y reinicia
+            # los contenedores correspondientes. Los datos de las bases de datos se conservan.
+            docker compose --env-file ./.env -f docker-compose.prod.yml up --build -d --remove-orphans
+
+            # Limpia cualquier otra imagen de Docker que no se esté utilizando
+            docker image prune -f

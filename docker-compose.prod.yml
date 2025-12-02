@@ -1,0 +1,128 @@
+# Este fichero docker-compose está configurado para el entorno de producción.
+services:
+  # Nginx actúa como reverse proxy y sirve el contenido estático del frontend.
+  nginx:
+    build:
+      context: .
+      dockerfile: nginx.Dockerfile
+    environment:
+      ADMINER_USER: ${ADMINER_USER}
+      ADMINER_PASSWORD: ${ADMINER_PASSWORD}
+    ports:
+      - "8082:80"
+    # Nginx solo necesita que el backend esté iniciado para hacer proxy.
+    # Ya no depende del servicio 'frontend' porque los ficheros se copian durante el build.
+    depends_on:
+      backend:
+        condition: service_started
+    networks:
+      - app-network
+    restart: unless-stopped # CRÍTICO: Reinicia Nginx si falla.
+
+  backend:
+    build: ./backend
+    # Use the start:prod script so migrations run before launching the server
+    command: npm run start:prod
+    environment:
+      NODE_ENV: ${NODE_ENV}
+      FRONTEND_URL: ${FRONTEND_URL}
+      JWT_SECRET: ${JWT_SECRET}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MONGO_URI: ${MONGO_URI}
+      DB_HOST: mysql
+    # MEJORA: El backend esperará a que las bases de datos estén listas.
+    depends_on:
+      mongo:
+        condition: service_started # MongoDB no tiene un healthcheck fácil, 'service_started' es una buena aproximación.
+      mysql:
+        condition: service_healthy # Espera a que el healthcheck de MySQL pase.
+    networks:
+      - app-network
+    restart: unless-stopped # CRÍTICO: Reinicia el backend si falla.
+
+  # OPTIMIZACIÓN: Este servicio solo existe para construir la imagen del frontend.
+  # Nginx la usará en su Dockerfile (con 'COPY --from=...').
+  # No se ejecutará como un contenedor persistente en producción.
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      # Las variables de entorno se pasan como argumentos de construcción (build args)
+      # para que estén disponibles durante 'npm run build' dentro del Dockerfile.
+      args:
+        VITE_NODE_ENV: ${VITE_NODE_ENV}
+        VITE_API_URL: ${VITE_API_URL}
+        VITE_SOCKET_URL: ${VITE_SOCKET_URL}
+    # Ya no necesita 'environment', 'networks' ni ejecutarse como un servicio.
+
+  mongo:
+    image: mongo:6.0 # BUENA PRÁCTICA: Fija la versión de la imagen.
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USER}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD}
+    volumes:
+      - mongo-data:/data/db
+    networks:
+      - app-network
+    restart: unless-stopped # CRÍTICO: Reinicia MongoDB si falla.
+
+  mysql:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    # Forzamos el uso del plugin de autenticación nativo para compatibilidad con Adminer
+    command: --default-authentication-plugin=mysql_native_password
+    volumes:
+      - mysql-data:/var/lib/mysql
+    healthcheck:
+      # Se usa CMD-SHELL para poder pasar la variable de entorno con la contraseña de root.
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -u root -p$${MYSQL_ROOT_PASSWORD}"]
+      interval: 20s  # Aumentamos el intervalo entre verificaciones a 20 segundos.
+      timeout: 10s   # Aumentamos el tiempo de espera de cada verificación.
+      retries: 10    # Aumentamos el número de reintentos.
+    networks:
+      - app-network
+    restart: unless-stopped # CRÍTICO: Reinicia MySQL si falla
+
+  # Adminer para gestión de bases de datos en producción
+  adminer:
+    image: adminer:latest
+    expose:
+      - "8080"
+    environment:
+      ADMINER_DEFAULT_SERVER: mysql
+      ADMINER_DESIGN: dracula # Tema oscuro más profesional
+    depends_on:
+      - mysql
+      - mongo
+    networks:
+      - app-network
+    restart: unless-stopped
+
+  mongo-express:
+    image: mongo-express:latest
+    environment:
+      - ME_CONFIG_MONGODB_SERVER=mongo
+      - ME_CONFIG_MONGODB_ENABLE_ADMIN=true
+      - ME_CONFIG_SITE_BASEURL=/mongo-express/
+      - ME_CONFIG_MONGODB_ADMINUSERNAME=${MONGO_ROOT_USER}
+      - ME_CONFIG_MONGODB_ADMINPASSWORD=${MONGO_ROOT_PASSWORD}
+    depends_on:
+      - mongo
+    networks:
+      - app-network
+    restart: unless-stopped
+
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  mongo-data:
+  mysql-data:
